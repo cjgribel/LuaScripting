@@ -24,6 +24,10 @@
 #include "Log.hpp"
 #include "ShapeRenderer.hpp"
 
+// entt-sol2
+#include "bond.hpp"
+#include "transform.hpp"
+
 using namespace linalg;
 const int WINDOW_WIDTH = 1600;
 const int WINDOW_HEIGHT = 900;
@@ -458,13 +462,16 @@ int main(int argc, char* argv[])
         m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f*fTO_RAD, aspectRatio, nearPlane, farPlane);
         m4f V = m4f::TRS(eye, 0.0f, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }).inverse();
 
+        // Push shapes
         renderer->push_states(Renderer::Color4u::Red);
         renderer->push_quad(v3f {0.0f, 0.0f, 0.0f}, 5.0f);
         renderer->pop_states<Renderer::Color4u>();
 
+        // Render shapes
         renderer->render(P*V);
         renderer->post_render();
 
+        // Render GUI
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

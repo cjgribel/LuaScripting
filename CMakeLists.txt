@@ -32,6 +32,7 @@ endif()
 # 'target_include_directories' if target specific
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vec)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/entt-meets-sol2)
 
 #
 # OpenGL
@@ -128,13 +129,42 @@ message(STATUS "Dear ImGui fetched and included")
 #
 # Lua
 #
-# find_package(Lua REQUIRED)
-# message(STATUS "Lua found")
-# message(STATUS "Found Lua: ${LUA_VERSION_STRING}")
-# message(STATUS "Lua include dir: ${LUA_INCLUDE_DIR}")
-# message(STATUS "Lua library: ${LUA_LIBRARY}")
+set(LUA_VERSION v5.4.6)
+find_package(Lua QUIET)
+if(NOT LUA_FOUND)
+    set(LUA_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        lua
+        GIT_REPOSITORY https://github.com/lua/lua.git
+        GIT_TAG ${LUA_VERSION}  # Use the defined version variable
+    )
+    FetchContent_MakeAvailable(lua)
+    message(STATUS "Fetched Lua ${LUA_VERSION}")
+else()
+    message(STATUS "Lua version ${LUA_VERSION} found, skipping fetch")
+endif()
+include_directories(${LUA_INCLUDE_DIR})
+message(STATUS "Lua include dir: ${lua_SOURCE_DIR}")
 
+#
 # sol2
+#
+set(SOL2_VERSION v3.3.0)
+find_package(sol2 QUIET)
+if(NOT sol2_FOUND)
+    set(SOL2_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        sol2
+        GIT_REPOSITORY https://github.com/ThePhD/sol2.git
+        GIT_TAG ${SOL2_VERSION}  # Use the defined version variable
+    )
+    FetchContent_MakeAvailable(sol2)
+    message(STATUS "Fetched sol2 ${SOL2_VERSION}")
+else()
+    message(STATUS "sol2 version ${sol2_VERSION} found, skipping fetch")
+endif()
+include_directories(${sol2_SOURCE_DIR}/include)
+message(STATUS "sol2 include dir: ${sol2_SOURCE_DIR}")
 
 #
 # Targets
@@ -163,7 +193,14 @@ add_executable(SpaceInvaders
 set_target_properties(SpaceInvaders PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/SpaceInvaders"
 )
-target_link_libraries(SpaceInvaders PRIVATE ${SDL2_LIBRARIES} libglew_static ${OPENGL_LIBRARIES})
+target_link_libraries(
+    SpaceInvaders PRIVATE 
+    ${SDL2_LIBRARIES} 
+    libglew_static 
+    ${OPENGL_LIBRARIES}
+    ${LUA_LIBRARIES} 
+    sol2::sol2
+    EnTT::EnTT)
 #target_include_directories(Module1 PRIVATE ${imgui_SOURCE_DIR})
 #target_include_directories(Module1 PRIVATE ${imgui_SOURCE_DIR}/backends)
 

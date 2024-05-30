@@ -10,7 +10,7 @@
 #include <cstddef>
 
 #include "ShapeRenderer.hpp"
-#include "Ray.h"
+#include "ray.h"
 #include "interp.h"
 
 namespace Renderer {
