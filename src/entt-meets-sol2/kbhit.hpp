@@ -1,3 +1,5 @@
+#ifndef kbhit_hpp
+#define kbhit_hpp
 #pragma once
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -30,4 +32,6 @@ int _kbhit() {
     ioctl(STDIN, FIONREAD, &bytesWaiting);
     return bytesWaiting;
 }
+#endif
+
 #endif

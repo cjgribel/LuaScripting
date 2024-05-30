@@ -1,3 +1,5 @@
+#ifndef meta_helper_hpp
+#define meta_helper_hpp
 #pragma once
 
 #include "entt/meta/factory.hpp"
@@ -45,3 +47,5 @@ inline auto invoke_meta_func(entt::id_type type_id, entt::id_type function_id,
   return invoke_meta_func(entt::resolve(type_id), function_id,
                           std::forward<Args>(args)...);
 }
+
+#endif

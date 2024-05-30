@@ -1,3 +1,5 @@
+#ifndef bond_hpp
+#define bond_hpp
 #pragma once
 
 #include "entt/entity/registry.hpp"
@@ -164,3 +166,5 @@ sol::table open_registry(sol::this_state s) {
 
   return entt_module;
 }
+
+#endif

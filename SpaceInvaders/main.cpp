@@ -23,6 +23,7 @@
 #include "mat.h"
 #include "Log.hpp"
 #include "ShapeRenderer.hpp"
+#include "Scene.hpp"
 
 // entt-sol2
 #include "bond.hpp"
@@ -58,17 +59,6 @@ namespace
 
 int main(int argc, char* argv[])
 {
-    auto renderer = std::make_shared<Renderer::ImPrimitiveRenderer>();
-
-    // Do some entt stuff
-    entt::registry registry;
-    auto ent1 = registry.create();
-    struct Tfm
-    {
-        float x, y, z;
-    };
-    registry.emplace<Tfm>(ent1, Tfm{});
-
     // Hello standard output
     std::cout << "Hello SDL2 + Assimp + Dear ImGui" << std::endl;
 
@@ -246,18 +236,25 @@ int main(int argc, char* argv[])
     }
 #endif
 
+    auto renderer = std::make_shared<Renderer::ImPrimitiveRenderer>();
     renderer->init();
 
+    auto scene = std::make_shared<Scene>();
+    scene->init();
+
     // Main loop
-    float time_s, time_ms;
+    float time_s = 0.0f, time_ms, deltaTime_s = 0.016f;
     bool quit = false;
     SDL_Event event;
     eeng::Log::log("Entering main loop...");
 
     while (!quit)
     {
-        time_ms = SDL_GetTicks();
-        time_s = time_ms * 0.001f;
+        const auto now_ms = SDL_GetTicks();
+        const auto now_s = now_ms * 0.001f;
+        deltaTime_s = now_s - time_s;
+        time_ms = now_ms;
+        time_s = now_s;
 
         while (SDL_PollEvent(&event))
         {
@@ -301,123 +298,93 @@ int main(int argc, char* argv[])
 
         // Render GUI here
 
-        ImGui::Begin("Config");
+        ImGui::Begin("Info");
 
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-        ImGui::Text("Drawcall count %i", DRAWCALL_COUNT);
-
-        // Combo (drop-down) for fps settings
-        static const char* items[] = { "10", "30", "60", "120", "Uncapped" };
-        static int currentItem = 2;
-        if (ImGui::BeginCombo("Target framerate##targetfps", items[currentItem]))
+        if (ImGui::CollapsingHeader("Backend", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+            ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            // ImGui::Text("Drawcall count %i", DRAWCALL_COUNT);
+
+            // Combo (drop-down) for fps settings
+            static const char* items[] = { "10", "30", "60", "120", "Uncapped" };
+            static int currentItem = 2;
+            if (ImGui::BeginCombo("Target framerate##targetfps", items[currentItem]))
             {
-                const bool isSelected = (currentItem == i);
-                if (ImGui::Selectable(items[i], isSelected))
-                    currentItem = i;
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        if (currentItem == 0)
-            FRAMETIME_MIN_MS = 1000.0f / 10;
-        else if (currentItem == 1)
-            FRAMETIME_MIN_MS = 1000.0f / 30;
-        else if (currentItem == 2)
-            FRAMETIME_MIN_MS = 1000.0f / 60;
-        else if (currentItem == 3)
-            FRAMETIME_MIN_MS = 1000.0f / 120;
-        else if (currentItem == 4)
-            FRAMETIME_MIN_MS = 0.0f;
-
-        // Combo (drop-down) for animation clip
-        /*
-        if (characterMesh)
-        {
-            int curAnimIndex = ANIM_INDEX;
-            std::string label = (curAnimIndex == -1 ? "Bind pose" : characterMesh->getAnimationName(curAnimIndex));
-            if (ImGui::BeginCombo("Character animation##animclip", label.c_str()))
-            {
-                // Bind pose item
-                const bool isSelected = (curAnimIndex == -1);
-                if (ImGui::Selectable("Bind pose", isSelected))
-                    curAnimIndex = -1;
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-
-                // Clip items
-                for (int i = 0; i < characterMesh->getNbrAnimations(); i++)
+                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
                 {
-                    const bool isSelected = (curAnimIndex == i);
-                    const auto label = characterMesh->getAnimationName(i) + "##" + std::to_string(i);
-                    if (ImGui::Selectable(label.c_str(), isSelected))
-                        curAnimIndex = i;
+                    const bool isSelected = (currentItem == i);
+                    if (ImGui::Selectable(items[i], isSelected))
+                        currentItem = i;
+
                     if (isSelected)
                         ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
-                ANIM_INDEX = curAnimIndex;
             }
-        }*/
+            if (currentItem == 0)
+                FRAMETIME_MIN_MS = 1000.0f / 10;
+            else if (currentItem == 1)
+                FRAMETIME_MIN_MS = 1000.0f / 30;
+            else if (currentItem == 2)
+                FRAMETIME_MIN_MS = 1000.0f / 60;
+            else if (currentItem == 3)
+                FRAMETIME_MIN_MS = 1000.0f / 120;
+            else if (currentItem == 4)
+                FRAMETIME_MIN_MS = 0.0f;
 
-        // ImGui::SliderFloat("Animation speed", &ANIM_SPEED, 0.1f, 5.0f);
+            ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
-        ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
-
-        if (SOUND_PLAY)
-        {
-            if (ImGui::Button("Pause sound"))
+            if (SOUND_PLAY)
             {
-                SDL_PauseAudioDevice(deviceId, 1);
-                SOUND_PLAY = false;
+                if (ImGui::Button("Pause sound"))
+                {
+                    SDL_PauseAudioDevice(deviceId, 1);
+                    SOUND_PLAY = false;
+                }
             }
-        }
-        else
-        {
-            if (ImGui::Button("Play sound"))
+            else
             {
-                SDL_PauseAudioDevice(deviceId, 0);
-                SOUND_PLAY = true;
+                if (ImGui::Button("Play sound"))
+                {
+                    SDL_PauseAudioDevice(deviceId, 0);
+                    SOUND_PLAY = true;
+                }
+            }
+
+            ImGui::Text("Controller State");
+
+            if (controller1 != nullptr)
+            {
+                ImGui::BeginChild("Controller State Frame", ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 4), true);
+                ImGui::Text("Buttons: A:%d B:%d X:%d Y:%d",
+                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
+                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
+                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
+                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y));
+
+                ImGui::Text("Left Stick: X:%.2f Y:%.2f",
+                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
+                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f);
+
+                ImGui::Text("Right Stick: X:%.2f Y:%.2f",
+                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
+                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f);
+                ImGui::EndChild();
+            }
+            else
+            {
+                ImGui::SameLine();
+                ImGui::Text("(No controller connected)");
             }
         }
 
-        // if (ImGui::ColorEdit3("Light color",
-        //     glm::value_ptr(LIGHT_COLOR),
-        //     ImGuiColorEditFlags_NoInputs))
-        // {
-        // }
-
-        ImGui::Text("Controller State");
-
-        if (controller1 != nullptr)
+        if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::BeginChild("Controller State Frame", ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 4), true);
-            ImGui::Text("Buttons: A:%d B:%d X:%d Y:%d",
-                SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
-                SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
-                SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
-                SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y));
-
-            ImGui::Text("Left Stick: X:%.2f Y:%.2f",
-                SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
-                SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f);
-
-            ImGui::Text("Right Stick: X:%.2f Y:%.2f",
-                SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
-                SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f);
-            ImGui::EndChild();
-        }
-        else
-        {
-            ImGui::SameLine();
-            ImGui::Text("No controller connected");
+            scene->renderUI();
         }
 
-        ImGui::End(); // end config window
+        ImGui::End(); // end info window
 
         eeng::Log::draw();
 
@@ -453,23 +420,8 @@ int main(int argc, char* argv[])
             glEnable(GL_CULL_FACE);
         }
 
-        // Camera position
-        linalg::vec3 eye = xyz(m4f::TRS({ 0.0f, 0.0f, 10.0f }, 0.0f, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }) * vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-
-        // Projection & View matrices
-        const float aspectRatio = float(WINDOW_WIDTH) / WINDOW_HEIGHT;
-        const float nearPlane = 1.0f, farPlane = 500.0f;
-        m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f*fTO_RAD, aspectRatio, nearPlane, farPlane);
-        m4f V = m4f::TRS(eye, 0.0f, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }).inverse();
-
-        // Push shapes
-        renderer->push_states(Renderer::Color4u::Red);
-        renderer->push_quad(v3f {0.0f, 0.0f, 0.0f}, 5.0f);
-        renderer->pop_states<Renderer::Color4u>();
-
-        // Render shapes
-        renderer->render(P*V);
-        renderer->post_render();
+        scene->update(time_s, deltaTime_s);
+        scene->render(time_s, WINDOW_WIDTH, WINDOW_HEIGHT, renderer);
 
         // Render GUI
         ImGui::Render();

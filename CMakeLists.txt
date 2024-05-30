@@ -173,7 +173,8 @@ message(STATUS "sol2 include dir: ${sol2_SOURCE_DIR}")
 # Module1
 message(STATUS "Creating executable target for SpaceInvaders")
 add_executable(SpaceInvaders 
-    SpaceInvaders/main.cpp 
+    SpaceInvaders/main.cpp
+    SpaceInvaders/Scene.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp

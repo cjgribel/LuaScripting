@@ -1,3 +1,5 @@
+#ifndef transform_hpp
+#define transform_hpp
 #pragma once
 
 #include <sstream>
@@ -31,3 +33,5 @@ void register_transform(sol::state &lua) {
   );
   // clang-format on
 }
+
+#endif
