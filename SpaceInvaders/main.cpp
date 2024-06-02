@@ -25,10 +25,6 @@
 #include "ShapeRenderer.hpp"
 #include "Scene.hpp"
 
-// entt-sol2
-#include "bond.hpp"
-#include "transform.hpp"
-
 using namespace linalg;
 const int WINDOW_WIDTH = 1600;
 const int WINDOW_HEIGHT = 900;

@@ -2,11 +2,88 @@
 #include "imgui.h"
 #include "mat.h"
 #include "Scene.hpp"
+
+// entt-sol2
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
+
+#include "bond.hpp"
+#include "transform.hpp"
+
+#define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
-//using namespace Renderer;
+
+inline void my_panic(sol::optional<std::string> maybe_msg) {
+    std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
+    if (maybe_msg) {
+        const std::string& msg = maybe_msg.value();
+        std::cerr << "\terror message: " << msg << std::endl;
+    }
+    // When this function exits, Lua will exhibit default behavior and abort()
+}
 
 bool Scene::init()
 {
+    try {
+        register_meta_component<Transform>();
+
+        // sol::state lua{};
+        sol::state lua{}; //(sol::c_call<decltype(&my_panic), &my_panic>);
+        lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+
+        lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
+        register_transform(lua); // Make Transform struct available to Lua
+
+        lua["registry"] = std::ref(registry); // Make the registry available to Lua
+
+        // Creates an entity and adds a Transform to it
+        std::cout << "Adding an entity..." << std::endl;
+        // lua.do_file("lua/registry_simple.lua");
+        lua.safe_script_file("lua/registry_simple.lua");
+        std::cout << "Adding an entity..." << std::endl;
+        // lua.do_file("lua/registry_simple.lua");
+        lua.safe_script_file("lua/registry_simple.lua");
+
+        // lua.safe_script_file()
+        // std::cout << "Running LUA script with assert(0)" << std::endl;
+        // lua.script(R"(
+        //     assert(false)
+        // )");
+
+        std::cout << "All Transforms:" << std::endl;
+        auto view = registry.view<Transform>();
+        for (auto& ent : view)
+        {
+            auto& t = view.get<Transform>(ent);
+            std::cout << t.to_string() << std::endl;
+        }
+
+        const auto bowser = lua["bowser"].get<entt::entity>();
+        const auto* xf = registry.try_get<Transform>(bowser);
+        assert(xf != nullptr);
+        const Transform& transform = lua["transform"];
+        assert(xf->x == transform.x && xf->y == transform.y);
+
+        // 
+        // lua.do_file("lua/iterate_entities.lua");
+        lua.safe_script_file("lua/iterate_entities.lua");
+        assert(registry.orphan(bowser) && "The only component (Transform) should  "
+            "be removed by the script");
+
+        std::cout << "All Transforms:" << std::endl;
+        auto view2 = registry.view<Transform>();
+        for (auto& ent : view2)
+        {
+            auto& t = view2.get<Transform>(ent);
+            std::cout << t.to_string() << std::endl;
+        }
+    }
+    catch (const sol::error& e)
+    {
+        std::cerr << "Lua script execution failed: " << e.what() << std::endl;
+        return false;
+    }
+
     // Do some entt stuff
     entt::registry registry;
     auto ent1 = registry.create();
@@ -34,6 +111,8 @@ void Scene::update(float time_s, float deltaTime_s)
         { 1.0f, 1.0f, 1.0f }) * vec4 {
         0.0f, 0.0f, 0.0f, 1.0f
     });
+
+
 }
 
 void Scene::renderUI()
