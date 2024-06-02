@@ -64,17 +64,34 @@ bool Scene::init()
         const Transform& transform = lua["transform"];
         assert(xf->x == transform.x && xf->y == transform.y);
 
-        // 
-        // lua.do_file("lua/iterate_entities.lua");
-        lua.safe_script_file("lua/iterate_entities.lua");
-        assert(registry.orphan(bowser) && "The only component (Transform) should  "
-            "be removed by the script");
 
+        entt::runtime_view view2{};
+        view2.iterate(registry.storage<Transform>());
+        std::cout << "Initial size hint: " << view2.size_hint() << std::endl;
+        //
+        entt::runtime_view view3{};
+        view3.iterate(registry.storage<Transform>());
+        for (auto ent : view3)
+            registry.remove<Transform>(ent);
+        //
+        entt::runtime_view view4{};
+        view4.iterate(registry.storage<Transform>());
+        // auto view2 = registry.runtime_view<Transform>();
+        std::cout << "Size hint after removal: " << view4.size_hint() << std::endl;
+
+
+        /*
+                //
+                // lua.do_file("lua/iterate_entities.lua");
+                lua.safe_script_file("lua/iterate_entities.lua");
+                assert(registry.orphan(bowser) && "The only component (Transform) should  "
+                    "be removed by the script");
+        */
         std::cout << "All Transforms:" << std::endl;
-        auto view2 = registry.view<Transform>();
-        for (auto& ent : view2)
+        auto view2_ = registry.view<Transform>();
+        for (auto& ent : view2_)
         {
-            auto& t = view2.get<Transform>(ent);
+            auto& t = view2_.get<Transform>(ent);
             std::cout << t.to_string() << std::endl;
         }
     }
