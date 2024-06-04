@@ -116,7 +116,7 @@ bool Scene::init()
         using namespace std::chrono_literals;
 
         // constexpr auto target_frame_time = 500ms;
-        int delta_time_ms{ 500 };
+        int delta_time_ms{ 1000 };
 
         while (true)
         {
