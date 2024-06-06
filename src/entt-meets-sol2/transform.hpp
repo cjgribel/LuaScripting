@@ -8,7 +8,7 @@ struct Transform {
   // https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#pointer-stability
   static constexpr auto in_place_delete = true;
 
-  int x, y;
+  float x, y;
 
   [[nodiscard]] std::string to_string() const {
     std::stringstream ss;
@@ -23,7 +23,7 @@ void register_transform(sol::state &lua) {
     "type_id", &entt::type_hash<Transform>::value,
 
     sol::call_constructor,
-    sol::factories([](int x, int y) {
+    sol::factories([](float x, float y) {
       return Transform{ x, y };
     }),
     "x", &Transform::x,

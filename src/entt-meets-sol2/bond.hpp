@@ -132,7 +132,10 @@ sol::table open_registry(sol::this_state s)
             return maybe_any ? maybe_any.cast<bool>() : false;
         },
         "any_of",
-        [](const sol::table& self, entt::entity entity, const sol::variadic_args& va) {
+        [](const sol::table& self,
+            entt::entity entity,
+            const sol::variadic_args& va)
+        {
             const auto types = collect_types(va);
             const auto has = self["has"].get<sol::function>();
             return std::any_of(types.cbegin(), types.cend(),
@@ -140,17 +143,24 @@ sol::table open_registry(sol::this_state s)
             );
         },
         "get",
-        [](entt::registry& self, entt::entity entity, const sol::object& type_or_id,
-            sol::this_state s) {
-                const auto maybe_any =
-                    invoke_meta_func(deduce_type(type_or_id), "get"_hs,
-                        &self, entity, s);
-                return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
+        [](entt::registry& self,
+            entt::entity entity,
+            const sol::object& type_or_id,
+            sol::this_state s)
+        {
+            const auto maybe_any = invoke_meta_func(
+                deduce_type(type_or_id),
+                "get"_hs,
+                &self, entity,
+                s);
+            return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
         },
         "clear",
         sol::overload(
             &entt::registry::clear<>,
-            [](entt::registry& self, sol::object type_or_id) {
+            [](entt::registry& self,
+                sol::object type_or_id)
+            {
                 invoke_meta_func(deduce_type(type_or_id), "clear"_hs, &self);
             }
         ),

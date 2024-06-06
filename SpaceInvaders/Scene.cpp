@@ -76,6 +76,33 @@ namespace {
             }
         }
     }
+
+    // void register_input_module(sol::state& lua)
+    // {
+    //     // lua.script_file("lua/input.lua");
+    //     lua.safe_script_file("lua/input.lua");
+    // }
+
+    // Register the input module with Lua
+    void register_input_module(sol::state& lua) {
+        sol::load_result result = lua.load_file("lua/input.lua");
+        if (!result.valid()) {
+            sol::error err = result;
+            std::cerr << "Failed to load input.lua: " << err.what() << std::endl;
+            return;
+        }
+        sol::protected_function_result script_result = result();
+        if (!script_result.valid()) {
+            sol::error err = script_result;
+            std::cerr << "Failed to execute input.lua: " << err.what() << std::endl;
+            return;
+        }
+    }
+
+    void update_input(sol::state& lua, float x, float y, bool button_pressed) {
+        lua["update_input"](x, y, button_pressed);
+    }
+
 }
 
 bool Scene::init()
@@ -84,26 +111,37 @@ bool Scene::init()
 
     try
     {
+        // 
         register_meta_component<Transform>();
 
-        // entt::registry registry{};
+        // ScriptComponent creation & destruction callbacks
         registry.on_construct<ScriptComponent>().connect<&init_script>();
         registry.on_destroy<ScriptComponent>().connect<&release_script>();
 
-        // sol::state lua{};
         lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+
+        // Register input module
+        register_input_module(lua);
+        if (!lua["input"].valid()) {
+            std::cerr << "Error: 'input' table not loaded properly" << std::endl;
+            return -1;
+        }
+        update_input(lua, 100.0f, 200.0f, true);
+
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
+
         register_transform(lua); // Make Transform struct available to Lua
 
+        // Add 5x of a test behavior script
+        // Requires the 'input' module to be registered
         sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
         sol::protected_function script_function = behavior_script;
-
         assert(behavior_script.valid());
 
         for (int i = 0; i < 5; ++i)
         {
             auto e = registry.create();
-            registry.emplace<Transform>(e, Transform{ i, i });
+            registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
 
             sol::table script_table = script_function();
 
@@ -246,7 +284,7 @@ bool Scene::init()
     // registry.emplace<Tfm>(ent1, Tfm{});
 
     return true;
-}
+    }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
