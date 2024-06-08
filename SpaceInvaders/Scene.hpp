@@ -12,6 +12,19 @@
 #include "vec.h"
 #include "SceneBase.h"
 
+struct CircleComponent
+{
+    // static constexpr auto in_place_delete = true;
+
+    float r;
+
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ r =" << std::to_string(r) << " }";
+        return ss.str();
+    }
+};
+
 // ScriptedBehaviorComponent
 struct ScriptComponent
 {
@@ -40,7 +53,7 @@ class Scene : public eeng::SceneBase
 {
 protected:
     // sol::state lua{}; //(sol::c_call<decltype(&my_panic), &my_panic>);
-    sol::state lua{(sol::c_call<decltype(&my_panic), &my_panic>)};
+    sol::state lua{ (sol::c_call<decltype(&my_panic), &my_panic>) };
     entt::registry registry{};
 
     linalg::v3f lightPos, eyePos;

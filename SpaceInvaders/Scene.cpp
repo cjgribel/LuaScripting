@@ -30,6 +30,23 @@ namespace {
     //         << std::endl; });
     // }
 
+    void register_circle(sol::state& lua) 
+    {
+        lua.new_usertype<CircleComponent>("CircleComponent",
+                   "type_id",
+                   &entt::type_hash<CircleComponent>::value,
+                   sol::call_constructor,
+                   sol::factories([](float r) {
+                       return CircleComponent{ r };
+                       }),
+
+                   "r",  
+                   &CircleComponent::r,
+                   sol::meta_function::to_string, 
+                   &CircleComponent::to_string
+        );
+    }
+
     void init_script(entt::registry& registry, entt::entity entity)
     {
         auto& script_comp = registry.get<ScriptComponent>(entity);
@@ -111,8 +128,9 @@ bool Scene::init()
 
     try
     {
-        // 
+        // Register registry meta functions to components
         register_meta_component<Transform>();
+        register_meta_component<CircleComponent>();
 
         // ScriptComponent creation & destruction callbacks
         registry.on_construct<ScriptComponent>().connect<&init_script>();
@@ -130,7 +148,9 @@ bool Scene::init()
 
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
 
-        register_transform(lua); // Make Transform struct available to Lua
+        // Expose components to Lua
+        register_transform(lua);
+        register_circle(lua);
 
         // Add 5x of a test behavior script
         // Requires the 'input' module to be registered
@@ -138,10 +158,13 @@ bool Scene::init()
         sol::protected_function script_function = behavior_script;
         assert(behavior_script.valid());
 
+        // Create entities with behavior scripts
+        // TODO: Have an init script that creates entities
         for (int i = 0; i < 5; ++i)
         {
             auto e = registry.create();
             registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
+            // Done by script registry.emplace<CircleComponent>(e, CircleComponent{ 1.0f });
 
             sol::table script_table = script_function();
 
@@ -164,6 +187,16 @@ bool Scene::init()
             script_system_update(registry, delta_time_ms * 0.001f);
             // std::this_thread::sleep_for(target_frame_time);
             std::this_thread::sleep_for(std::chrono::milliseconds(delta_time_ms));
+
+            {
+                std::cout << "All CircleComponent" << std::endl;
+                auto view = registry.view<CircleComponent>();
+                for (auto &&entity : view)
+                {
+                    const auto& cc = view.get<CircleComponent>(entity);
+                    std::cout << cc.to_string() << std::endl;
+                }
+            }
 
             //delta_time = std::chrono::duration_cast<fsec>(clock::now() - begin_ticks);
             //if (delta_time > 1s)
@@ -266,7 +299,7 @@ bool Scene::init()
                 std::cout << t.to_string() << std::endl;
             }
         }
-    }
+        }
     catch (const sol::error& e)
     {
         std::cerr << "Lua script execution failed: " << e.what() << std::endl;
