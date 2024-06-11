@@ -30,20 +30,19 @@ namespace {
     //         << std::endl; });
     // }
 
-    void register_circle(sol::state& lua) 
+    void register_circle(sol::state& lua)
     {
         lua.new_usertype<CircleComponent>("CircleComponent",
-                   "type_id",
-                   &entt::type_hash<CircleComponent>::value,
-                   sol::call_constructor,
-                   sol::factories([](float r) {
-                       return CircleComponent{ r };
-                       }),
-
-                   "r",  
-                   &CircleComponent::r,
-                   sol::meta_function::to_string, 
-                   &CircleComponent::to_string
+            "type_id",
+            &entt::type_hash<CircleComponent>::value,
+            sol::call_constructor,
+            sol::factories([](float r) {
+                return CircleComponent{ r };
+                }),
+            "r",
+            &CircleComponent::r,
+            sol::meta_function::to_string,
+            &CircleComponent::to_string
         );
     }
 
@@ -184,14 +183,16 @@ bool Scene::init()
             using clock = std::chrono::high_resolution_clock;
             const auto begin_ticks = clock::now();
 
+            // Script behavior update
             script_system_update(registry, delta_time_ms * 0.001f);
+
             // std::this_thread::sleep_for(target_frame_time);
             std::this_thread::sleep_for(std::chrono::milliseconds(delta_time_ms));
 
             {
                 std::cout << "All CircleComponent" << std::endl;
                 auto view = registry.view<CircleComponent>();
-                for (auto &&entity : view)
+                for (auto&& entity : view)
                 {
                     const auto& cc = view.get<CircleComponent>(entity);
                     std::cout << cc.to_string() << std::endl;
@@ -299,7 +300,7 @@ bool Scene::init()
                 std::cout << t.to_string() << std::endl;
             }
         }
-        }
+    }
     catch (const sol::error& e)
     {
         std::cerr << "Lua script execution failed: " << e.what() << std::endl;
@@ -317,7 +318,7 @@ bool Scene::init()
     // registry.emplace<Tfm>(ent1, Tfm{});
 
     return true;
-    }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -396,10 +397,22 @@ void Scene::render(
         { 1.0f, 0.0f, 0.0f },
         { 1.0f, 1.0f, 1.0f }).inverse();
 
-    // Push shapes
+    // Push some test shapes
     renderer->push_states(Renderer::Color4u::Red);
     renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 5.0f);
     renderer->pop_states<Renderer::Color4u>();
+
+    // Render CircleComponents
+    auto view = registry.view<Transform, CircleComponent>();
+    for (auto entity : view)
+    {
+        auto& transform_comp = registry.get<Transform>(entity);
+        auto& circle_comp = registry.get<CircleComponent>(entity);
+
+        // * Quads, not circles
+        // * Fix sizes & update behavior so quads are seen
+        // renderer->push_cube();
+    }
 
     // Render shapes
     renderer->render(P * V);
