@@ -416,7 +416,19 @@ int main(int argc, char* argv[])
             glEnable(GL_CULL_FACE);
         }
 
+        // Update input
+        const auto btn_A = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A);
+        const auto btn_B = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B);
+        const auto btn_X = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X);
+        const auto btn_Y = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y);
+        const auto axis_left_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f;
+        const auto axis_left_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f;
+        scene->update_input(axis_left_x, axis_left_y, btn_A);
+
+        // Update scene
         scene->update(time_s, deltaTime_s);
+
+        // Render scene
         scene->render(time_s, WINDOW_WIDTH, WINDOW_HEIGHT, renderer);
 
         // Render GUI

@@ -1,6 +1,7 @@
 
 #include <thread>
 #include <chrono>
+
 #include "imgui.h"
 #include "mat.h"
 #include "Scene.hpp"
@@ -93,14 +94,14 @@ namespace {
         }
     }
 
-    // void register_input_module(sol::state& lua)
+    // void register_input_script(sol::state& lua)
     // {
     //     // lua.script_file("lua/input.lua");
     //     lua.safe_script_file("lua/input.lua");
     // }
 
     // Register the input module with Lua
-    void register_input_module(sol::state& lua) {
+    void register_input_script(sol::state& lua) {
         sol::load_result result = lua.load_file("lua/input.lua");
         if (!result.valid()) {
             sol::error err = result;
@@ -115,7 +116,7 @@ namespace {
         }
     }
 
-    void update_input(sol::state& lua, float x, float y, bool button_pressed) {
+    void update_input_script(sol::state& lua, float x, float y, bool button_pressed) {
         lua["update_input"](x, y, button_pressed);
     }
 
@@ -139,12 +140,12 @@ bool Scene::init()
         lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
 
         // Register input module
-        register_input_module(lua);
+        register_input_script(lua);
         if (!lua["input"].valid()) {
             std::cerr << "Error: 'input' table not loaded properly" << std::endl;
             return -1;
         }
-        update_input(lua, 100.0f, 200.0f, true);
+        update_input_script(lua, 100.0f, 200.0f, true);
 
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
 
@@ -311,7 +312,7 @@ bool Scene::init()
     {
         std::cerr << "Lua script execution failed: " << e.what() << std::endl;
         return false;
-}
+    }
 #endif
 
     // Do some entt stuff
@@ -324,7 +325,7 @@ bool Scene::init()
     // registry.emplace<Tfm>(ent1, Tfm{});
 
     return true;
-    }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -341,6 +342,8 @@ void Scene::update(float time_s, float deltaTime_s)
         { 1.0f, 1.0f, 1.0f }) * vec4 {
         0.0f, 0.0f, 0.0f, 1.0f
     });
+
+    update_input_script(lua, SceneBase::axis_x, SceneBase::axis_y, SceneBase::button_pressed);
 
     script_system_update(registry, deltaTime_s);
 }
@@ -418,7 +421,7 @@ void Scene::render(
         const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
         const auto size = quad_comp.r;
 
-        std::cout << pos << std::endl;
+        // std::cout << pos << std::endl;
         renderer->push_states(Renderer::Color4u::Blue);
         renderer->push_quad(pos, size);
         renderer->pop_states<Renderer::Color4u>();
