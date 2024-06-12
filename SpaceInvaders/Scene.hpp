@@ -12,7 +12,7 @@
 #include "vec.h"
 #include "SceneBase.h"
 
-struct CircleComponent
+struct QuadComponent
 {
     // static constexpr auto in_place_delete = true;
 

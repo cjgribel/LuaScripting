@@ -30,19 +30,19 @@ namespace {
     //         << std::endl; });
     // }
 
-    void register_circle(sol::state& lua)
+    void registerQuadComponent(sol::state& lua)
     {
-        lua.new_usertype<CircleComponent>("CircleComponent",
+        lua.new_usertype<QuadComponent>("QuadComponent",
             "type_id",
-            &entt::type_hash<CircleComponent>::value,
+            &entt::type_hash<QuadComponent>::value,
             sol::call_constructor,
             sol::factories([](float r) {
-                return CircleComponent{ r };
+                return QuadComponent{ r };
                 }),
             "r",
-            &CircleComponent::r,
+            &QuadComponent::r,
             sol::meta_function::to_string,
-            &CircleComponent::to_string
+            &QuadComponent::to_string
         );
     }
 
@@ -129,13 +129,14 @@ bool Scene::init()
     {
         // Register registry meta functions to components
         register_meta_component<Transform>();
-        register_meta_component<CircleComponent>();
+        register_meta_component<QuadComponent>();
 
         // ScriptComponent creation & destruction callbacks
         registry.on_construct<ScriptComponent>().connect<&init_script>();
         registry.on_destroy<ScriptComponent>().connect<&release_script>();
 
-        lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+        // lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+        lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
 
         // Register input module
         register_input_module(lua);
@@ -149,21 +150,21 @@ bool Scene::init()
 
         // Expose components to Lua
         register_transform(lua);
-        register_circle(lua);
+        registerQuadComponent(lua);
 
         // Add 5x of a test behavior script
         // Requires the 'input' module to be registered
         sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
         sol::protected_function script_function = behavior_script;
         assert(behavior_script.valid());
-
+        //
         // Create entities with behavior scripts
         // TODO: Have an init script that creates entities
         for (int i = 0; i < 5; ++i)
         {
             auto e = registry.create();
             registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
-            // Done by script registry.emplace<CircleComponent>(e, CircleComponent{ 1.0f });
+            // Done by script registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
 
             sol::table script_table = script_function();
 
@@ -171,13 +172,17 @@ bool Scene::init()
             ScriptComponent::Script script{ script_table };
             script_comp.scripts.push_back(script);
             registry.emplace<ScriptComponent>(e, script_comp);
+
+            // Sone in behavior.init()
+                        // QuadComponent quad_comp {1.0f};
+                        // registry.emplace<QuadComponent>(e, quad_comp);
         }
 
         using namespace std::chrono_literals;
 
+#if 0
         // constexpr auto target_frame_time = 500ms;
         int delta_time_ms{ 1000 };
-
         while (true)
         {
             using clock = std::chrono::high_resolution_clock;
@@ -190,11 +195,11 @@ bool Scene::init()
             std::this_thread::sleep_for(std::chrono::milliseconds(delta_time_ms));
 
             {
-                std::cout << "All CircleComponent" << std::endl;
-                auto view = registry.view<CircleComponent>();
+                std::cout << "All QuadComponent" << std::endl;
+                auto view = registry.view<QuadComponent>();
                 for (auto&& entity : view)
                 {
-                    const auto& cc = view.get<CircleComponent>(entity);
+                    const auto& cc = view.get<QuadComponent>(entity);
                     std::cout << cc.to_string() << std::endl;
                 }
             }
@@ -207,6 +212,7 @@ bool Scene::init()
                 break;
         }
         registry.clear();
+#endif
     }
     // catch (const std::exception& e)
     catch (const sol::error& e)
@@ -305,7 +311,7 @@ bool Scene::init()
     {
         std::cerr << "Lua script execution failed: " << e.what() << std::endl;
         return false;
-    }
+}
 #endif
 
     // Do some entt stuff
@@ -318,7 +324,7 @@ bool Scene::init()
     // registry.emplace<Tfm>(ent1, Tfm{});
 
     return true;
-}
+    }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -336,7 +342,7 @@ void Scene::update(float time_s, float deltaTime_s)
         0.0f, 0.0f, 0.0f, 1.0f
     });
 
-
+    script_system_update(registry, deltaTime_s);
 }
 
 void Scene::renderUI()
@@ -398,20 +404,24 @@ void Scene::render(
         { 1.0f, 1.0f, 1.0f }).inverse();
 
     // Push some test shapes
-    renderer->push_states(Renderer::Color4u::Red);
-    renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 5.0f);
-    renderer->pop_states<Renderer::Color4u>();
+    // renderer->push_states(Renderer::Color4u::Red);
+    // renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 5.0f);
+    // renderer->pop_states<Renderer::Color4u>();
 
-    // Render CircleComponents
-    auto view = registry.view<Transform, CircleComponent>();
+    // Render QuadComponents
+    auto view = registry.view<Transform, QuadComponent>();
     for (auto entity : view)
     {
         auto& transform_comp = registry.get<Transform>(entity);
-        auto& circle_comp = registry.get<CircleComponent>(entity);
 
-        // * Quads, not circles
-        // * Fix sizes & update behavior so quads are seen
-        // renderer->push_cube();
+        auto& quad_comp = registry.get<QuadComponent>(entity);
+        const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
+        const auto size = quad_comp.r;
+
+        std::cout << pos << std::endl;
+        renderer->push_states(Renderer::Color4u::Blue);
+        renderer->push_quad(pos, size);
+        renderer->pop_states<Renderer::Color4u>();
     }
 
     // Render shapes
