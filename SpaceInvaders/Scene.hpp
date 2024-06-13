@@ -31,11 +31,16 @@ struct ScriptComponent
     // BehaviorScript
     struct Script
     {
+        // Lua object
         sol::table self;
+        // Update function of Lua object
+        sol::function update;
+
+        // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;
         // sol::function destroy;
-        sol::function update;
     };
+
     std::vector<Script> scripts;
 };
 
@@ -61,6 +66,8 @@ protected:
     int drawcallCount = 0;
 
 public:
+    void reload_scripts();
+
     bool init() override;
 
     void update(float time_s, float deltaTime_s) override;

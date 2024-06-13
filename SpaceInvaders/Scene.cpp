@@ -61,6 +61,7 @@ namespace {
                 { return entity; });
             // -> registry?
             script.self["owner"] = std::ref(registry);
+
             if (auto&& f = script.self["init"]; f.valid())
                 f(script.self);
             // inspect_script(script);
@@ -120,6 +121,60 @@ namespace {
         lua["update_input"](x, y, button_pressed);
     }
 
+}
+
+void Scene::reload_scripts()
+{
+    // Clear entt registry
+    // We must do this before destroying the current Lua state,
+    // since the Lua state is accessed when instances of ScriptComponent are destroyed.
+    registry.clear();
+
+    // Create Lua state
+    lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
+    lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
+
+    // Register input module
+    register_input_script(lua);
+    if (!lua["input"].valid()) {
+        std::cerr << "Error: 'input' table not loaded properly" << std::endl;
+        // return -1;
+        assert(0);
+    }
+    update_input_script(lua, 0.0f, 0.0f, false);
+
+    // Attach registry to Lua state
+    lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
+
+    // Expose components as user types to Lua 
+    register_transform(lua);
+    registerQuadComponent(lua);
+
+    // Add 5x of a test behavior script
+    // Requires the 'input' module to be registered
+    sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
+    sol::protected_function script_function = behavior_script;
+    assert(behavior_script.valid());
+    //
+    // Create entities with behavior scripts
+    // TODO: Have an init script that creates entities
+    for (int i = 0; i < 5; ++i)
+    {
+        auto e = registry.create();
+        registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
+        // Done by script registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
+
+        sol::table script_table = script_function();
+
+        ScriptComponent script_comp;
+        ScriptComponent::Script script{ script_table };
+        script_comp.scripts.push_back(script);
+        registry.emplace<ScriptComponent>(e, script_comp);
+
+        // Done in behavior.init()
+                    // QuadComponent quad_comp {1.0f};
+                    // registry.emplace<QuadComponent>(e, quad_comp);
+    }
 }
 
 bool Scene::init()
@@ -352,6 +407,12 @@ void Scene::renderUI()
 {
     ImGui::Text("Drawcall count %i", drawcallCount);
 
+    float available_width = ImGui::GetContentRegionAvail().x;
+    if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
+    {
+        reload_scripts();
+    }
+
     // if (ImGui::ColorEdit3("Light color",
     //     glm::value_ptr(lightColor),
     //     ImGuiColorEditFlags_NoInputs))
@@ -434,5 +495,5 @@ void Scene::render(
 
 void Scene::destroy()
 {
-
+    registry.clear();
 }
