@@ -401,7 +401,8 @@ int main(int argc, char* argv[])
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         // Clear depth and color attachments of frame buffer
         // glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-        glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
+        // glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

@@ -391,7 +391,7 @@ void Scene::update(float time_s, float deltaTime_s)
         { 1.0f, 1.0f, 1.0f }) * linalg::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
     eyePos = xyz(m4f::TRS(
-        { 0.0f, 0.0f, 10.0f },
+        { 0.0f, 0.0f, 5.0f },
         0.0f,
         { 1.0f, 0.0f, 0.0f },
         { 1.0f, 1.0f, 1.0f }) * vec4 {
@@ -455,10 +455,12 @@ void Scene::render(
     int screenHeight,
     ShapeRendererPtr renderer)
 {
-    // Projection matrix
+    // Perspective projection matrix
     const float aspectRatio = float(screenWidth) / screenHeight;
-    const float nearPlane = 1.0f, farPlane = 500.0f;
-    m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f * fTO_RAD, aspectRatio, nearPlane, farPlane);
+    // const float nearPlane = 1.0f, farPlane = 500.0f;
+    // m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f * fTO_RAD, aspectRatio, nearPlane, farPlane);
+    // Orthographic projection matrix
+    m4f P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, 1.0f, 10.0f);
 
     // View matrix
     m4f V = m4f::TRS(
@@ -472,18 +474,24 @@ void Scene::render(
     // renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 5.0f);
     // renderer->pop_states<Renderer::Color4u>();
 
+    // Background quad
+    renderer->push_states(Renderer::Color4u{ 0x40ffffff });
+    renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 11.0f);
+    renderer->pop_states<Renderer::Color4u>();
+
     // Render QuadComponents
     auto view = registry.view<Transform, QuadComponent>();
+    float z = 0.0f;
     for (auto entity : view)
     {
         auto& transform_comp = registry.get<Transform>(entity);
 
         auto& quad_comp = registry.get<QuadComponent>(entity);
-        const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
+        const auto pos = v3f{ transform_comp.x, transform_comp.y, z += 0.01f };
         const auto size = quad_comp.r;
 
-        // std::cout << pos << std::endl;
-        renderer->push_states(Renderer::Color4u::Blue);
+        // renderer->push_states(Renderer::Color4u::Blue);
+        renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
         renderer->push_quad(pos, size);
         renderer->pop_states<Renderer::Color4u>();
     }
