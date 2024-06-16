@@ -131,7 +131,7 @@ namespace {
         const sol::table& script_table)
     {
         std::cout << "add_script " << (uint32_t)entity << std::endl;
-        return;
+        //return;
         assert(script_table.valid());
 
         ScriptedBehaviorComponent::BehaviorScript script{ script_table };
@@ -215,31 +215,34 @@ void Scene::reload_scripts()
     //
     lua.safe_script_file("lua/init.lua");
 
+#if 1
     // Add 5x of a test behavior script
     // Requires the 'input' module to be registered
-    sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
-    sol::protected_function script_function = behavior_script;
-    assert(behavior_script.valid());
+    // sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
+    // sol::protected_function script_function = behavior_script;
+    // assert(behavior_script.valid());
     //
     // Create entities with behavior scripts
     // TODO: Have an init script that creates entities
     for (int i = 0; i < 5; ++i)
     {
         auto e = registry.create();
-        registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
-        // Done by script registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
+        registry.emplace<Transform>(e, Transform{ (float)-i, (float)-i });
+        registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
 
-        sol::table script_table = script_function();
+        add_script_from_file(registry, e, lua, "lua/behavior.lua");
 
-        ScriptedBehaviorComponent script_comp;
-        ScriptedBehaviorComponent::BehaviorScript script{ script_table };
-        script_comp.scripts.push_back(script);
-        registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
+        // sol::table script_table = script_function();
+        // ScriptedBehaviorComponent script_comp;
+        // ScriptedBehaviorComponent::BehaviorScript script{ script_table };
+        // script_comp.scripts.push_back(script);
+        // registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
 
         // Done in behavior.init()
                     // QuadComponent quad_comp {1.0f};
                     // registry.emplace<QuadComponent>(e, quad_comp);
     }
+    #endif
 }
 
 bool Scene::init()
@@ -254,7 +257,7 @@ bool Scene::init()
         register_meta_component<QuadComponent>();
 
         // ScriptedBehaviorComponent creation & destruction callbacks
-        registry.on_construct<ScriptedBehaviorComponent>().connect<&init_script>();
+        //registry.on_construct<ScriptedBehaviorComponent>().connect<&init_script>();
         registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         reload_scripts();
