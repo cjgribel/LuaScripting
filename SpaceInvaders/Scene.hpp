@@ -26,10 +26,10 @@ struct QuadComponent
 };
 
 // ScriptedBehaviorComponent
-struct ScriptComponent
+struct ScriptedBehaviorComponent
 {
     // BehaviorScript
-    struct Script
+    struct BehaviorScript
     {
         // Lua object
         sol::table self;
@@ -39,10 +39,19 @@ struct ScriptComponent
         // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;
         // sol::function destroy;
+
+        // template<typename... Args>
+        // BehaviorScript()
+        // {
+        //     (script_files.emplace_back(std::forward<Args>(args)), ...);
+        // }
     };
 
-    std::vector<Script> scripts;
+    std::vector<std::string> script_files;
+    std::vector<BehaviorScript> scripts;
 };
+
+static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
 inline void my_panic(sol::optional<std::string> maybe_msg)
 {

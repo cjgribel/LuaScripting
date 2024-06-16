@@ -7,37 +7,63 @@ function node:init()
     self.index = #nodes + 1
     nodes[self.index] = self
 
+    -- Stuff that might be done by an init script
+    -- Add QuadComponent
+    self.owner:emplace(self.id(), QuadComponent(1.0))
+    --bowser = registry:create()
+    --registry:emplace(bowser, Transform(5, 6))
+    --transform = registry:get(bowser, Transform)
+
+    -- Test, add script to this entity
+    local script_table = dofile("lua/behavior.lua")
+    add_script(self.owner, self.id(), script_table)
+
 	print('node [#' .. self.id() .. '] init ()', self)
 end
 
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
-	transform.x = transform.x + 1
-	print('node [#' .. self.id() .. '] update()', transform)
+	--transform.x = transform.x + 1
+	--print('node [#' .. self.id() .. '] update()', transform)
+
+    -- Apply input to transform
+    transform.x = transform.x + input.x * dt * 10.0
+    transform.y = transform.y - input.y * dt * 10.0
+    -- Clamp
+    transform.x = math.max(-5.0, math.min(transform.x, 5.0))
+    transform.y = math.max(-5.0, math.min(transform.y, 5.0))
 
     -- Input test
     if input.button_pressed then
-        print('Transform.x before:', transform.x)
-        transform.x = transform.x + input.x * dt
-        print('Transform.x after:', transform.x)
-        transform.y = transform.y + input.y * dt
+        --transform.x = transform.x + input.x * dt
+        --transform.y = transform.y + input.y * dt
     end
-    print('Input type:', type(input.x), type(input.y))
+    --print('Input type:', type(input.x), type(input.y))
+
+    -- Alter transform
+    local theta = math.pi * dt
+    local cos_theta = math.cos(theta)
+    --local sin_theta = math.sin(theta)
+    --transform.x = cos_theta * transform.x - sin_theta * transform.y
+    --transform.y = sin_theta * transform.x + cos_theta * transform.y
+    --transform.x = cos_theta
+    --transform.y = cos_theta
+    --print('dt ', dt)
 
     -- Example: Access another enemy instance
     if self.index > 1 then
         local other_node = nodes[self.index - 1]
-        print(' Interacting with node [#' .. other_node.id() .. ']')
+        --print(' Interacting with node [#' .. other_node.id() .. ']')
     end
 
     -- Interact with all other nodes
     for i, node in ipairs(nodes) do
         if i ~= self.index then
             -- Example interaction: print each node's ID
-            print('  Interacting with node [#' .. node.id() .. ']')
+            --print('  Interacting with node [#' .. node.id() .. ']')
             -- Example interaction: Adjust their Transform
             local other_transform = self.owner:get(node.id(), Transform)
-            other_transform.x = other_transform.x - 1
+            --other_transform.x = other_transform.x - 1
         end
     end
 end

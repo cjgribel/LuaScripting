@@ -23,7 +23,7 @@ namespace {
     //     // When this function exits, Lua will exhibit default behavior and abort()
     // }
 
-    // void inspect_script(const ScriptComponent& script)
+    // void inspect_script(const ScriptedBehaviorComponent& script)
     // {
     //     script.self.for_each([](const sol::object& key, const sol::object& value)
     //         { std::cout << key.as<std::string>() << ": "
@@ -49,7 +49,7 @@ namespace {
 
     void init_script(entt::registry& registry, entt::entity entity)
     {
-        auto& script_comp = registry.get<ScriptComponent>(entity);
+        auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
         for (auto& script : script_comp.scripts)
         {
             assert(script.self.valid());
@@ -70,10 +70,10 @@ namespace {
 
     void release_script(entt::registry& registry, entt::entity entity)
     {
-        auto& script_comp = registry.get<ScriptComponent>(entity);
+        auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
         for (auto& script : script_comp.scripts)
         {
-            // auto& script = registry.get<ScriptComponent>(entity);
+            // auto& script = registry.get<ScriptedBehaviorComponent>(entity);
             if (auto&& f = script.self["destroy"]; f.valid())
                 f(script.self);
             script.self.abandon();
@@ -82,13 +82,13 @@ namespace {
 
     void script_system_update(entt::registry& registry, float delta_time)
     {
-        auto view = registry.view<ScriptComponent>();
+        auto view = registry.view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
-            auto& script_comp = registry.get<ScriptComponent>(entity);
+            auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
             for (auto& script : script_comp.scripts)
             {
-                // auto& script = view.get<ScriptComponent>(entity);
+                // auto& script = view.get<ScriptedBehaviorComponent>(entity);
                 assert(script.self.valid());
                 script.update(script.self, delta_time);
             }
@@ -121,18 +121,78 @@ namespace {
         lua["update_input"](x, y, button_pressed);
     }
 
+    // Called from Lua
+    // Adds a behavior script to the ScriptedBehaviorComponent of an entity
+    // Adds entity & registry to the script ('id', 'owner')
+    // 
+    void add_script(
+        entt::registry& registry,
+        entt::entity entity,
+        const sol::table& script_table)
+    {
+        std::cout << "add_script " << (uint32_t)entity << std::endl;
+        return;
+        assert(script_table.valid());
+
+        ScriptedBehaviorComponent::BehaviorScript script{ script_table };
+        script.update = script.self["update"];
+        assert(script.update.valid());
+
+        // -> entityID?
+        script.self["id"] = sol::readonly_property([entity] { return entity; });
+        // -> registry?
+        script.self["owner"] = std::ref(registry);
+
+        if (auto&& f = script.self["init"]; f.valid())
+            f(script.self);
+        // inspect_script(script);
+
+        auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
+        script_comp.scripts.push_back({ script /*, script["update"]*/ });
+
+        // Example: Print the table's contents
+        std::cout << "Lua table contents:" << std::endl;
+        for (auto& pair : script_table) {
+            sol::object key = pair.first;
+            sol::object value = pair.second;
+            std::cout << "Key: " << key.as<std::string>() << ", Value: ";
+            if (value.is<std::string>()) {
+                std::cout << value.as<std::string>() << std::endl;
+            }
+            else if (value.is<int>()) {
+                std::cout << value.as<int>() << std::endl;
+            }
+            else {
+                std::cout << "Unknown type" << std::endl;
+            }
+        }
+    }
+
+    void add_script_from_file(
+        entt::registry& registry,
+        entt::entity entity,
+        sol::state& lua,
+        const std::string& script_file)
+    {
+        sol::load_result behavior_script = lua.load_file(script_file);
+        sol::protected_function script_function = behavior_script;
+        assert(behavior_script.valid());
+        add_script(registry, entity, script_function());
+    }
 }
 
 void Scene::reload_scripts()
 {
     // Clear entt registry
     // We must do this before destroying the current Lua state,
-    // since the Lua state is accessed when instances of ScriptComponent are destroyed.
+    // since the Lua state is accessed when instances of ScriptedBehaviorComponent are destroyed.
     registry.clear();
 
     // Create Lua state
     lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
     lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
+
+    lua["add_script"] = &add_script;
 
     // Register input module
     register_input_script(lua);
@@ -146,9 +206,14 @@ void Scene::reload_scripts()
     // Attach registry to Lua state
     lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
 
+    lua["registry"] = std::ref(registry);
+
     // Expose components as user types to Lua 
     register_transform(lua);
     registerQuadComponent(lua);
+
+    //
+    lua.safe_script_file("lua/init.lua");
 
     // Add 5x of a test behavior script
     // Requires the 'input' module to be registered
@@ -166,10 +231,10 @@ void Scene::reload_scripts()
 
         sol::table script_table = script_function();
 
-        ScriptComponent script_comp;
-        ScriptComponent::Script script{ script_table };
+        ScriptedBehaviorComponent script_comp;
+        ScriptedBehaviorComponent::BehaviorScript script{ script_table };
         script_comp.scripts.push_back(script);
-        registry.emplace<ScriptComponent>(e, script_comp);
+        registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
 
         // Done in behavior.init()
                     // QuadComponent quad_comp {1.0f};
@@ -179,6 +244,7 @@ void Scene::reload_scripts()
 
 bool Scene::init()
 {
+    std::cout << "Scene::init()" << std::endl;
 #if 1
 
     try
@@ -187,12 +253,19 @@ bool Scene::init()
         register_meta_component<Transform>();
         register_meta_component<QuadComponent>();
 
-        // ScriptComponent creation & destruction callbacks
-        registry.on_construct<ScriptComponent>().connect<&init_script>();
-        registry.on_destroy<ScriptComponent>().connect<&release_script>();
+        // ScriptedBehaviorComponent creation & destruction callbacks
+        registry.on_construct<ScriptedBehaviorComponent>().connect<&init_script>();
+        registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
+
+        reload_scripts();
+        return true;
 
         // lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
         lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
+
+        //
+        // NOT MADE IN RELOAD
+        lua["add_script"] = &add_script;
 
         // Register input module
         register_input_script(lua);
@@ -222,12 +295,14 @@ bool Scene::init()
             registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
             // Done by script registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
 
+            // add_script_from_file(registry, e, lua, "lua/behavior.lua");
+
             sol::table script_table = script_function();
 
-            ScriptComponent script_comp;
-            ScriptComponent::Script script{ script_table };
+            ScriptedBehaviorComponent script_comp;
+            ScriptedBehaviorComponent::BehaviorScript script{ script_table };
             script_comp.scripts.push_back(script);
-            registry.emplace<ScriptComponent>(e, script_comp);
+            registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
 
             // Sone in behavior.init()
                         // QuadComponent quad_comp {1.0f};
