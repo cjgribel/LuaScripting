@@ -29,11 +29,13 @@ namespace {
             "type_id",
             &entt::type_hash<QuadComponent>::value,
             sol::call_constructor,
-            sol::factories([](float w) {
-                return QuadComponent{ w };
+            sol::factories([](float w, uint32_t color) {
+                return QuadComponent{ w, color };
                 }),
             "w",
             &QuadComponent::w,
+            "color",
+            &QuadComponent::color,
             sol::meta_function::to_string,
             &QuadComponent::to_string
         );
@@ -188,7 +190,12 @@ bool Scene::init()
 
         // Create Lua state
         lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
-        lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
+        lua.open_libraries(
+            sol::lib::base,
+            sol::lib::package,
+            sol::lib::string,
+            sol::lib::math,
+            sol::lib::os);
 
         // Register to Lua: function for adding scripts from other scripts
         lua["add_script"] = &add_script;
@@ -239,8 +246,9 @@ bool Scene::init()
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
-        std::cout << "Exception: " << e.what();
-        return false;
+        std::cerr << "Exception: " << e.what();
+        throw std::runtime_error(e.what());
+        // return false;
     }
 
     is_initialized = true;
@@ -359,10 +367,12 @@ void Scene::render(
 
         auto& quad_comp = registry.get<QuadComponent>(entity);
         const auto pos = v3f{ transform_comp.x, transform_comp.y, z += 0.01f };
-        const auto size = quad_comp.w;
+        const auto& size = quad_comp.w;
+        const auto& color = quad_comp.color;
 
         // renderer->push_states(Renderer::Color4u::Blue);
-        renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
+        // renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
+        renderer->push_states(Renderer::Color4u{ color });
         renderer->push_quad(pos, size);
         renderer->pop_states<Renderer::Color4u>();
     }

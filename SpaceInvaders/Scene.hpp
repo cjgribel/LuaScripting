@@ -17,6 +17,7 @@ struct QuadComponent
     // static constexpr auto in_place_delete = true;
 
     float w;
+    uint32_t color;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
