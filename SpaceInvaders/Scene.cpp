@@ -29,11 +29,11 @@ namespace {
             "type_id",
             &entt::type_hash<QuadComponent>::value,
             sol::call_constructor,
-            sol::factories([](float r) {
-                return QuadComponent{ r };
+            sol::factories([](float w) {
+                return QuadComponent{ w };
                 }),
-            "r",
-            &QuadComponent::r,
+            "w",
+            &QuadComponent::w,
             sol::meta_function::to_string,
             &QuadComponent::to_string
         );
@@ -359,7 +359,7 @@ void Scene::render(
 
         auto& quad_comp = registry.get<QuadComponent>(entity);
         const auto pos = v3f{ transform_comp.x, transform_comp.y, z += 0.01f };
-        const auto size = quad_comp.r;
+        const auto size = quad_comp.w;
 
         // renderer->push_states(Renderer::Color4u::Blue);
         renderer->push_states(Renderer::Color4u{ 0x80ff0000 });

@@ -16,11 +16,11 @@ struct QuadComponent
 {
     // static constexpr auto in_place_delete = true;
 
-    float r;
+    float w;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
-        ss << "{ r =" << std::to_string(r) << " }";
+        ss << "{ w =" << std::to_string(w) << " }";
         return ss.str();
     }
 };
