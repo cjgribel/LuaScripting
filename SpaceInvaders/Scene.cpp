@@ -230,6 +230,7 @@ void Scene::reload_scripts()
         registry.emplace<Transform>(e, Transform{ (float)-i, (float)-i });
         registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
 
+        // add_script_from_file(registry, e, lua, "lua/behavior.lua");
         add_script_from_file(registry, e, lua, "lua/behavior.lua");
 
         // sol::table script_table = script_function();
@@ -554,7 +555,7 @@ void Scene::render(
 
     // Background quad
     renderer->push_states(Renderer::Color4u{ 0x40ffffff });
-    renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 11.0f);
+    renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 10.0f);
     renderer->pop_states<Renderer::Color4u>();
 
     // Render QuadComponents

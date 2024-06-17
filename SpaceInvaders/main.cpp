@@ -56,7 +56,7 @@ namespace
 int main(int argc, char* argv[])
 {
     // Hello standard output
-    std::cout << "Hello SDL2 + Assimp + Dear ImGui" << std::endl;
+    std::cout << "Hello SDL2 + sol2 + enTT + Dear ImGui" << std::endl;
 
     // Initialize SDL
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");

@@ -9,14 +9,11 @@ function node:init()
 
     -- Stuff that might be done by an init script
     -- Add QuadComponent
-    self.owner:emplace(self.id(), QuadComponent(1.0))
-    --bowser = registry:create()
-    --registry:emplace(bowser, Transform(5, 6))
-    --transform = registry:get(bowser, Transform)
+    --self.owner:emplace(self.id(), QuadComponent(1.0))
 
     -- Test, add script to this entity
-    local script_table = dofile("lua/behavior.lua")
-    add_script(self.owner, self.id(), script_table)
+    --local script_table = dofile("lua/behavior.lua")
+    --add_script(self.owner, self.id(), script_table)
 
 	print('node [#' .. self.id() .. '] init ()', self)
 end
@@ -57,15 +54,15 @@ function node:update(dt)
     end
 
     -- Interact with all other nodes
-    for i, node in ipairs(nodes) do
-        if i ~= self.index then
-            -- Example interaction: print each node's ID
-            --print('  Interacting with node [#' .. node.id() .. ']')
-            -- Example interaction: Adjust their Transform
-            local other_transform = self.owner:get(node.id(), Transform)
-            --other_transform.x = other_transform.x - 1
-        end
-    end
+    --for i, node in ipairs(nodes) do
+    --    if i ~= self.index then
+    --        -- Example interaction: print each node's ID
+    --        --print('  Interacting with node [#' .. node.id() .. ']')
+    --        -- Example interaction: Adjust their Transform
+    --        local other_transform = self.owner:get(node.id(), Transform)
+    --        --other_transform.x = other_transform.x - 1
+    --    end
+    --end
 end
 
 function node:destroy()
