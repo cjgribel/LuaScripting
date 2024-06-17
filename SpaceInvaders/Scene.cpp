@@ -14,14 +14,6 @@
 using namespace linalg;
 
 namespace {
-    // inline void my_panic(sol::optional<std::string> maybe_msg) {
-    //     std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
-    //     if (maybe_msg) {
-    //         const std::string& msg = maybe_msg.value();
-    //         std::cerr << "\terror message: " << msg << std::endl;
-    //     }
-    //     // When this function exits, Lua will exhibit default behavior and abort()
-    // }
 
     // void inspect_script(const ScriptedBehaviorComponent& script)
     // {
@@ -95,12 +87,6 @@ namespace {
         }
     }
 
-    // void register_input_script(sol::state& lua)
-    // {
-    //     // lua.script_file("lua/input.lua");
-    //     lua.safe_script_file("lua/input.lua");
-    // }
-
     // Register the input module with Lua
     void register_input_script(sol::state& lua)
     {
@@ -153,6 +139,7 @@ namespace {
         script_comp.scripts.push_back({ script /*, script["update"]*/ });
 
         // Example: Print the table's contents
+#if 0
         std::cout << "Lua table contents:" << std::endl;
         for (auto& pair : script_table) {
             sol::object key = pair.first;
@@ -168,6 +155,7 @@ namespace {
                 std::cout << "Unknown type" << std::endl;
             }
         }
+#endif
     }
 
     void add_script_from_file(
@@ -183,295 +171,86 @@ namespace {
     }
 }
 
-void Scene::reload_scripts()
-{
-    // Clear entt registry
-    // We must do this before destroying the current Lua state,
-    // since the Lua state is accessed when instances of ScriptedBehaviorComponent are destroyed.
-
-    // registry.clear();
-    registry.clear<ScriptedBehaviorComponent>(); // Invoke on_destroy for this type
-    
-    registry = entt::registry{};
-    registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
-
-    // Create Lua state
-    lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
-    lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
-
-    lua["add_script"] = &add_script;
-
-    // Register input module
-    register_input_script(lua);
-    if (!lua["input"].valid()) {
-        std::cerr << "Error: 'input' table not loaded properly" << std::endl;
-        // return -1;
-        assert(0);
-    }
-    update_input_script(lua, 0.0f, 0.0f, false);
-
-    // Attach registry to Lua state
-    lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
-
-    lua["registry"] = std::ref(registry);
-
-    // Expose components as user types to Lua 
-    register_transform(lua);
-    registerQuadComponent(lua);
-
-    //
-    lua.safe_script_file("lua/init.lua");
-
-#if 1
-    // Add 5x of a test behavior script
-    // Requires the 'input' module to be registered
-    // sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
-    // sol::protected_function script_function = behavior_script;
-    // assert(behavior_script.valid());
-    //
-    // Create entities with behavior scripts
-    // TODO: Have an init script that creates entities
-    for (int i = 0; i < 5; ++i)
-    {
-        auto e = registry.create();
-        registry.emplace<Transform>(e, Transform{ (float)-i, (float)-i });
-        registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
-
-        // add_script_from_file(registry, e, lua, "lua/behavior.lua");
-        add_script_from_file(registry, e, lua, "lua/behavior.lua");
-
-        // sol::table script_table = script_function();
-        // ScriptedBehaviorComponent script_comp;
-        // ScriptedBehaviorComponent::BehaviorScript script{ script_table };
-        // script_comp.scripts.push_back(script);
-        // registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
-
-        // Done in behavior.init()
-                    // QuadComponent quad_comp {1.0f};
-                    // registry.emplace<QuadComponent>(e, quad_comp);
-    }
-#endif
-}
-
 bool Scene::init()
 {
+    assert(!is_initialized);
     std::cout << "Scene::init()" << std::endl;
-#if 1
 
-    // if initialized
-    // skip reload_scripts();
+    // Register registry meta functions to components
+    register_meta_component<Transform>();
+    register_meta_component<QuadComponent>();
 
     try
     {
-        // Register registry meta functions to components
-        register_meta_component<Transform>();
-        register_meta_component<QuadComponent>();
+        // Create enTT registry
+        registry = entt::registry{};
+        registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
-        // ScriptedBehaviorComponent creation & destruction callbacks
-        //registry.on_construct<ScriptedBehaviorComponent>().connect<&init_script>();
-        // registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
-
-        reload_scripts();
-        return true;
-
-        // lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+        // Create Lua state
+        lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
         lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
 
-        //
+        // Register to Lua: function for adding scripts from other scripts
         lua["add_script"] = &add_script;
 
-        // Register input module
+        // Register to Lua: input module
         register_input_script(lua);
         if (!lua["input"].valid()) {
             std::cerr << "Error: 'input' table not loaded properly" << std::endl;
-            return -1;
+            // return -1;
+            assert(0);
         }
-        update_input_script(lua, 100.0f, 200.0f, true);
+        update_input_script(lua, 0.0f, 0.0f, false);
 
+        // Attach registry to Lua state
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
+        lua["registry"] = std::ref(registry);
 
-        // Expose components to Lua
+        // Register to Lua: component types
         register_transform(lua);
         registerQuadComponent(lua);
 
-        // Add 5x of a test behavior script
-        // Requires the 'input' module to be registered
-        sol::load_result behavior_script = lua.load_file("lua/behavior.lua");
-        sol::protected_function script_function = behavior_script;
-        assert(behavior_script.valid());
-        //
-        // Create entities with behavior scripts
-        // TODO: Have an init script that creates entities
+        // Run init script
+        lua.safe_script_file("lua/init.lua");
+
+        // Run engine-side init code
+#if 1
         for (int i = 0; i < 5; ++i)
         {
-            auto e = registry.create();
-            registry.emplace<Transform>(e, Transform{ (float)i, (float)i });
-            // Done by script registry.emplace<QuadComponent>(e, QuadComponent{ 1.0f });
+            auto entity = registry.create();
+            registry.emplace<Transform>(entity, Transform{ (float)-i, (float)-i });
+            registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f });
 
             // add_script_from_file(registry, e, lua, "lua/behavior.lua");
+            add_script_from_file(registry, entity, lua, "lua/behavior.lua");
 
-            sol::table script_table = script_function();
+            // sol::table script_table = script_function();
+            // ScriptedBehaviorComponent script_comp;
+            // ScriptedBehaviorComponent::BehaviorScript script{ script_table };
+            // script_comp.scripts.push_back(script);
+            // registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
 
-            ScriptedBehaviorComponent script_comp;
-            ScriptedBehaviorComponent::BehaviorScript script{ script_table };
-            script_comp.scripts.push_back(script);
-            registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
-
-            // Sone in behavior.init()
+            // Done in behavior.init()
                         // QuadComponent quad_comp {1.0f};
                         // registry.emplace<QuadComponent>(e, quad_comp);
         }
-
-        using namespace std::chrono_literals;
-
-#if 0
-        // constexpr auto target_frame_time = 500ms;
-        int delta_time_ms{ 1000 };
-        while (true)
-        {
-            using clock = std::chrono::high_resolution_clock;
-            const auto begin_ticks = clock::now();
-
-            // Script behavior update
-            script_system_update(registry, delta_time_ms * 0.001f);
-
-            // std::this_thread::sleep_for(target_frame_time);
-            std::this_thread::sleep_for(std::chrono::milliseconds(delta_time_ms));
-
-            {
-                std::cout << "All QuadComponent" << std::endl;
-                auto view = registry.view<QuadComponent>();
-                for (auto&& entity : view)
-                {
-                    const auto& cc = view.get<QuadComponent>(entity);
-                    std::cout << cc.to_string() << std::endl;
-                }
-            }
-
-            //delta_time = std::chrono::duration_cast<fsec>(clock::now() - begin_ticks);
-            //if (delta_time > 1s)
-            //    delta_time = target_frame_time;
-
-            if (_kbhit())
-                break;
-        }
-        registry.clear();
 #endif
     }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
-        std::cout << "exception: " << e.what();
-        return -1;
-    }
-#else
-    // Registry test
-    // lua/registry_simple.lua, lua/iterate_entities.lua
-    // Linking an entt::registry to Lua, creating entities, 
-    // adding & modifying components, iterating & removing components
-    try {
-        register_meta_component<Transform>();
-
-        // sol::state lua{};
-        sol::state lua{}; //(sol::c_call<decltype(&my_panic), &my_panic>);
-        lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
-
-        lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
-        register_transform(lua); // Make Transform struct available to Lua
-
-        lua["registry"] = std::ref(registry); // Make the registry available to Lua
-
-        // Creates an entity and adds a Transform to it
-        std::cout << "Adding an entity..." << std::endl;
-        // lua.do_file("lua/registry_simple.lua");
-        lua.safe_script_file("lua/registry_simple.lua");
-        std::cout << "Adding an entity..." << std::endl;
-        // lua.do_file("lua/registry_simple.lua");
-        lua.safe_script_file("lua/registry_simple.lua");
-
-        // lua.safe_script_file()
-        // std::cout << "Running LUA script with assert(0)" << std::endl;
-        // lua.script(R"(
-        //     assert(false)
-        // )");
-
-        {
-            std::cout << "All Transforms:" << std::endl;
-            auto view = registry.view<Transform>();
-            for (auto& ent : view)
-            {
-                auto& t = view.get<Transform>(ent);
-                std::cout << t.to_string() << std::endl;
-            }
-        }
-
-        const auto bowser = lua["bowser"].get<entt::entity>();
-        const auto* xf = registry.try_get<Transform>(bowser);
-        assert(xf != nullptr);
-        const Transform& transform = lua["transform"];
-        assert(xf->x == transform.x && xf->y == transform.y);
-
-#if 0
-        {
-            // print 'size_hint'
-            entt::runtime_view view{};
-            view.iterate(registry.storage<Transform>());
-            std::cout << "Initial size hint: " << view.size_hint() << std::endl;
-        }
-        {
-            // Remove Component for all entities
-            entt::runtime_view view3{};
-            view3.iterate(registry.storage<Transform>());
-            for (auto ent : view3)
-                registry.remove<Transform>(ent);
-            std::cout << "Removed Transform from all entities" << std::endl;
-        }
-        {
-            // print 'size_hint' again
-            entt::runtime_view view4{};
-            view4.iterate(registry.storage<Transform>());
-            // auto view2 = registry.runtime_view<Transform>();
-            std::cout << "Size hint after removal: " << view4.size_hint() << std::endl;
-        }
-#endif
-
-        //
-        // lua.do_file("lua/iterate_entities.lua");
-        lua.safe_script_file("lua/iterate_entities.lua");
-        assert(registry.orphan(bowser) && "The only component (Transform) should  "
-            "be removed by the script");
-
-        {
-            std::cout << "All Transforms:" << std::endl;
-            auto view = registry.view<Transform>();
-            for (auto& ent : view)
-            {
-                auto& t = view.get<Transform>(ent);
-                std::cout << t.to_string() << std::endl;
-            }
-        }
-    }
-    catch (const sol::error& e)
-    {
-        std::cerr << "Lua script execution failed: " << e.what() << std::endl;
+        std::cout << "Exception: " << e.what();
         return false;
     }
-#endif
 
-    // Do some entt stuff
-    // entt::registry registry;
-    // auto ent1 = registry.create();
-    // struct Tfm
-    // {
-    //     float x, y, z;
-    // };
-    // registry.emplace<Tfm>(ent1, Tfm{});
-
+    is_initialized = true;
     return true;
 }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
+    assert(is_initialized);
+
     lightPos = xyz(m4f::TRS(
         { 1000.0f, 1000.0f, 1000.0f },
         time_s * 0.0f,
@@ -493,6 +272,8 @@ void Scene::update(float time_s, float deltaTime_s)
 
 void Scene::renderUI()
 {
+    assert(is_initialized);
+
     ImGui::Text("Drawcall count %i", drawcallCount);
 
     // float available_width = ImGui::GetContentRegionAvail().x;
@@ -543,6 +324,8 @@ void Scene::render(
     int screenHeight,
     ShapeRendererPtr renderer)
 {
+    assert(is_initialized);
+
     // Perspective projection matrix
     const float aspectRatio = float(screenWidth) / screenHeight;
     // const float nearPlane = 1.0f, farPlane = 500.0f;
@@ -591,8 +374,10 @@ void Scene::render(
 
 void Scene::destroy()
 {
-    // Destroy all ScriptedBehaviorComponent before destroying the Lua state
-    // registry.clear() will not invoke on_destroy for existing components
+    // Explicitly destroy all ScriptedBehaviorComponent in order to
+    // invoke on_destroy. Must be done before the Lua state is detroyed.
     registry.clear<ScriptedBehaviorComponent>();
     registry.clear();
+
+    is_initialized = false;
 }

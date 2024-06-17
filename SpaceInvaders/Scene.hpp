@@ -66,8 +66,7 @@ inline void my_panic(sol::optional<std::string> maybe_msg)
 class Scene : public eeng::SceneBase
 {
 protected:
-    // sol::state lua{}; //(sol::c_call<decltype(&my_panic), &my_panic>);
-    sol::state lua{ (sol::c_call<decltype(&my_panic), &my_panic>) };
+    sol::state lua{};
     entt::registry registry{};
 
     linalg::v3f lightPos, eyePos;
@@ -75,8 +74,6 @@ protected:
     int drawcallCount = 0;
 
 public:
-    void reload_scripts();
-
     bool init() override;
 
     void update(float time_s, float deltaTime_s) override;

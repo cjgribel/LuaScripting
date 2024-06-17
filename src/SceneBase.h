@@ -10,6 +10,8 @@ namespace eeng {
     class SceneBase
     {
     protected:
+        bool is_initialized = false;
+
         // Input placeholder
         float axis_x = 0.0f, axis_y = 0.0f;
         bool button_pressed = false;
