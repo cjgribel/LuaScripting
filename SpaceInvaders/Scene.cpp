@@ -47,26 +47,26 @@ namespace {
         );
     }
 
-    void init_script(entt::registry& registry, entt::entity entity)
-    {
-        auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
-        for (auto& script : script_comp.scripts)
-        {
-            assert(script.self.valid());
-            script.update = script.self["update"];
-            assert(script.update.valid());
+    // void init_script(entt::registry& registry, entt::entity entity)
+    // {
+    //     auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+    //     for (auto& script : script_comp.scripts)
+    //     {
+    //         assert(script.self.valid());
+    //         script.update = script.self["update"];
+    //         assert(script.update.valid());
 
-            // -> entityID?
-            script.self["id"] = sol::readonly_property([entity]
-                { return entity; });
-            // -> registry?
-            script.self["owner"] = std::ref(registry);
+    //         // -> entityID?
+    //         script.self["id"] = sol::readonly_property([entity]
+    //             { return entity; });
+    //         // -> registry?
+    //         script.self["owner"] = std::ref(registry);
 
-            if (auto&& f = script.self["init"]; f.valid())
-                f(script.self);
-            // inspect_script(script);
-        }
-    }
+    //         if (auto&& f = script.self["init"]; f.valid())
+    //             f(script.self);
+    //         // inspect_script(script);
+    //     }
+    // }
 
     void release_script(entt::registry& registry, entt::entity entity)
     {
@@ -102,7 +102,8 @@ namespace {
     // }
 
     // Register the input module with Lua
-    void register_input_script(sol::state& lua) {
+    void register_input_script(sol::state& lua)
+    {
         sol::load_result result = lua.load_file("lua/input.lua");
         if (!result.valid()) {
             sol::error err = result;
@@ -117,7 +118,8 @@ namespace {
         }
     }
 
-    void update_input_script(sol::state& lua, float x, float y, bool button_pressed) {
+    void update_input_script(sol::state& lua, float x, float y, bool button_pressed)
+    {
         lua["update_input"](x, y, button_pressed);
     }
 
@@ -186,7 +188,12 @@ void Scene::reload_scripts()
     // Clear entt registry
     // We must do this before destroying the current Lua state,
     // since the Lua state is accessed when instances of ScriptedBehaviorComponent are destroyed.
-    registry.clear();
+
+    // registry.clear();
+    registry.clear<ScriptedBehaviorComponent>(); // Invoke on_destroy for this type
+    
+    registry = entt::registry{};
+    registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
     // Create Lua state
     lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
@@ -243,13 +250,16 @@ void Scene::reload_scripts()
                     // QuadComponent quad_comp {1.0f};
                     // registry.emplace<QuadComponent>(e, quad_comp);
     }
-    #endif
+#endif
 }
 
 bool Scene::init()
 {
     std::cout << "Scene::init()" << std::endl;
 #if 1
+
+    // if initialized
+    // skip reload_scripts();
 
     try
     {
@@ -259,7 +269,7 @@ bool Scene::init()
 
         // ScriptedBehaviorComponent creation & destruction callbacks
         //registry.on_construct<ScriptedBehaviorComponent>().connect<&init_script>();
-        registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
+        // registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         reload_scripts();
         return true;
@@ -268,7 +278,6 @@ bool Scene::init()
         lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
 
         //
-        // NOT MADE IN RELOAD
         lua["add_script"] = &add_script;
 
         // Register input module
@@ -486,11 +495,11 @@ void Scene::renderUI()
 {
     ImGui::Text("Drawcall count %i", drawcallCount);
 
-    float available_width = ImGui::GetContentRegionAvail().x;
-    if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
-    {
-        reload_scripts();
-    }
+    // float available_width = ImGui::GetContentRegionAvail().x;
+    // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
+    // {
+    //     reload_scripts();
+    // }
 
     // if (ImGui::ColorEdit3("Light color",
     //     glm::value_ptr(lightColor),
@@ -582,5 +591,8 @@ void Scene::render(
 
 void Scene::destroy()
 {
+    // Destroy all ScriptedBehaviorComponent before destroying the Lua state
+    // registry.clear() will not invoke on_destroy for existing components
+    registry.clear<ScriptedBehaviorComponent>();
     registry.clear();
 }

@@ -378,6 +378,14 @@ int main(int argc, char* argv[])
         if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
         {
             scene->renderUI();
+
+            float available_width = ImGui::GetContentRegionAvail().x;
+            if (ImGui::Button("Reload Scene", ImVec2(available_width, 0.0f)))
+            {
+                scene->destroy();
+                scene = std::make_shared<Scene>();
+                scene->init();
+            }
         }
 
         ImGui::End(); // end info window
@@ -452,6 +460,8 @@ int main(int argc, char* argv[])
     }
 
     eeng::Log::log("Exiting...");
+
+    scene->destroy();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
