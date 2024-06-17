@@ -17,7 +17,7 @@ end
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
     local quad = self.owner:get(self.id(), QuadComponent)
-    local radius = quad.r / 2
+    local radius = quad.w / 2
 
     -- Apply input to transform
     transform.x = transform.x + self.velocity.x * dt
