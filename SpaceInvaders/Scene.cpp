@@ -275,6 +275,8 @@ void Scene::update(float time_s, float deltaTime_s)
 
     update_input_script(lua, SceneBase::axis_x, SceneBase::axis_y, SceneBase::button_pressed);
 
+    particleBuffer.update(deltaTime_s);
+
     script_system_update(registry, deltaTime_s);
 }
 
@@ -283,6 +285,8 @@ void Scene::renderUI()
     assert(is_initialized);
 
     ImGui::Text("Drawcall count %i", drawcallCount);
+
+    ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
 
     // float available_width = ImGui::GetContentRegionAvail().x;
     // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
@@ -376,6 +380,19 @@ void Scene::render(
         renderer->push_quad(pos, size);
         renderer->pop_states<Renderer::Color4u>();
     }
+
+    // Add some test particles
+    const int N = 5;
+    for (int i = 0; i < N; i++)
+    {
+        const float angle = fPI / N * i;
+        const float x = std::cos(angle);
+        const float y = std::sin(angle);
+        particleBuffer.push_point(v3f{ 0.0f, 0.0f, z += 0.01f }, v3f{ x, y, 0.0f } * 4, 0xff0000ff);
+    }
+
+    // Render particles
+    particleBuffer.render(renderer);
 
     // Render shapes
     renderer->render(P * V);

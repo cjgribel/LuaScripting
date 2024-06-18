@@ -11,6 +11,7 @@
 
 #include "vec.h"
 #include "SceneBase.h"
+#include "ParticleBuffer.hpp"
 
 struct QuadComponent
 {
@@ -73,6 +74,8 @@ protected:
     linalg::v3f lightPos, eyePos;
     const float nearPlane = 1.0f, farPlane = 500.0f;
     int drawcallCount = 0;
+
+    ParticleBuffer particleBuffer {};
 
 public:
     bool init() override;

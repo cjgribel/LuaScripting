@@ -185,6 +185,7 @@ add_executable(SpaceInvaders
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLDebugMessageCallback.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ShapeRenderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ParticleBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/vec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/mat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/quat.cpp
