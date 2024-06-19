@@ -259,21 +259,12 @@ bool Scene::init()
         for (int i = 0; i < 5; ++i)
         {
             auto entity = registry.create();
+
             registry.emplace<Transform>(entity, Transform{ (float)-i, (float)-i });
-            registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f });
 
-            // add_script_from_file(registry, e, lua, "lua/behavior.lua");
+            registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff });
+
             add_script_from_file(registry, entity, lua, "lua/behavior.lua");
-
-            // sol::table script_table = script_function();
-            // ScriptedBehaviorComponent script_comp;
-            // ScriptedBehaviorComponent::BehaviorScript script{ script_table };
-            // script_comp.scripts.push_back(script);
-            // registry.emplace<ScriptedBehaviorComponent>(e, script_comp);
-
-            // Done in behavior.init()
-                        // QuadComponent quad_comp {1.0f};
-                        // registry.emplace<QuadComponent>(e, quad_comp);
         }
 #endif
     }
@@ -374,8 +365,8 @@ void Scene::update(float time_s, float deltaTime_s)
                     // std::cout << "Penetration Depth: " << penetrationDepth << "\n";
 
                     // (nx, ny) points 2 -> 1
-                    dispatch_collision_event_to_scripts(px, py, nx, ny, entity1, entity2);
-                    dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity2, entity1);
+                    dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
+                    dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
         }
@@ -473,7 +464,7 @@ void Scene::render(
         auto& transform_comp = registry.get<Transform>(entity);
 
         auto& quad_comp = registry.get<QuadComponent>(entity);
-        const auto pos = v3f{ transform_comp.x, transform_comp.y, z += 0.01f };
+        const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
         const auto& size = quad_comp.w;
         const auto& color = quad_comp.color;
 
@@ -491,7 +482,7 @@ void Scene::render(
         const float angle = fPI / N * i;
         const float x = std::cos(angle);
         const float y = std::sin(angle);
-        particleBuffer.push_point(v3f{ 0.0f, 0.0f, z += 0.01f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
+        particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
     }
 
     // Render particles

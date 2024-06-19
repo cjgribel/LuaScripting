@@ -399,7 +399,7 @@ int main(int argc, char* argv[])
         // Rasterization stuff
         glEnable(GL_DEPTH_TEST); // Perform depth test when rasterizing
         glDepthFunc(GL_LESS);    // Depth test pass if z < existing z (closer than existing z)
-        glDepthMask(GL_TRUE);    // If depth test passes, write z to z-buffer
+        glDepthMask(GL_FALSE);    // If depth test passes, write z to z-buffer
         glDepthRange(0, 1);      // Z-buffer range is [0,1], where 0 is at z-near and 1 is at z-far
 
         // Define viewport transform = Clip -> Screen space (applied before rasterization)
