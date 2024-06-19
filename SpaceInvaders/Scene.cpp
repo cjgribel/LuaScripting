@@ -41,6 +41,22 @@ namespace {
         );
     }
 
+    void registerCircleColliderComponent(sol::state& lua)
+    {
+        lua.new_usertype<CircleColliderComponent>("CircleColliderComponent",
+            "type_id",
+            &entt::type_hash<CircleColliderComponent>::value,
+            sol::call_constructor,
+            sol::factories([](float r) {
+                return CircleColliderComponent{ r };
+                }),
+            "r",
+            &CircleColliderComponent::r,
+            sol::meta_function::to_string,
+            &CircleColliderComponent::to_string
+        );
+    }
+
     // void init_script(entt::registry& registry, entt::entity entity)
     // {
     //     auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
@@ -125,8 +141,12 @@ namespace {
         assert(script_table.valid());
 
         ScriptedBehaviorComponent::BehaviorScript script{ script_table };
+
         script.update = script.self["update"];
         assert(script.update.valid());
+
+        script.on_collision = script.self["on_collision"];
+        assert(script.on_collision.valid());
 
         // -> entityID?
         script.self["id"] = sol::readonly_property([entity] { return entity; });
@@ -181,6 +201,7 @@ bool Scene::init()
     // Register registry meta functions to components
     register_meta_component<Transform>();
     register_meta_component<QuadComponent>();
+    register_meta_component<CircleColliderComponent>();
 
     try
     {
@@ -200,6 +221,18 @@ bool Scene::init()
         // Register to Lua: function for adding scripts from other scripts
         lua["add_script"] = &add_script;
 
+        // Placeholder particle emitter function
+        const auto emit_particle = [&](
+            float x,
+            float y,
+            float vx,
+            float vy,
+            uint32_t color)
+            {
+                particleBuffer.push_point(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
+            };
+        lua["emit_particle"] = emit_particle;
+
         // Register to Lua: input module
         register_input_script(lua);
         if (!lua["input"].valid()) {
@@ -216,6 +249,7 @@ bool Scene::init()
         // Register to Lua: component types
         register_transform(lua);
         registerQuadComponent(lua);
+        registerCircleColliderComponent(lua);
 
         // Run init script
         lua.safe_script_file("lua/init.lua");
@@ -278,6 +312,75 @@ void Scene::update(float time_s, float deltaTime_s)
     particleBuffer.update(deltaTime_s);
 
     script_system_update(registry, deltaTime_s);
+
+    // Placeholder collision system
+    {
+        const auto dispatch_collision_event_to_scripts = [&](
+            float x,
+            float y,
+            float nx,
+            float ny,
+            entt::entity entity,
+            entt::entity other_entity)
+            {
+                if (!registry.all_of<ScriptedBehaviorComponent>(entity)) return;
+                auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+                for (auto& script : script_comp.scripts)
+                {
+                    assert(script.self.valid());
+                    script.on_collision(script.self, x, y, nx, ny, other_entity);
+                }
+            };
+
+        auto view = registry.view<Transform, CircleColliderComponent>();
+        for (auto it1 = view.begin(); it1 != view.end(); ++it1) {
+            auto entity1 = *it1;
+            const auto& transform1 = view.get<Transform>(entity1);
+            const auto& collider1 = view.get<CircleColliderComponent>(entity1);
+
+            for (auto it2 = it1; ++it2 != view.end(); ) {
+                auto entity2 = *it2;
+                const auto& transform2 = view.get<Transform>(entity2);
+                const auto& collider2 = view.get<CircleColliderComponent>(entity2);
+
+                // Calculate the distance between the two entities
+                float dx = transform1.x - transform2.x;
+                float dy = transform1.y - transform2.y;
+                float distanceSquared = dx * dx + dy * dy;
+                float radiusSum = collider1.r + collider2.r;
+
+                // Check for collision
+                if (distanceSquared < radiusSum * radiusSum) {
+                    // Collision detected
+
+                    // Calculate distance
+                    float distance = std::sqrt(distanceSquared);
+
+                    // Calculate penetration depth
+                    float penetrationDepth = radiusSum - distance;
+
+                    // Calculate contact normal
+                    float nx = dx / distance;
+                    float ny = dy / distance;
+
+                    // Calculate point of contact
+                    float px = transform1.x - collider1.r * nx + collider2.r * nx;
+                    float py = transform1.y - collider1.r * ny + collider2.r * ny;
+
+                    // std::cout << "Collision detected between entity " << (uint32_t)entity1
+                    //     << " and entity " << (uint32_t)entity2 << std::endl;
+                    // std::cout << "Contact Point: (" << px << ", " << py << ")\n";
+                    // std::cout << "Contact Normal: (" << nx << ", " << ny << ")\n";
+                    // std::cout << "Penetration Depth: " << penetrationDepth << "\n";
+
+                    // (nx, ny) points 2 -> 1
+                    dispatch_collision_event_to_scripts(px, py, nx, ny, entity1, entity2);
+                    dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity2, entity1);
+                }
+            }
+        }
+    } // anon
+
 }
 
 void Scene::renderUI()
@@ -382,13 +485,13 @@ void Scene::render(
     }
 
     // Add some test particles
-    const int N = 5;
+    const int N = 1;
     for (int i = 0; i < N; i++)
     {
         const float angle = fPI / N * i;
         const float x = std::cos(angle);
         const float y = std::sin(angle);
-        particleBuffer.push_point(v3f{ 0.0f, 0.0f, z += 0.01f }, v3f{ x, y, 0.0f } * 4, 0xff0000ff);
+        particleBuffer.push_point(v3f{ 0.0f, 0.0f, z += 0.01f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
     }
 
     // Render particles

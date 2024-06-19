@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 #endif
 
     // Create a window
-    SDL_Window* window = SDL_CreateWindow("SDL2 + Assimp + Dear ImGui",
+    SDL_Window* window = SDL_CreateWindow("Hello SDL2 + sol2 + enTT + Dear ImGui",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH,

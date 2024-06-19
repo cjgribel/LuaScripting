@@ -65,6 +65,10 @@ function node:update(dt)
     --end
 end
 
+function node:on_collision(x, y, nx, ny, entity)
+    print(x, y, nx, ny, entity)
+end
+
 function node:destroy()
 	print('bye, bye! from: node #' .. self.id())
 

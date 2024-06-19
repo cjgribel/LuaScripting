@@ -37,6 +37,15 @@ function node:update(dt)
     transform.y = math.max(self.MIN_BOUND + radius, math.min(transform.y, self.MAX_BOUND - radius))
 end
 
+function node:on_collision(x, y, nx, ny, entity)
+    local quad = self.owner:get(self.id(), QuadComponent)
+    local quad_color = quad.color
+
+    local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
+    emit_particle(x, y, -ny * vel_length, nx * vel_length, quad_color)
+    --print(x, y)
+end
+
 function node:destroy()
 	print('bye, bye! from: node #' .. self.id())
 end

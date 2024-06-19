@@ -27,6 +27,19 @@ struct QuadComponent
     }
 };
 
+struct CircleColliderComponent
+{
+    // static constexpr auto in_place_delete = true;
+
+    float r;
+
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ r =" << std::to_string(r) << " }";
+        return ss.str();
+    }
+};
+
 // ScriptedBehaviorComponent
 struct ScriptedBehaviorComponent
 {
@@ -37,6 +50,7 @@ struct ScriptedBehaviorComponent
         sol::table self;
         // Update function of Lua object
         sol::function update;
+        sol::function on_collision;
 
         // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;
@@ -49,7 +63,7 @@ struct ScriptedBehaviorComponent
         // }
     };
 
-    std::vector<std::string> script_files;
+    // std::vector<std::string> script_files;
     std::vector<BehaviorScript> scripts;
 };
 
