@@ -27,13 +27,13 @@ local function create_bouncy_entity(index)
     add_script(registry, entity, dofile("lua/bounce_behavior.lua"), "bounce_behavior")
 end
 
---local function create_projectile_pool__entity()
---    local entity = registry:create()
---
+local function create_projectile_pool_entity()
+    local entity = registry:create()
+
     -- Behavior
---    add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")
---    return entity
---end
+    add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")
+    return entity
+end
 
 --local function create_player_entity(size, color, projectile_pool_entity)
 --    local entity = registry:create()
@@ -51,7 +51,7 @@ print('Lua init script...')
 math.randomseed(os.time())
 
 -- Projectile entity
---local projectile_entity = create_projectile_pool__entity()
+--local projectile_pool_entity = create_projectile_pool_entity()
 
 -- Create player(s)
 --local player_entity = create_player_entity(0.5, 0xffffffff, projectile_entity)

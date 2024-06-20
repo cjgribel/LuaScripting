@@ -51,7 +51,7 @@ function node:on_collision(x, y, nx, ny, entity)
     local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
     if bounceBehavior then
         -- Interact with the scoreBehavior script
-        --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
+        print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     end
 end
 
