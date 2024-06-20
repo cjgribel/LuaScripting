@@ -51,20 +51,37 @@ struct ScriptedBehaviorComponent
         // Update function of Lua object
         sol::function update;
         sol::function on_collision;
+        std::string identifier;
 
         // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;
         // sol::function destroy;
-
-        // template<typename... Args>
-        // BehaviorScript()
-        // {
-        //     (script_files.emplace_back(std::forward<Args>(args)), ...);
-        // }
     };
 
-    // std::vector<std::string> script_files;
     std::vector<BehaviorScript> scripts;
+
+    // sol::table get_script_by_id(const std::string& identifier)
+    // {
+    //     for (auto& script : scripts)
+    //     {
+    //         if (script.identifier == identifier)
+    //         {
+    //             return script.self;
+    //         }
+    //     }
+    //     return sol::lua_nil;
+    // }
+
+    // TODO: add_script
+    // TODO: add_script_from_file?
+
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ scripts = ";
+        for (auto& script : scripts) ss << script.identifier << " ";
+        ss << "}";
+        return ss.str();
+    }
 };
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
@@ -89,7 +106,7 @@ protected:
     const float nearPlane = 1.0f, farPlane = 500.0f;
     int drawcallCount = 0;
 
-    ParticleBuffer particleBuffer {};
+    ParticleBuffer particleBuffer{};
 
 public:
     bool init() override;

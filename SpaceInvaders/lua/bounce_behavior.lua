@@ -37,13 +37,22 @@ function node:update(dt)
     transform.y = math.max(self.MIN_BOUND + radius, math.min(transform.y, self.MAX_BOUND - radius))
 end
 
+-- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, entity)
     local quad = self.owner:get(self.id(), QuadComponent)
     local quad_color = quad.color
 
     local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
-    emit_particle(x, y, -ny * vel_length, nx * vel_length, quad_color)
-    --print(x, y)
+    emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
+
+    -- Check script in the other entity
+    --local scriptComponent = self.owner:get(self.id(), ScriptedBehaviorComponent)
+    --local bounceBehavior = scriptComponent:get_script_by_id("bounce_behavior")
+    local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    if bounceBehavior then
+        -- Interact with the scoreBehavior script
+        print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
+    end
 end
 
 function node:destroy()

@@ -57,6 +57,24 @@ namespace {
         );
     }
 
+    void registerScriptedBehaviorComponent(sol::state& lua)
+    {
+        lua.new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
+            "type_id",
+            &entt::type_hash<ScriptedBehaviorComponent>::value,
+            sol::call_constructor,
+            sol::factories([]() {
+                return ScriptedBehaviorComponent{ };
+                }),
+            // "scripts",
+            // &ScriptedBehaviorComponent::scripts,
+            // "get_script_by_id",
+            // &ScriptedBehaviorComponent::get_script_by_id,
+            sol::meta_function::to_string,
+            &ScriptedBehaviorComponent::to_string
+        );
+    }
+
     // void init_script(entt::registry& registry, entt::entity entity)
     // {
     //     auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
@@ -131,10 +149,11 @@ namespace {
     // Adds a behavior script to the ScriptedBehaviorComponent of an entity
     // Adds entity & registry to the script ('id', 'owner')
     // 
-    void add_script(
+    sol::table add_script(
         entt::registry& registry,
         entt::entity entity,
-        const sol::table& script_table)
+        const sol::table& script_table,
+        const std::string& identifier)
     {
         std::cout << "add_script " << (uint32_t)entity << std::endl;
         //return;
@@ -148,6 +167,8 @@ namespace {
         script.on_collision = script.self["on_collision"];
         assert(script.on_collision.valid());
 
+        script.identifier = identifier;
+
         // -> entityID?
         script.self["id"] = sol::readonly_property([entity] { return entity; });
         // -> registry?
@@ -160,7 +181,7 @@ namespace {
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
         script_comp.scripts.push_back({ script /*, script["update"]*/ });
 
-        // Example: Print the table's contents
+        // Print the table's contents
 #if 0
         std::cout << "Lua table contents:" << std::endl;
         for (auto& pair : script_table) {
@@ -178,18 +199,40 @@ namespace {
             }
         }
 #endif
+        return script.self;
     }
 
     void add_script_from_file(
         entt::registry& registry,
         entt::entity entity,
         sol::state& lua,
-        const std::string& script_file)
+        const std::string& script_file,
+        const std::string& identifier)
     {
         sol::load_result behavior_script = lua.load_file(script_file);
         sol::protected_function script_function = behavior_script;
         assert(behavior_script.valid());
-        add_script(registry, entity, script_function());
+        add_script(registry, entity, script_function(), identifier);
+    }
+
+    sol::table get_script(
+        entt::registry& registry,
+        entt::entity entity,
+        const std::string& identifier)
+    {
+        if (!registry.all_of<ScriptedBehaviorComponent>(entity))
+            return sol::lua_nil;
+
+        auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+
+        for (auto& script : script_comp.scripts)
+        {
+            if (script.identifier == identifier)
+            {
+                return script.self;
+            }
+        }
+        return sol::lua_nil;
     }
 }
 
@@ -202,6 +245,7 @@ bool Scene::init()
     register_meta_component<Transform>();
     register_meta_component<QuadComponent>();
     register_meta_component<CircleColliderComponent>();
+    register_meta_component<ScriptedBehaviorComponent>();
 
     try
     {
@@ -218,8 +262,9 @@ bool Scene::init()
             sol::lib::math,
             sol::lib::os);
 
-        // Register to Lua: function for adding scripts from other scripts
+        // Register to Lua: helper functions for adding & obtaining scripts from entities
         lua["add_script"] = &add_script;
+        lua["get_script"] = &get_script;
 
         // Placeholder particle emitter function
         const auto emit_particle = [&](
@@ -250,6 +295,7 @@ bool Scene::init()
         register_transform(lua);
         registerQuadComponent(lua);
         registerCircleColliderComponent(lua);
+        registerScriptedBehaviorComponent(lua);
 
         // Run init script
         lua.safe_script_file("lua/init.lua");
@@ -264,7 +310,7 @@ bool Scene::init()
 
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff });
 
-            add_script_from_file(registry, entity, lua, "lua/behavior.lua");
+            add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
         }
 #endif
     }
