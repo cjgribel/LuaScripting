@@ -1,72 +1,34 @@
--- Define the ProjectilePool
-ProjectilePool = {
-    pool = {},
-    activeCount = 0,
-    poolSize = 100
+local node = {
+    velocity = {x = 1.0, y = 0.0},
+    is_active = false
+    --projectile_pool_behavior = nil
 }
 
--- Initialize the pool
-function ProjectilePool:init()
-    for i = 1, self.poolSize do
-        local entity = registry:create()
-        registry:emplace(entity, Transform(0.0, 0.0))
-        --registry:emplace(entity, "Velocity", { dx = 0, dy = 0 })
-        table.insert(self.pool, { entity = entity, active = false })
-    end
+function node:init()
+	print('projectile_behavior [#' .. self.id() .. '] init ()', self)
 end
 
--- Update function for projectiles
-function ProjectilePool:update(dt)
-    for i = 1, ProjectilePool.activeCount do
-        local projectile = ProjectilePool.pool[i]
-        -- Update projectile logic here
-        -- e.g., move the projectile, check for collisions, emit particles
-    end
+function node:update(dt)
+    --print('projectile_behavior update')
+	local transform = self.owner:get(self.id(), Transform)
+
+    -- Apply input to transform
+    transform.x = transform.x + self.velocity.x * dt
+    transform.y = transform.y + self.velocity.y * dt
+
+    -- Clamp considering the radius
+    --transform.x = math.max(self.MIN_BOUND + radius, math.min(transform.x, self.MAX_BOUND - radius))
+    --transform.y = math.max(self.MIN_BOUND + radius, math.min(transform.y, self.MAX_BOUND - radius))
 end
 
 -- (nx, ny) points away from this entity
-function ProjectilePool:on_collision(x, y, nx, ny, entity)
-
+function node:on_collision(x, y, nx, ny, entity)
+    -- Deactivate if hitting target, going outside of bounds etc
+    --projectile_pool_behavior.release(self.id())
 end
 
-function ProjectilePool:destroy()
-
+function node:destroy()
+	print('bye, bye! from: node #' .. self.id())
 end
 
--- Get an inactive projectile from the pool
-function ProjectilePool:get()
-    if self.activeCount < self.poolSize then
-        local projectile = self.pool[self.activeCount + 1]
-        projectile.active = true
-        self.activeCount = self.activeCount + 1
-        return projectile.entity
-    end
-    return nil -- Pool exhausted
-end
-
--- Return a projectile to the pool using back-swapping
-function ProjectilePool:release(entity)
-    for i = 1, self.activeCount do
-        if self.pool[i].entity == entity then
-            self.pool[i].active = false
-            if i ~= self.activeCount then
-                self.pool[i], self.pool[self.activeCount] = self.pool[self.activeCount], self.pool[i]
-            end
-            self.activeCount = self.activeCount - 1
-            break
-        end
-    end
-end
-
--- Fire a projectile from a given position with a given velocity
-function ProjectilePool:fire(x, y, dx, dy)
-    local entity = self:get()
-    if entity then
-        local transform = registry:get(entity, "Transform")
-        --local velocity = registry:get(entity, "Velocity")
-        transform.x, transform.y = x, y
-        --velocity.dx, velocity.dy = dx, dy
-    end
-end
-
-return ProjectilePool
+return node

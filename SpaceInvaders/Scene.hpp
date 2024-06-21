@@ -19,10 +19,11 @@ struct QuadComponent
 
     float w;
     uint32_t color;
+    bool is_visible;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
-        ss << "{ w =" << std::to_string(w) << " }";
+        ss << "{ w " << std::to_string(w) << ", color " << color << ", is_visible " << is_visible <<" }";
         return ss.str();
     }
 };
@@ -32,10 +33,11 @@ struct CircleColliderComponent
     // static constexpr auto in_place_delete = true;
 
     float r;
+    bool is_active;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
-        ss << "{ r =" << std::to_string(r) << " }";
+        ss << "{ r =" << std::to_string(r) << ", is_active " << is_active << " }";
         return ss.str();
     }
 };

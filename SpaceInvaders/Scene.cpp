@@ -29,13 +29,15 @@ namespace {
             "type_id",
             &entt::type_hash<QuadComponent>::value,
             sol::call_constructor,
-            sol::factories([](float w, uint32_t color) {
-                return QuadComponent{ w, color };
+            sol::factories([](float w, uint32_t color, bool is_visible) {
+                return QuadComponent{ w, color, is_visible };
                 }),
             "w",
             &QuadComponent::w,
             "color",
             &QuadComponent::color,
+            "is_visible",
+            &QuadComponent::is_visible,
             sol::meta_function::to_string,
             &QuadComponent::to_string
         );
@@ -47,11 +49,13 @@ namespace {
             "type_id",
             &entt::type_hash<CircleColliderComponent>::value,
             sol::call_constructor,
-            sol::factories([](float r) {
-                return CircleColliderComponent{ r };
+            sol::factories([](float r, bool is_active) {
+                return CircleColliderComponent{ r, is_active };
                 }),
             "r",
             &CircleColliderComponent::r,
+            "is_active",
+            &CircleColliderComponent::is_active,
             sol::meta_function::to_string,
             &CircleColliderComponent::to_string
         );
@@ -232,6 +236,7 @@ namespace {
                 return script.self;
             }
         }
+        //assert(0);
         return sol::lua_nil;
     }
 }
@@ -260,7 +265,8 @@ bool Scene::init()
             sol::lib::package,
             sol::lib::string,
             sol::lib::math,
-            sol::lib::os);
+            sol::lib::os,
+            sol::lib::table);
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
         lua["add_script"] = &add_script;
@@ -308,7 +314,7 @@ bool Scene::init()
 
             registry.emplace<Transform>(entity, Transform{ (float)-i, (float)-i });
 
-            registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff });
+            registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
         }
@@ -370,15 +376,19 @@ void Scene::update(float time_s, float deltaTime_s)
             };
 
         auto view = registry.view<Transform, CircleColliderComponent>();
-        for (auto it1 = view.begin(); it1 != view.end(); ++it1) {
+        for (auto it1 = view.begin(); it1 != view.end(); ++it1) 
+        {
             auto entity1 = *it1;
             const auto& transform1 = view.get<Transform>(entity1);
             const auto& collider1 = view.get<CircleColliderComponent>(entity1);
+            if (!collider1.is_active) continue;
 
-            for (auto it2 = it1; ++it2 != view.end(); ) {
+            for (auto it2 = it1; ++it2 != view.end(); ) 
+            {
                 auto entity2 = *it2;
                 const auto& transform2 = view.get<Transform>(entity2);
                 const auto& collider2 = view.get<CircleColliderComponent>(entity2);
+                if (!collider2.is_active) continue;
 
                 // Calculate the distance between the two entities
                 float dx = transform1.x - transform2.x;
@@ -387,7 +397,8 @@ void Scene::update(float time_s, float deltaTime_s)
                 float radiusSum = collider1.r + collider2.r;
 
                 // Check for collision
-                if (distanceSquared < radiusSum * radiusSum) {
+                if (distanceSquared < radiusSum * radiusSum) 
+                {
                     // Collision detected
 
                     // Calculate distance
@@ -510,6 +521,8 @@ void Scene::render(
         auto& transform_comp = registry.get<Transform>(entity);
 
         auto& quad_comp = registry.get<QuadComponent>(entity);
+        if (!quad_comp.is_visible) continue;
+
         const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
         const auto& size = quad_comp.w;
         const auto& color = quad_comp.color;

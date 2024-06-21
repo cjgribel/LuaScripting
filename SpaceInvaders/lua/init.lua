@@ -13,17 +13,10 @@ local function create_bouncy_entity(index)
     local entity = registry:create()
     print("Created entity ID:", entity)
     
-    -- Attach Transform
     registry:emplace(entity, Transform(0.0, 0.0))
-    
-    -- Attach Quad
     local size = 0.1 + math.random() * 0.5
-    registry:emplace(entity, QuadComponent(size, random_color()))
-    
-    -- Attach Circle collider
-    registry:emplace(entity, CircleColliderComponent(size/2))
-
-    -- Attach behavior
+    registry:emplace(entity, QuadComponent(size, random_color(), true))
+    registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     add_script(registry, entity, dofile("lua/bounce_behavior.lua"), "bounce_behavior")
 end
 
@@ -31,7 +24,7 @@ local function create_projectile_pool_entity()
     local entity = registry:create()
 
     -- Behavior
-    add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")
+    add_script(registry, entity, dofile("lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
     return entity
 end
 
@@ -51,7 +44,13 @@ print('Lua init script...')
 math.randomseed(os.time())
 
 -- Projectile entity
---local projectile_pool_entity = create_projectile_pool_entity()
+local projectile_pool_entity = create_projectile_pool_entity()
+-- Fire a few test projectiles
+local projectileBehavior = get_script(registry, projectile_pool_entity, "projectile_pool_behavior")
+projectileBehavior:fire(0.0, 0.0, 0.0, 0.0)
+--projectileBehavior.fire(1.0, 0.0, 0.0, 0.0)
+--projectileBehavior.fire(0.0, 1.0, 0.0, 0.0)
+--projectileBehavior.fire(1.0, 1.0, 0.0, 0.0)
 
 -- Create player(s)
 --local player_entity = create_player_entity(0.5, 0xffffffff, projectile_entity)
