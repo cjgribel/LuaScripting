@@ -307,7 +307,7 @@ bool Scene::init()
         lua.safe_script_file("lua/init.lua");
 
         // Run engine-side init code
-#if 1
+#if 0
         for (int i = 0; i < 5; ++i)
         {
             auto entity = registry.create();

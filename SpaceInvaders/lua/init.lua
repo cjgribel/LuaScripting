@@ -28,16 +28,18 @@ local function create_projectile_pool_entity()
     return entity
 end
 
---local function create_player_entity(size, color, projectile_pool_entity)
---    local entity = registry:create()
---    registry:emplace(entity, Transform(0.0, 0.0))
---    registry:emplace(entity, QuadComponent(size, color))
+local function create_player_entity(size, color, projectile_pool)
+    local entity = registry:create()
+    registry:emplace(entity, Transform(0.0, 0.0))
+    registry:emplace(entity, QuadComponent(size, color, true))
 --    registry:emplace(entity, CircleColliderComponent(size/2))
 
     -- Behavior
---    local player_table = add_script(registry, entity, dofile("lua/player_behavior.lua"), "player_behavior")
---    player_table.projectile_pool_entity = projectile_pool_entity
---end
+    local player_table = add_script(registry, entity, dofile("lua/player_behavior.lua"), "player_behavior")
+    player_table.projectile_pool = projectile_pool
+
+    return entity
+end
 
 print('Lua init script...')
 
@@ -53,10 +55,10 @@ projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
 --projectileBehavior.fire(1.0, 1.0, 0.0, 0.0)
 
 -- Create player(s)
---local player_entity = create_player_entity(0.5, 0xffffffff, projectile_entity)
+local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 50 do
+for i = 1, 5 do
     create_bouncy_entity(i)
 end
 
