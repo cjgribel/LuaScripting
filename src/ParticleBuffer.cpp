@@ -64,5 +64,5 @@ void ParticleBuffer::render(ShapeRendererPtr renderer)
 {
     renderer->push_points(points,
         nbr_points,
-        2);
+        4);
 }

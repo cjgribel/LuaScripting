@@ -13,18 +13,14 @@ namespace eeng {
         bool is_initialized = false;
 
         // Input placeholder
-        float axis_x = 0.0f, axis_y = 0.0f;
-        bool button_pressed = false;
+        v4f axes;
+        vec4<bool> buttons;
 
     public:
-        void update_input(
-            float controller_x,
-            float controller_y,
-            bool button_pressed)
+        void update_input(v4f axes, vec4<bool> buttons)
         {
-            this->axis_x = controller_x;
-            this->axis_y = controller_y;
-            this->button_pressed = button_pressed;
+            this->axes = axes;
+            this->buttons = buttons;
         }
 
         virtual bool init() = 0;

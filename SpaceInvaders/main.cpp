@@ -426,13 +426,28 @@ int main(int argc, char* argv[])
         }
 
         // Update input
-        const auto btn_A = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A);
-        const auto btn_B = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B);
-        const auto btn_X = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X);
-        const auto btn_Y = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y);
-        const auto axis_left_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f;
-        const auto axis_left_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f;
-        scene->update_input(axis_left_x, axis_left_y, btn_A);
+        v4f axes{
+            SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
+            SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f,
+            SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
+            SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f
+        };
+        vec4<bool> buttons{
+            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
+            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
+            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
+            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y)
+        };
+        // const auto btn_A = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A);
+        // const auto btn_B = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B);
+        // const auto btn_X = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X);
+        // const auto btn_Y = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y);
+        // const auto axis_left_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f;
+        // const auto axis_left_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f;
+        // const auto axis_right_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f;
+        // const auto axis_right_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f;
+        // scene->update_input(axis_left_x, axis_left_y, btn_A);
+        scene->update_input(axes, buttons);
 
         // Update scene
         scene->update(time_s, deltaTime_s);

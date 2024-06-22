@@ -144,9 +144,18 @@ namespace {
         }
     }
 
-    void update_input_script(sol::state& lua, float x, float y, bool button_pressed)
+    void update_input_script(sol::state& lua, v4f axes, vec4<bool> buttons)
     {
-        lua["update_input"](x, y, button_pressed);
+        lua["update_input"](
+            axes.x,
+            axes.y,
+            axes.z,
+            axes.w,
+            buttons.x,
+            buttons.y,
+            buttons.z,
+            buttons.w
+            );
     }
 
     // Called from Lua
@@ -291,7 +300,7 @@ bool Scene::init()
             // return -1;
             assert(0);
         }
-        update_input_script(lua, 0.0f, 0.0f, false);
+        //update_input_script(lua, 0.0f, 0.0f, false);
 
         // Attach registry to Lua state
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
@@ -325,7 +334,6 @@ bool Scene::init()
     {
         std::cerr << "Exception: " << e.what();
         throw std::runtime_error(e.what());
-        // return false;
     }
 
     is_initialized = true;
@@ -350,7 +358,7 @@ void Scene::update(float time_s, float deltaTime_s)
         0.0f, 0.0f, 0.0f, 1.0f
     });
 
-    update_input_script(lua, SceneBase::axis_x, SceneBase::axis_y, SceneBase::button_pressed);
+    update_input_script(lua, SceneBase::axes, SceneBase::buttons);
 
     particleBuffer.update(deltaTime_s);
 
@@ -376,14 +384,14 @@ void Scene::update(float time_s, float deltaTime_s)
             };
 
         auto view = registry.view<Transform, CircleColliderComponent>();
-        for (auto it1 = view.begin(); it1 != view.end(); ++it1) 
+        for (auto it1 = view.begin(); it1 != view.end(); ++it1)
         {
             auto entity1 = *it1;
             const auto& transform1 = view.get<Transform>(entity1);
             const auto& collider1 = view.get<CircleColliderComponent>(entity1);
             if (!collider1.is_active) continue;
 
-            for (auto it2 = it1; ++it2 != view.end(); ) 
+            for (auto it2 = it1; ++it2 != view.end(); )
             {
                 auto entity2 = *it2;
                 const auto& transform2 = view.get<Transform>(entity2);
@@ -397,7 +405,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 float radiusSum = collider1.r + collider2.r;
 
                 // Check for collision
-                if (distanceSquared < radiusSum * radiusSum) 
+                if (distanceSquared < radiusSum * radiusSum)
                 {
                     // Collision detected
 
@@ -535,6 +543,7 @@ void Scene::render(
     }
 
     // Add some test particles
+#if 0
     const int N = 1;
     for (int i = 0; i < N; i++)
     {
@@ -543,6 +552,7 @@ void Scene::render(
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
     }
+#endif
 
     // Render particles
     particleBuffer.render(renderer);
