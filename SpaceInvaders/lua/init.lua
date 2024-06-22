@@ -47,7 +47,7 @@ math.randomseed(os.time())
 local projectile_pool_entity = create_projectile_pool_entity()
 -- Fire a few test projectiles
 local projectileBehavior = get_script(registry, projectile_pool_entity, "projectile_pool_behavior")
-projectileBehavior:fire(0.0, 0.0, 0.0, 0.0)
+projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
 --projectileBehavior.fire(1.0, 0.0, 0.0, 0.0)
 --projectileBehavior.fire(0.0, 1.0, 0.0, 0.0)
 --projectileBehavior.fire(1.0, 1.0, 0.0, 0.0)
@@ -56,7 +56,7 @@ projectileBehavior:fire(0.0, 0.0, 0.0, 0.0)
 --local player_entity = create_player_entity(0.5, 0xffffffff, projectile_entity)
 
 -- Create 5 bouncing entities
-for i = 1, 15 do
+for i = 1, 50 do
     create_bouncy_entity(i)
 end
 

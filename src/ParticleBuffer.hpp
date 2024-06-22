@@ -8,7 +8,7 @@
 #include "ShapeRenderer.hpp"
 #include "vec.h"
 
-#define ParticlesCapacity 512
+#define ParticlesCapacity 1024
 using ShapeRendererPtr = std::shared_ptr<Renderer::ImPrimitiveRenderer>;
 
 class ParticleBuffer

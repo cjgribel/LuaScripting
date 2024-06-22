@@ -1,7 +1,7 @@
 local node = {
     velocity = {x = 1.0, y = 0.0},
-    is_active = false
-    --projectile_pool_behavior = nil
+    is_active = false,
+    projectile_pool = nil
 }
 
 function node:init()
@@ -24,7 +24,15 @@ end
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, entity)
     -- Deactivate if hitting target, going outside of bounds etc
-    --projectile_pool_behavior.release(self.id())
+    
+    -- Deactivate if collided with bouny entity
+    --if self.is_active then
+    local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    if bounceBehavior then
+        self.projectile_pool:release(self.id())
+
+    end
+    --end
 end
 
 function node:destroy()

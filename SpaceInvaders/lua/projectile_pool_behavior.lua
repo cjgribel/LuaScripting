@@ -20,8 +20,10 @@ function ProjectilePool:init()
         local size = 0.2
         registry:emplace(entity, QuadComponent(size, 0xffffffff, false))
         registry:emplace(entity, CircleColliderComponent(size * 0.5, false))
+
+        print('Adding projectile_behavior to: ', entity)
         local projectile_behavior = add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")
-        --projectile_behavior.projectile_pool = self
+        projectile_behavior.projectile_pool = self
 
         table.insert(self.pool, { entity = entity, active = false })
         self.entityToIndex[entity] = i
@@ -36,6 +38,9 @@ function ProjectilePool:update(dt)
         -- Update projectile logic here
         -- e.g., move the projectile, check for collisions, emit particles
     end
+
+    --self:fire(0.0, 5.0*dt, 0.0, 0.0)
+    self:fire(-5.0 + 10.0*math.random(), -5.0 + 10.0*math.random(), 0.0, 0.0)
 end
 
 -- (nx, ny) points away from this entity
@@ -66,6 +71,9 @@ end
 
 -- Return a projectile to the pool
 function ProjectilePool:release(entity)
+
+    
+
     local circle_collider = self.owner:get(entity, CircleColliderComponent)
     local quad = self.owner:get(entity, QuadComponent)
     circle_collider.is_active, quad.is_visible = false, false
@@ -88,16 +96,26 @@ function ProjectilePool:release(entity)
     end
     
     self.activeCount = self.activeCount - 1
+
+    --print('ProjectilePool:release', self.activeCount)
 end
 
 -- Fire a projectile from a given position with a given velocity
 function ProjectilePool:fire(x, y, dx, dy)
     local entity = self:get()
     if entity then
-        local transform = self.owner:get(self.id(), Transform)
+        local transform = self.owner:get(entity, Transform)
         --local velocity = registry:get(entity, "Velocity")
         transform.x, transform.y = x, y
         --velocity.dx, velocity.dy = dx, dy
+
+        -- Set velocity too
+        local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+        if projectileBehavior then
+            projectileBehavior.velocity.x, projectileBehavior.velocity.y = dx, dy
+            -- Interact with the scoreBehavior script
+            --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
+        end
     end
 end
 
