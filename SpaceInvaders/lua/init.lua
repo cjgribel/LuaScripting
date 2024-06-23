@@ -14,7 +14,7 @@ local function create_bouncy_entity(index)
     print("Created entity ID:", entity)
     
     registry:emplace(entity, Transform(0.0, 0.0))
-    local size = 0.1 + math.random() * 0.5
+    local size = 0.5 + math.random() * 0.0
     registry:emplace(entity, QuadComponent(size, random_color(), true))
     registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     add_script(registry, entity, dofile("lua/bounce_behavior.lua"), "bounce_behavior")
@@ -58,7 +58,7 @@ projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 5 do
+for i = 1, 10 do
     create_bouncy_entity(i)
 end
 

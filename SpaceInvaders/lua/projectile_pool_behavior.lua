@@ -18,8 +18,8 @@ function ProjectilePool:init()
         --registry:emplace(entity, "Velocity", { dx = 0, dy = 0 })
 
         local size = 0.2
-        registry:emplace(entity, QuadComponent(size, 0xffffffff, false))
-        registry:emplace(entity, CircleColliderComponent(size * 0.5, false))
+        registry:emplace(entity, QuadComponent(size, 0xff00ffff, false))
+        registry:emplace(entity, CircleColliderComponent(size * 0.6, false))
 
         print('Adding projectile_behavior to: ', entity)
         local projectile_behavior = add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")
@@ -54,7 +54,7 @@ end
 -- Get an inactive projectile from the pool
 function ProjectilePool:get()
 
-    print(self.activeCount)
+    --print(self.activeCount)
 
     if self.activeCount < self.poolSize then
         self.activeCount = self.activeCount + 1
@@ -67,7 +67,7 @@ function ProjectilePool:get()
         local quad = self.owner:get(projectile.entity, QuadComponent)
         circle_collider.is_active, quad.is_visible = true, true
 
-        print(self.activeCount)
+        --print(self.activeCount)
         return projectile.entity
     end
     return nil -- Pool exhausted
@@ -124,7 +124,7 @@ function ProjectilePool:release(entity)
     self.activeCount = self.activeCount - 1
     self:activate_entity(entity, false)
 
-    print(self.activeCount)
+    --print(self.activeCount)
     --print('ProjectilePool:release', self.activeCount)
 end
 

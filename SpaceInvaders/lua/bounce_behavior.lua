@@ -53,6 +53,15 @@ function node:on_collision(x, y, nx, ny, entity)
         -- Interact with the scoreBehavior script
         --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     end
+
+    local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+    if projectileBehavior then
+        local transform = self.owner:get(self.id(), Transform)
+        transform.x, transform.y = -4.5, 4.5
+
+        self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+        self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+    end
 end
 
 function node:destroy()
