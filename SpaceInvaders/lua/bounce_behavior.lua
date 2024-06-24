@@ -1,6 +1,6 @@
 local node = {
-    MIN_BOUND = -5.0,
-    MAX_BOUND = 5.0,
+    --MIN_BOUND = -5.0,
+    --MAX_BOUND = 5.0,
     VELOCITY_MIN = -5.0,
     VELOCITY_MAX = 5.0
 }
@@ -23,24 +23,22 @@ function node:update(dt)
     transform.x = transform.x + self.velocity.x * dt
     transform.y = transform.y + self.velocity.y * dt
 
-    -- Bounce off walls at MIN_BOUND and MAX_BOUND considering the radius
-    if transform.x - radius <= self.MIN_BOUND or transform.x + radius >= self.MAX_BOUND then
+    -- Bounce at bounds
+    if transform.x - radius <= config.bounds.left or transform.x + radius >= config.bounds.right then
         self.velocity.x = -self.velocity.x
     end
-
-    if transform.y - radius <= self.MIN_BOUND or transform.y + radius >= self.MAX_BOUND then
+    if transform.y - radius <= config.bounds.bottom or transform.y + radius >= config.bounds.top then
         self.velocity.y = -self.velocity.y
     end
 
-    -- Clamp considering the radius
-    transform.x = math.max(self.MIN_BOUND + radius, math.min(transform.x, self.MAX_BOUND - radius))
-    transform.y = math.max(self.MIN_BOUND + radius, math.min(transform.y, self.MAX_BOUND - radius))
+    -- Clamp to bounds
+    transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
+    transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
 end
 
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, entity)
     local quad = self.owner:get(self.id(), QuadComponent)
-    local quad_color = quad.color
 
     --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
     --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
@@ -58,12 +56,13 @@ function node:on_collision(x, y, nx, ny, entity)
     if projectileBehavior then
         local transform = self.owner:get(self.id(), Transform)
         -- Explosion
-        emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad_color)
+        emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
         
         -- Reset object
         transform.x, transform.y = -4.5, 4.5
         self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
         self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+        quad.color = random_color()
     end
 end
 

@@ -45,20 +45,25 @@ print('Lua init script...')
 
 math.randomseed(os.time())
 
+config = {
+    bounds = { left = -5, right = 10, bottom = -5, top = 5 },
+    
+    is_out_of_bounds = function(self, x, y)
+        return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top
+    end
+}
+
 -- Projectile entity
 local projectile_pool_entity = create_projectile_pool_entity()
 -- Fire a few test projectiles
 local projectileBehavior = get_script(registry, projectile_pool_entity, "projectile_pool_behavior")
-projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
---projectileBehavior.fire(1.0, 0.0, 0.0, 0.0)
---projectileBehavior.fire(0.0, 1.0, 0.0, 0.0)
---projectileBehavior.fire(1.0, 1.0, 0.0, 0.0)
+--projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
 
 -- Create player(s)
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 20 do
+for i = 1, 3 do
     create_bouncy_entity(i)
 end
 

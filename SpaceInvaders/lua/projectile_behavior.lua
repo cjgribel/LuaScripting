@@ -22,7 +22,10 @@ function node:update(dt)
     transform.y = transform.y + self.velocity.y * dt
 
     -- Despawn if out of bounds
-    if transform.x < -5.0 or transform.x > 5.0 or transform.y < -5.0 or transform.y > 5.0 then
+    --if transform.x < config.bounds.left or transform.x > config.bounds.right or transform.y < config.bounds.bottom or transform.y > config.bounds.top then
+    --    self.projectile_pool:release(self.id())
+    --end
+    if config:is_out_of_bounds(transform.x, transform.y) then
         self.projectile_pool:release(self.id())
     end
 

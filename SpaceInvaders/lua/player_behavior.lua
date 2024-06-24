@@ -1,6 +1,6 @@
 local node = {
-    MIN_BOUND = -5.0,
-    MAX_BOUND = 5.0,
+    --MIN_BOUND = -5.0,
+    --MAX_BOUND = 5.0,
     fire_cooldown = 0.1,
     fire_delay = 0.0,
     projectile_pool = nil
@@ -19,9 +19,9 @@ function node:update(dt)
     transform.x = transform.x + input.axis_left_x * dt * 10.0
     transform.y = transform.y - input.axis_left_y * dt * 10.0
 
-    -- Clamp considering the radius
-    transform.x = math.max(self.MIN_BOUND + radius, math.min(transform.x, self.MAX_BOUND - radius))
-    transform.y = math.max(self.MIN_BOUND + radius, math.min(transform.y, self.MAX_BOUND - radius))
+    -- Clamp to bounds
+    transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
+    transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
 
     --if input.button_x then
         --print('button pressed')
