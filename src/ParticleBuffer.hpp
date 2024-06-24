@@ -23,6 +23,8 @@ class ParticleBuffer
 public:
     void push_point(const v3f& p, const v3f& v, uint color);
 
+    void push_explosion(const v3f& p, const v3f& v, uint color);
+
     int size();
 
     int capacity();
@@ -30,6 +32,8 @@ public:
     // push_burst
 
     void update(float dt);
+
+    void update_explosion(float dt);
 
     void render(ShapeRendererPtr renderer);
 };

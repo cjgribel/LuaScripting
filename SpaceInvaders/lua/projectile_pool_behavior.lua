@@ -19,7 +19,7 @@ function ProjectilePool:init()
 
         local size = 0.2
         registry:emplace(entity, QuadComponent(size, 0xff00ffff, false))
-        registry:emplace(entity, CircleColliderComponent(size * 0.6, false))
+        registry:emplace(entity, CircleColliderComponent(size * 0.75, false))
 
         print('Adding projectile_behavior to: ', entity)
         local projectile_behavior = add_script(registry, entity, dofile("lua/projectile_behavior.lua"), "projectile_behavior")

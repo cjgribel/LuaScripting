@@ -58,7 +58,7 @@ projectileBehavior:fire(0.0, 0.0, 0.0, 1.0)
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 10 do
+for i = 1, 20 do
     create_bouncy_entity(i)
 end
 

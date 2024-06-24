@@ -281,7 +281,7 @@ bool Scene::init()
         lua["add_script"] = &add_script;
         lua["get_script"] = &get_script;
 
-        // Placeholder particle emitter function
+        // Placeholder particle emitter functions
         const auto emit_particle = [&](
             float x,
             float y,
@@ -291,7 +291,17 @@ bool Scene::init()
             {
                 particleBuffer.push_point(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
             };
+        const auto emit_explosion = [&](
+            float x,
+            float y,
+            float vx,
+            float vy,
+            uint32_t color)
+            {
+                particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
+            };
         lua["emit_particle"] = emit_particle;
+        lua["emit_explosion"] = emit_explosion;
 
         // Register to Lua: input module
         register_input_script(lua);
