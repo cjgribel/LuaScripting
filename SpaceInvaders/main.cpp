@@ -145,6 +145,10 @@ int main(int argc, char* argv[])
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
 
+    // ImGui fonts
+    io.Fonts->AddFontFromFileTTF("../../assets/fonts/ProggyClean.ttf", 13.0f); // Default
+    io.Fonts->AddFontFromFileTTF("../../assets/fonts/DroidSans.ttf", 26.0f);
+
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
@@ -378,7 +382,14 @@ int main(int argc, char* argv[])
         if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
         {
             scene->renderUI();
-
+            // Default dark theme blue values
+            // ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.40f));
+            // ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+            // ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.53f, 0.98f, 1.00f));
+            // Green-ish version
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.98f, 0.59f, 0.40f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.98f, 0.59f, 1.00f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.78f, 0.35f, 1.00f));
             float available_width = ImGui::GetContentRegionAvail().x;
             if (ImGui::Button("Reload Scene", ImVec2(available_width, 0.0f)))
             {
@@ -386,6 +397,7 @@ int main(int argc, char* argv[])
                 scene = std::make_shared<Scene>();
                 scene->init();
             }
+            ImGui::PopStyleColor(3);
         }
 
         ImGui::End(); // end info window
@@ -403,7 +415,7 @@ int main(int argc, char* argv[])
         glDepthRange(0, 1);      // Z-buffer range is [0,1], where 0 is at z-near and 1 is at z-far
 
         // Define viewport transform = Clip -> Screen space (applied before rasterization)
-        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
         // Bind the default framebuffer (only needed when using multiple render targets)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -426,27 +438,18 @@ int main(int argc, char* argv[])
         }
 
         // Update input
-        v4f axes{
+        const v4f axes{
             SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
             SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f,
             SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
             SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f
         };
-        vec4<bool> buttons{
+        const vec4<bool> buttons{
             SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
             SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
             SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
             SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y)
         };
-        // const auto btn_A = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A);
-        // const auto btn_B = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B);
-        // const auto btn_X = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X);
-        // const auto btn_Y = SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y);
-        // const auto axis_left_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f;
-        // const auto axis_left_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f;
-        // const auto axis_right_x = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f;
-        // const auto axis_right_y = SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f;
-        // scene->update_input(axis_left_x, axis_left_y, btn_A);
         scene->update_input(axes, buttons);
 
         // Update scene

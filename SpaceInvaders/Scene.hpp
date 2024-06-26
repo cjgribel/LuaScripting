@@ -108,6 +108,8 @@ protected:
     const float nearPlane = 1.0f, farPlane = 500.0f;
     int drawcallCount = 0;
 
+    m4f P, V;
+
     ParticleBuffer particleBuffer{};
 
 public:

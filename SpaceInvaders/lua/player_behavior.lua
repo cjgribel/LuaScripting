@@ -3,7 +3,8 @@ local node = {
     --MAX_BOUND = 5.0,
     fire_cooldown = 0.1,
     fire_delay = 0.0,
-    projectile_pool = nil
+    projectile_pool = nil,
+    projectiles_fired = 0
 }
 
 function node:init()
@@ -37,11 +38,23 @@ function node:update(dt)
             local dir_x = input.axis_right_x/axis_right_len
             local dir_y = input.axis_right_y/axis_right_len
             self.projectile_pool:fire(transform.x, transform.y, dir_x * 12.0, dir_y * -12.0)
+
+            self.projectiles_fired = self.projectiles_fired + 1
             self.fire_delay = 0.0
         end
     end
     self.fire_delay = self.fire_delay + dt
     --print(self.fire_delay, self.fire_cooldown)
+
+    ImGui_SetNextWindowPos(500, 100)
+    ImGui_Begin("ProjectileCount")
+    ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
+    ImGui_End()
+
+    ImGui_SetNextWindowPos(-5, 5)
+    ImGui_Begin("ProjectileCount2")
+    ImGui_Text('WORLD Projectiles fired ' .. tostring(self.projectiles_fired))
+    ImGui_End()
 end
 
 -- (nx, ny) points away from this entity

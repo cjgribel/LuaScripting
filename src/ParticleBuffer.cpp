@@ -38,6 +38,31 @@ namespace {
             lerp<float>(b0, b1, xf)
         };
     }
+
+    inline vec3f color_heatmap_(float x)
+    {
+        const int nbrStrata = 4;
+        float xf, xs, x0, x1;
+        xs = x * nbrStrata;
+        xf = modff(x * nbrStrata, &x0);
+        x1 = x0 + 1;
+
+        float r0 = step_up(3, x0);
+        float r1 = step_up(3, x1);
+        float g0 = step_updown(1, 3, x0);
+        float g1 = step_updown(1, 3, x1);
+        float b0 = step_down(1, x0);
+        float b1 = step_down(1, x1);
+
+        //        float r = lerp<float>(step_up(3, x0), step_up(3, x1), xf);
+
+        return
+        {
+            lerp<float>(r0, r1, xf),
+            lerp<float>(g0, g1, xf),
+            lerp<float>(b0, b1, xf)
+        };
+    }
 }
 
 void ParticleBuffer::push_point(const v3f& p, const v3f& v, uint color)
@@ -59,7 +84,7 @@ void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
     float vel_factor = clamp(vel_len / vel_max, 0.0f, 1.0f);
     float theta_spread = lerp(theta_max, theta_min, vel_factor);
 
-    std::cout << v << ", " << vel_factor << ", " << theta_spread << std::endl;
+    //std::cout << v << ", " << vel_factor << ", " << theta_spread << std::endl;
 
     v3f vn;
     if (vel_len < 0.001f)
@@ -74,7 +99,7 @@ void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
         const float cos_theta = std::cos(theta);
         const v3f pvn = v3f{
             vn.x * cos_theta - vn.y * sin_theta,
-            vn.x * sin_theta + vn.y * cos_theta, 
+            vn.x * sin_theta + vn.y * cos_theta,
             0.0f
         };
         const float speed = rnd(1.0f, 7.5f);

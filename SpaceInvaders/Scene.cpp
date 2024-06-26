@@ -250,6 +250,50 @@ namespace {
     }
 }
 
+// ImGui -> Lua integration
+namespace {
+    void ImGui_Text(const std::string& text)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImFont* customFont = io.Fonts->Fonts[1];
+        ImGui::PushFont(customFont);
+
+        ImGui::TextUnformatted(text.c_str());
+
+        ImGui::PopFont();
+    }
+
+    void ImGui_SetNextWindowPos(float x, float y) {
+        ImVec2 pos(x, y);
+        ImGui::SetNextWindowPos(pos);
+    }
+
+    // void ImGui_SetNextWindowSize(float width, float height) {
+    //     ImVec2 size(width, height);
+    //     ImGui::SetNextWindowSize(size);
+    // }
+
+    void ImGui_Begin(const char* name)
+    {
+        const auto flags =
+            ImGuiWindowFlags_NoTitleBar
+            | ImGuiWindowFlags_AlwaysAutoResize
+            | ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoScrollbar
+            | ImGuiWindowFlags_NoScrollWithMouse
+            | ImGuiWindowFlags_NoCollapse
+            | ImGuiWindowFlags_NoBackground
+            | ImGuiWindowFlags_NoDecoration;
+
+        ImGui::Begin(name, nullptr, flags);
+    }
+
+    void ImGui_End()
+    {
+        ImGui::End();
+    }
+}
+
 bool Scene::init()
 {
     assert(!is_initialized);
@@ -321,6 +365,40 @@ bool Scene::init()
         registerQuadComponent(lua);
         registerCircleColliderComponent(lua);
         registerScriptedBehaviorComponent(lua);
+
+        // ImGui -> Lua
+        lua.set_function("ImGui_Text", &ImGui_Text);
+        //lua.set_function("ImGui_SetNextWindowSize", &ImGui_SetNextWindowSize);
+        lua.set_function("ImGui_Begin", &ImGui_Begin);
+        lua.set_function("ImGui_End", &ImGui_End);
+        // lua.set_function("ImGui_SetNextWindowPos", &ImGui_SetNextWindowPos);
+        lua.set_function("ImGui_SetNextWindowPos", [&](float x, float y)
+            {
+                // auto VP = mat4f::GL_Viewport(vp.l, vp.r, vp.t, vp.b, vp.n, vp.f);
+                auto VP = mat4f::GL_Viewport(0.0f, 1600.0f, 900.0f, 0.0f, 0.0f, 1.0f);
+                // auto VPinverse = mat4f::GL_ViewportInverse(VP);
+
+                m4f VP_PROJ_MV = VP * P * V;
+                v4f pos4_ss = VP_PROJ_MV * v4f{ x, y, 0.0f, 1.0f };
+
+                if (pos4_ss.w < 0) return; // Behind near plane
+                // TODO: Cull against the other frustum planes
+
+                v2f pos2_ss = pos4_ss.xy() * 1.0f / pos4_ss.w;
+
+                // //    bool op = true; // ???
+                // //    bool* p_open = &op;
+
+                //     //    ImGui::SetWindowPos(ImVec2{pos2_ss.x, camera.frustum.h - pos2_ss.y});
+                //     //    if (!ImGui::GetID(window_name))
+
+                //     ImGui::SetNextWindowPos(ImVec2{pos2_ss.x, win_h - pos2_ss.y},
+                //                             ImGuiCond_Always,
+                //                             ImVec2 {0.0f, 0.0f});
+
+                // ImGui_SetNextWindowPos(x, y);
+                ImGui_SetNextWindowPos(pos2_ss.x, 900.0f - pos2_ss.y);
+            });
 
         // Run init script
         lua.safe_script_file("lua/init.lua");
@@ -512,10 +590,10 @@ void Scene::render(
     // const float nearPlane = 1.0f, farPlane = 500.0f;
     // m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f * fTO_RAD, aspectRatio, nearPlane, farPlane);
     // Orthographic projection matrix
-    m4f P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, 1.0f, 10.0f);
+    P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, 1.0f, 10.0f);
 
     // View matrix
-    m4f V = m4f::TRS(
+    V = m4f::TRS(
         eyePos,
         0.0f,
         { 1.0f, 0.0f, 0.0f },

@@ -59,7 +59,10 @@ function node:on_collision(x, y, nx, ny, entity)
         emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
         
         -- Reset object
-        transform.x, transform.y = -4.5, 4.5
+        --transform.x = -4.5
+        --transform.y = 4.5
+        transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
+        transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
         self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
         self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
         quad.color = random_color()
