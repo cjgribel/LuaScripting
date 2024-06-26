@@ -105,15 +105,15 @@ protected:
     entt::registry registry{};
 
     linalg::v3f lightPos, eyePos;
-    const float nearPlane = 1.0f, farPlane = 500.0f;
+    const float nearPlane = 1.0f, farPlane = 10.0f;
     int drawcallCount = 0;
 
-    m4f P, V;
+    m4f VP, P, V;
 
     ParticleBuffer particleBuffer{};
 
 public:
-    bool init() override;
+    bool init(const v2i& windowSize) override;
 
     void update(float time_s, float deltaTime_s) override;
 
@@ -121,8 +121,6 @@ public:
 
     void render(
         float time_s,
-        int screenWidth,
-        int screenHeight,
         ShapeRendererPtr renderer) override;
 
     void destroy() override;

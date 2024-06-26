@@ -26,8 +26,9 @@
 #include "Scene.hpp"
 
 using namespace linalg;
-const int WINDOW_WIDTH = 1600;
-const int WINDOW_HEIGHT = 900;
+//const int WINDOW_WIDTH = 1600;
+//const int WINDOW_HEIGHT = 900;
+v2i gWindowSize {1600, 900};
 float FRAMETIME_MIN_MS = 1000.0f / 60;
 bool WIREFRAME = false;
 bool SOUND_PLAY = false;
@@ -83,8 +84,8 @@ int main(int argc, char* argv[])
     SDL_Window* window = SDL_CreateWindow("Hello SDL2 + sol2 + enTT + Dear ImGui",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
+        gWindowSize.x,
+        gWindowSize.y,
         SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     if (!window)
     {
@@ -240,7 +241,7 @@ int main(int argc, char* argv[])
     renderer->init();
 
     auto scene = std::make_shared<Scene>();
-    scene->init();
+    scene->init(gWindowSize);
 
     // Main loop
     float time_s = 0.0f, time_ms, deltaTime_s = 0.016f;
@@ -395,7 +396,7 @@ int main(int argc, char* argv[])
             {
                 scene->destroy();
                 scene = std::make_shared<Scene>();
-                scene->init();
+                scene->init(gWindowSize);
             }
             ImGui::PopStyleColor(3);
         }
@@ -415,7 +416,7 @@ int main(int argc, char* argv[])
         glDepthRange(0, 1);      // Z-buffer range is [0,1], where 0 is at z-near and 1 is at z-far
 
         // Define viewport transform = Clip -> Screen space (applied before rasterization)
-        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        glViewport(0, 0, gWindowSize.x, gWindowSize.y);
 
         // Bind the default framebuffer (only needed when using multiple render targets)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -456,7 +457,7 @@ int main(int argc, char* argv[])
         scene->update(time_s, deltaTime_s);
 
         // Render scene
-        scene->render(time_s, WINDOW_WIDTH, WINDOW_HEIGHT, renderer);
+        scene->render(time_s, renderer);
 
         // Render GUI
         ImGui::Render();

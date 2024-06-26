@@ -295,10 +295,13 @@ namespace {
     }
 }
 
-bool Scene::init()
+bool Scene::init(const v2i& windowSize)
 {
     assert(!is_initialized);
+
     std::cout << "Scene::init()" << std::endl;
+
+    SceneBase::windowSize = windowSize;
 
     // Register registry meta functions to components
     register_meta_component<Transform>();
@@ -369,36 +372,14 @@ bool Scene::init()
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);
-        //lua.set_function("ImGui_SetNextWindowSize", &ImGui_SetNextWindowSize);
         lua.set_function("ImGui_Begin", &ImGui_Begin);
         lua.set_function("ImGui_End", &ImGui_End);
-        // lua.set_function("ImGui_SetNextWindowPos", &ImGui_SetNextWindowPos);
-        lua.set_function("ImGui_SetNextWindowPos", [&](float x, float y)
+        lua.set_function("ImGui_SetNextWindowPos", &ImGui_SetNextWindowPos);
+        lua.set_function("ImGui_SetNextWindowWorldPos", [&](float x, float y)
             {
-                // auto VP = mat4f::GL_Viewport(vp.l, vp.r, vp.t, vp.b, vp.n, vp.f);
-                auto VP = mat4f::GL_Viewport(0.0f, 1600.0f, 900.0f, 0.0f, 0.0f, 1.0f);
-                // auto VPinverse = mat4f::GL_ViewportInverse(VP);
-
-                m4f VP_PROJ_MV = VP * P * V;
-                v4f pos4_ss = VP_PROJ_MV * v4f{ x, y, 0.0f, 1.0f };
-
-                if (pos4_ss.w < 0) return; // Behind near plane
-                // TODO: Cull against the other frustum planes
-
-                v2f pos2_ss = pos4_ss.xy() * 1.0f / pos4_ss.w;
-
-                // //    bool op = true; // ???
-                // //    bool* p_open = &op;
-
-                //     //    ImGui::SetWindowPos(ImVec2{pos2_ss.x, camera.frustum.h - pos2_ss.y});
-                //     //    if (!ImGui::GetID(window_name))
-
-                //     ImGui::SetNextWindowPos(ImVec2{pos2_ss.x, win_h - pos2_ss.y},
-                //                             ImGuiCond_Always,
-                //                             ImVec2 {0.0f, 0.0f});
-
-                // ImGui_SetNextWindowPos(x, y);
-                ImGui_SetNextWindowPos(pos2_ss.x, 900.0f - pos2_ss.y);
+                // Transform from world to screen space
+                const v4f pos_ss = (VP * P * V) * v4f{ x, y, 0.0f, 1.0f };
+                ImGui_SetNextWindowPos(pos_ss.x/pos_ss.w, SceneBase::windowSize.y - pos_ss.y/pos_ss.w);
             });
 
         // Run init script
@@ -434,12 +415,14 @@ void Scene::update(float time_s, float deltaTime_s)
 {
     assert(is_initialized);
 
+    // Light position
     lightPos = xyz(m4f::TRS(
         { 1000.0f, 1000.0f, 1000.0f },
         time_s * 0.0f,
         { 0.0f, 1.0f, 0.0f },
         { 1.0f, 1.0f, 1.0f }) * linalg::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
+    // Camera position
     eyePos = xyz(m4f::TRS(
         { 0.0f, 0.0f, 5.0f },
         0.0f,
@@ -447,6 +430,16 @@ void Scene::update(float time_s, float deltaTime_s)
         { 1.0f, 1.0f, 1.0f }) * vec4 {
         0.0f, 0.0f, 0.0f, 1.0f
     });
+
+    // Viewport matrix
+    VP = mat4f::GL_Viewport(0.0f, SceneBase::windowSize.x, SceneBase::windowSize.y, 0.0f, 0.0f, 1.0f);
+
+    // Projection matrix
+    const float aspectRatio = float(SceneBase::windowSize.x) / SceneBase::windowSize.y;
+    P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, nearPlane, farPlane);
+
+    // View matrix
+    V = m4f::TRS(eyePos, 0.0f, v3f { 1.0f, 0.0f, 0.0f }, v3f { 1.0f, 1.0f, 1.0f }).inverse();
 
     update_input_script(lua, SceneBase::axes, SceneBase::buttons);
 
@@ -581,25 +574,9 @@ void Scene::renderUI()
 
 void Scene::render(
     float time_s,
-    int screenWidth,
-    int screenHeight,
     ShapeRendererPtr renderer)
 {
     assert(is_initialized);
-
-    // Perspective projection matrix
-    const float aspectRatio = float(screenWidth) / screenHeight;
-    // const float nearPlane = 1.0f, farPlane = 500.0f;
-    // m4f P = m4f::GL_PerspectiveProjectionRHS(60.0f * fTO_RAD, aspectRatio, nearPlane, farPlane);
-    // Orthographic projection matrix
-    P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, 1.0f, 10.0f);
-
-    // View matrix
-    V = m4f::TRS(
-        eyePos,
-        0.0f,
-        { 1.0f, 0.0f, 0.0f },
-        { 1.0f, 1.0f, 1.0f }).inverse();
 
     // Push some test shapes
     // renderer->push_states(Renderer::Color4u::Red);
