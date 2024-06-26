@@ -130,7 +130,8 @@ namespace {
     // Register the input module with Lua
     void register_input_script(sol::state& lua)
     {
-        sol::load_result result = lua.load_file("lua/input.lua");
+        // sol::load_result result = lua.load_file("lua/input.lua");
+        sol::load_result result = lua.load_file("../../SpaceInvaders/lua/input.lua"); // TODO: working directory
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "Failed to load input.lua: " << err.what() << std::endl;
@@ -401,7 +402,8 @@ bool Scene::init()
             });
 
         // Run init script
-        lua.safe_script_file("lua/init.lua");
+        // lua.safe_script_file("lua/init.lua");
+        lua.safe_script_file("../../SpaceInvaders/lua/init.lua"); // TODO: working directory
 
         // Run engine-side init code
 #if 0

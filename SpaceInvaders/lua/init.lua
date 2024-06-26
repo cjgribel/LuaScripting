@@ -17,14 +17,14 @@ local function create_bouncy_entity(index)
     local size = 0.5 + math.random() * 0.0
     registry:emplace(entity, QuadComponent(size, random_color(), true))
     registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
-    add_script(registry, entity, dofile("lua/bounce_behavior.lua"), "bounce_behavior")
+    add_script(registry, entity, dofile("../../SpaceInvaders/lua/bounce_behavior.lua"), "bounce_behavior")
 end
 
 local function create_projectile_pool_entity()
     local entity = registry:create()
 
     -- Behavior
-    add_script(registry, entity, dofile("lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
+    add_script(registry, entity, dofile("../../SpaceInvaders/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
     return entity
 end
 
@@ -35,7 +35,7 @@ local function create_player_entity(size, color, projectile_pool)
 --    registry:emplace(entity, CircleColliderComponent(size/2))
 
     -- Behavior
-    local player_table = add_script(registry, entity, dofile("lua/player_behavior.lua"), "player_behavior")
+    local player_table = add_script(registry, entity, dofile("../../SpaceInvaders/lua/player_behavior.lua"), "player_behavior")
     player_table.projectile_pool = projectile_pool
 
     return entity

@@ -46,10 +46,10 @@ function node:update(dt)
     self.fire_delay = self.fire_delay + dt
     --print(self.fire_delay, self.fire_cooldown)
 
-    ImGui_SetNextWindowPos(500, 100)
-    ImGui_Begin("ProjectileCount")
-    ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
-    ImGui_End()
+    --ImGui_SetNextWindowPos(500, 100)
+    --ImGui_Begin("ProjectileCount")
+    --ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
+    --ImGui_End()
 
     ImGui_SetNextWindowPos(-5, 5)
     ImGui_Begin("ProjectileCount2")
