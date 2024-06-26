@@ -48,7 +48,7 @@ function ProjectilePool:on_collision(x, y, nx, ny, entity)
 end
 
 function ProjectilePool:destroy()
-
+    print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
 end
 
 -- Get an inactive projectile from the pool

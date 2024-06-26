@@ -52,9 +52,10 @@ function node:update(dt)
     --ImGui_End()
 
     --ImGui_SetNextWindowWorldPos(-5, 5)
-    ImGui_SetNextWindowWorldPos(-5, 5)
+    ImGui_SetNextWindowWorldPos(-5, 6.5)
     ImGui_Begin("ProjectileCount2")
-    ImGui_Text('WORLD Projectiles fired ' .. tostring(self.projectiles_fired))
+    ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
+    ImGui_Text('Enemies killed ' .. tostring(config.enemy_kill_count))
     ImGui_End()
 end
 

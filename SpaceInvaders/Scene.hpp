@@ -119,9 +119,7 @@ public:
 
     void renderUI() override;
 
-    void render(
-        float time_s,
-        ShapeRendererPtr renderer) override;
+    void render(float time_s, ShapeRendererPtr renderer) override;
 
     void destroy() override;
 };

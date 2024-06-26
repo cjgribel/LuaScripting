@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 
     // ImGui fonts
     io.Fonts->AddFontFromFileTTF("../../assets/fonts/ProggyClean.ttf", 13.0f); // Default
-    io.Fonts->AddFontFromFileTTF("../../assets/fonts/DroidSans.ttf", 26.0f);
+    io.Fonts->AddFontFromFileTTF("../../assets/fonts/ProggyClean.ttf", 26.0f);
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

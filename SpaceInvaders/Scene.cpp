@@ -572,16 +572,9 @@ void Scene::renderUI()
     // }
 }
 
-void Scene::render(
-    float time_s,
-    ShapeRendererPtr renderer)
+void Scene::render( float time_s, ShapeRendererPtr renderer)
 {
     assert(is_initialized);
-
-    // Push some test shapes
-    // renderer->push_states(Renderer::Color4u::Red);
-    // renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 5.0f);
-    // renderer->pop_states<Renderer::Color4u>();
 
     // Background quad
     renderer->push_states(Renderer::Color4u{ 0x40ffffff });

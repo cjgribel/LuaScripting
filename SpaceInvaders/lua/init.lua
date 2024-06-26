@@ -47,10 +47,10 @@ math.randomseed(os.time())
 
 config = {
     bounds = { left = -5, right = 10, bottom = -5, top = 5 },
-    
     is_out_of_bounds = function(self, x, y)
         return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top
-    end
+    end,
+    enemy_kill_count = 0
 }
 
 -- Projectile entity
@@ -63,7 +63,7 @@ local projectileBehavior = get_script(registry, projectile_pool_entity, "project
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 3 do
+for i = 1, 30 do
     create_bouncy_entity(i)
 end
 

@@ -55,12 +55,14 @@ function node:on_collision(x, y, nx, ny, entity)
     local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
         local transform = self.owner:get(self.id(), Transform)
+        
         -- Explosion
         emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
         
+        -- Kill counter
+        config.enemy_kill_count = config.enemy_kill_count + 1
+
         -- Reset object
-        --transform.x = -4.5
-        --transform.y = 4.5
         transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
         transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
         self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
@@ -70,7 +72,7 @@ function node:on_collision(x, y, nx, ny, entity)
 end
 
 function node:destroy()
-	print('bye, bye! from: node #' .. self.id())
+	print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
 end
 
 return node
