@@ -31,6 +31,7 @@ function node:update(dt)
     --    self.projectile_pool:fire(transform.x, transform.y, -1.0 + 2.0*math.random(), -1.0 + 2.0*math.random())
     --end
 
+    -- Firing
     if self.fire_delay > self.fire_cooldown then
         local axis_right_len = math.sqrt(input.axis_right_x * input.axis_right_x + input.axis_right_y * input.axis_right_y)
         if axis_right_len > 0.5 then
@@ -45,6 +46,12 @@ function node:update(dt)
     end
     self.fire_delay = self.fire_delay + dt
     --print(self.fire_delay, self.fire_cooldown)
+
+    -- Trail particles
+    local axis_left_len = math.sqrt(input.axis_left_x * input.axis_left_x + input.axis_left_y * input.axis_left_y)
+    if axis_left_len > 0.1 then
+        emit_trail(transform.x, transform.y, -input.axis_left_x * 5.0, input.axis_left_y * 5.0, 2, quad.color)
+    end
 
     --ImGui_SetNextWindowPos(500, 100)
     --ImGui_Begin("ProjectileCount")

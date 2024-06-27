@@ -348,8 +348,19 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
             };
+        const auto emit_trail = [&](
+            float x,
+            float y,
+            float vx,
+            float vy,
+            int nbr_particles,
+            uint32_t color)
+            {
+                particleBuffer.push_trail(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
+            };
         lua["emit_particle"] = emit_particle;
         lua["emit_explosion"] = emit_explosion;
+        lua["emit_trail"] = emit_trail;
 
         // Register to Lua: input module
         register_input_script(lua);
@@ -379,7 +390,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 // Transform from world to screen space
                 const v4f pos_ss = (VP * P * V) * v4f{ x, y, 0.0f, 1.0f };
-                ImGui_SetNextWindowPos(pos_ss.x/pos_ss.w, SceneBase::windowSize.y - pos_ss.y/pos_ss.w);
+                ImGui_SetNextWindowPos(pos_ss.x / pos_ss.w, SceneBase::windowSize.y - pos_ss.y / pos_ss.w);
             });
 
         // Run init script
@@ -439,7 +450,7 @@ void Scene::update(float time_s, float deltaTime_s)
     P = m4f::GL_OrthoProjectionRHS(7.5f * aspectRatio, 7.5f, nearPlane, farPlane);
 
     // View matrix
-    V = m4f::TRS(eyePos, 0.0f, v3f { 1.0f, 0.0f, 0.0f }, v3f { 1.0f, 1.0f, 1.0f }).inverse();
+    V = m4f::TRS(eyePos, 0.0f, v3f{ 1.0f, 0.0f, 0.0f }, v3f{ 1.0f, 1.0f, 1.0f }).inverse();
 
     update_input_script(lua, SceneBase::axes, SceneBase::buttons);
 
@@ -572,7 +583,7 @@ void Scene::renderUI()
     // }
 }
 
-void Scene::render( float time_s, ShapeRendererPtr renderer)
+void Scene::render(float time_s, ShapeRendererPtr renderer)
 {
     assert(is_initialized);
 

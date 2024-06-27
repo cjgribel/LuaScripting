@@ -76,6 +76,40 @@ void ParticleBuffer::push_point(const v3f& p, const v3f& v, uint color)
     }
 }
 
+void ParticleBuffer::push_trail(const v3f& p, const v3f& v, int nbr_particles, uint color)
+{
+    const float vel_len = length(v);
+    const float vel_max = 10.0f;
+    const float theta_min = 0.0f, theta_max = 20.0f * fTO_RAD;
+    float vel_factor = clamp(vel_len / vel_max, 0.0f, 1.0f);
+    float theta_spread = lerp(theta_max, theta_min, vel_factor);
+
+    //std::cout << v << ", " << vel_factor << ", " << theta_spread << std::endl;
+
+    v3f vn;
+    if (vel_len < 0.001f)
+        vn = v3f{ 1.0f, 0.0f, 0.0f };
+    else
+        vn = v3f{ v.x / vel_len, v.y / vel_len, 0.0f };
+
+    for (int i = 0; i < nbr_particles; i++)
+    {
+        const float theta = rnd(-theta_spread, theta_spread);
+        const float sin_theta = std::sin(theta);
+        const float cos_theta = std::cos(theta);
+        const v3f pvn = v3f{
+            vn.x * cos_theta - vn.y * sin_theta,
+            vn.x * sin_theta + vn.y * cos_theta,
+            0.0f
+        };
+        const float speed = rnd(0.0f, vel_len);
+
+        //v3f prnd = { p.x + rnd(-0.25f, 0.25f), p.y + rnd(-0.25f, 0.25f), p.z };
+
+        push_point(p, pvn * speed, color);
+    }
+}
+
 void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
 {
     const float vel_len = length(v);
@@ -102,8 +136,11 @@ void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
             vn.x * sin_theta + vn.y * cos_theta,
             0.0f
         };
-        const float speed = rnd(1.0f, 7.5f);
-        push_point(p, pvn * speed, color);
+        const float speed = rnd(1.0f, 12.0f);
+
+        v3f prnd = { p.x + rnd(-0.25f, 0.25f), p.y + rnd(-0.25f, 0.25f), p.z };
+
+        push_point(prnd, pvn * speed, color);
     }
 }
 
@@ -126,9 +163,14 @@ void ParticleBuffer::update(float dt)
         // Gravity
         //point_vels[i] += (v3f(0.0f, -9.82f, 0.0f) * 0.25 * dt);
         // Damping
-        point_vels[i] += (point_vels[i] * -5.0f * dt);
+        point_vels[i] += (point_vels[i] * -2.5f * dt);
 
         points[i].p += (point_vels[i] * dt);
+
+        // HACKING IN BOUNDS
+        points[i].p.x = clamp(points[i].p.x, -5.0f, 10.0f);
+        points[i].p.y = clamp(points[i].p.y, -5.0f, 5.0f);
+
         point_ages[i] += dt;
 
         // Current point has expired: shift last point to current pos

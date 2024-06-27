@@ -106,10 +106,11 @@ inline int binomial_factorial()
 //
 // Random value
 //
+#define RAND_MAX_INV (1.0/RAND_MAX)
 template<class T>
 inline T rnd(const T &min, const T &max)
 {
-    return min + (T)rand()/RAND_MAX*(max-min);
+    return min + (T)rand()*RAND_MAX_INV*(max-min);
 }
 
 //

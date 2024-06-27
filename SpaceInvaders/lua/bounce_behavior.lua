@@ -57,7 +57,8 @@ function node:on_collision(x, y, nx, ny, entity)
         local transform = self.owner:get(self.id(), Transform)
         
         -- Explosion
-        emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
+        --emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
+        emit_explosion(transform.x, transform.y, projectileBehavior.velocity.x, projectileBehavior.velocity.y, quad.color)
         
         -- Kill counter
         config.enemy_kill_count = config.enemy_kill_count + 1
