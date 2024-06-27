@@ -63,7 +63,7 @@ local projectileBehavior = get_script(registry, projectile_pool_entity, "project
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 5 do
+for i = 1, 10 do
     create_bouncy_entity(i)
 end
 
