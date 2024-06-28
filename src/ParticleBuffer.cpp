@@ -156,7 +156,7 @@ int ParticleBuffer::capacity()
 
 void ParticleBuffer::update(float dt)
 {
-    const float max_age = 0.75f;
+    const float max_age = 0.5f;
 
     for (int i = 0; i < nbr_points; i++)
     {

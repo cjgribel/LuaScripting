@@ -59,15 +59,27 @@ function node:update(dt)
     --ImGui_End()
 
     --ImGui_SetNextWindowWorldPos(-5, 5)
-    ImGui_SetNextWindowWorldPos(-5, 6.5)
+    ImGui_SetNextWindowWorldPos(-5, 7)
     ImGui_Begin("ProjectileCount2")
     ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
-    ImGui_Text('Enemies killed ' .. tostring(config.enemy_kill_count))
+    ImGui_Text('Targets destroyed ' .. tostring(config.enemy_kill_count))
+    ImGui_Text('Deaths ' .. tostring(config.player_deaths))
     ImGui_End()
 end
 
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, entity)
+    -- Death
+    local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    if bounceBehavior then
+        local transform = self.owner:get(self.id(), Transform)
+        -- Particles
+        emit_explosion(transform.x, transform.y, 0.0, 0.0, 0xff0000ff)
+        -- Reset
+        transform.x, transform.y = config.bounds.right, config.bounds.bottom
+        
+        config.player_deaths = config.player_deaths + 1
+    end
 
 end
 

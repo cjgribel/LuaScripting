@@ -32,7 +32,7 @@ local function create_player_entity(size, color, projectile_pool)
     local entity = registry:create()
     registry:emplace(entity, Transform(0.0, 0.0))
     registry:emplace(entity, QuadComponent(size, color, true))
---    registry:emplace(entity, CircleColliderComponent(size/2))
+    registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
 
     -- Behavior
     local player_table = add_script(registry, entity, dofile("../../SpaceInvaders/lua/player_behavior.lua"), "player_behavior")
@@ -50,7 +50,8 @@ config = {
     is_out_of_bounds = function(self, x, y)
         return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top
     end,
-    enemy_kill_count = 0
+    enemy_kill_count = 0,
+    player_deaths = 0
 }
 
 -- Projectile entity
