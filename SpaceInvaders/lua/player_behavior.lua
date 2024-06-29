@@ -13,8 +13,8 @@ end
 
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
-    local quad = self.owner:get(self.id(), QuadComponent)
-    local radius = quad.w / 2
+    local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(0)
+    local radius = 0.5 --quad.w / 2
 
     -- Apply input to transform
     transform.x = transform.x + input.axis_left_x * dt * 10.0
@@ -50,7 +50,7 @@ function node:update(dt)
     -- Trail particles
     local axis_left_len = math.sqrt(input.axis_left_x * input.axis_left_x + input.axis_left_y * input.axis_left_y)
     if axis_left_len > 0.1 then
-        emit_trail(transform.x, transform.y, -input.axis_left_x * 5.0, input.axis_left_y * 5.0, 2, quad.color)
+        emit_trail(transform.x, transform.y, -input.axis_left_x * 5.0, input.axis_left_y * 5.0, 2, quad_color)
     end
 
     --ImGui_SetNextWindowPos(500, 100)
@@ -68,7 +68,7 @@ function node:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, entity)
+function node:on_collision(x, y, nx, ny, collider_index, entity)
     -- Death
     local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
     if bounceBehavior then

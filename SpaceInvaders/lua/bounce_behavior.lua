@@ -16,8 +16,8 @@ end
 
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
-    local quad = self.owner:get(self.id(), QuadComponent)
-    local radius = quad.w / 2
+    --local quad = self.owner:get(self.id(), QuadComponent)
+    local radius = 0.5 --quad.w / 2
 
     -- Apply velocity
     transform.x = transform.x + self.velocity.x * dt
@@ -37,11 +37,13 @@ function node:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, entity)
-    local quad = self.owner:get(self.id(), QuadComponent)
+function node:on_collision(x, y, nx, ny, collider_index, entity)
+    --local quad = self.owner:get(self.id(), QuadComponent)
+    local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(collider_index)
 
     --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
     --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
+    --print(collider_index)
 
     -- Check script in the other entity
     --local scriptComponent = self.owner:get(self.id(), ScriptedBehaviorComponent)
@@ -52,23 +54,39 @@ function node:on_collision(x, y, nx, ny, entity)
         --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     end
 
+    -- Hit by projectile?
     local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
         local transform = self.owner:get(self.id(), Transform)
         
         -- Explosion
         --emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
-        emit_explosion(transform.x, transform.y, projectileBehavior.velocity.x, projectileBehavior.velocity.y, quad.color)
+        emit_explosion(transform.x, transform.y, projectileBehavior.velocity.x, projectileBehavior.velocity.y, quad_color)
         
         -- Kill counter
         config.enemy_kill_count = config.enemy_kill_count + 1
 
+        -- Deactivate collider & quad that was hit
+        local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+        local quad = self.owner:get(self.id(), QuadSetComponent)
+        collider:set_active_flag(collider_index, false)
+        quad:set_active_flag(collider_index, false)
+        
         -- Reset object
-        transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
-        transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
-        self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-        self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-        quad.color = random_color()
+        if (not collider:is_any_active()) then
+
+            collider:activate_all(true) -- activates all colliders
+            quad:activate_all(true) -- activates all quads
+            
+            transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
+            transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
+            
+            self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+            self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+            
+            quad_color = random_color()
+
+        end
     end
 end
 

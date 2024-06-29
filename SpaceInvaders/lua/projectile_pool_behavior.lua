@@ -18,8 +18,18 @@ function ProjectilePool:init()
         --registry:emplace(entity, "Velocity", { dx = 0, dy = 0 })
 
         local size = 0.2
-        registry:emplace(entity, QuadComponent(size, 0xff00ffff, false))
-        registry:emplace(entity, CircleColliderComponent(size * 0.75, false))
+        --registry:emplace(entity, QuadComponent(size, 0xff00ffff, false))
+        --registry:emplace(entity, CircleColliderComponent(size * 0.75, false))
+        
+        -- QuadSetComponent
+        local qsc = QuadSetComponent(false)
+        qsc:add_quad(0.0, 0.0, size, 0xffffffff, false)
+        registry:emplace(entity, qsc)
+
+        -- CircleColliderSetComponent
+        local ccs = CircleColliderSetComponent(false)
+        ccs:add_circle(0.0, 0.0, size * 0.75, false)
+        registry:emplace(entity, ccs)
 
         print('Adding projectile_behavior to: ', entity)
         local projectile_behavior = add_script(registry, entity, dofile("../../SpaceInvaders/lua/projectile_behavior.lua"), "projectile_behavior")
@@ -43,8 +53,8 @@ function ProjectilePool:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function ProjectilePool:on_collision(x, y, nx, ny, entity)
-
+function ProjectilePool:on_collision(x, y, nx, ny, collider_index, entity)
+    -- not used
 end
 
 function ProjectilePool:destroy()
@@ -63,9 +73,9 @@ function ProjectilePool:get()
         --projectile.active = true
 
         self:activate_entity(projectile.entity, true)
-        local circle_collider = self.owner:get(projectile.entity, CircleColliderComponent)
-        local quad = self.owner:get(projectile.entity, QuadComponent)
-        circle_collider.is_active, quad.is_visible = true, true
+        --local circle_collider = self.owner:get(projectile.entity, CircleColliderComponent)
+        --local quad = self.owner:get(projectile.entity, QuadComponent)
+        --circle_collider.is_active, quad.is_visible = true, true
 
         --print(self.activeCount)
         return projectile.entity
@@ -80,8 +90,11 @@ function ProjectilePool:is_active(entity)
 end
 
 function ProjectilePool:activate_entity(entity, is_active)
-    self.owner:get(entity, CircleColliderComponent).is_active = is_active
-    self.owner:get(entity, QuadComponent).is_visible = is_active
+    --self.owner:get(entity, CircleColliderComponent).is_active = is_active
+    --self.owner:get(entity, QuadComponent).is_visible = is_active
+
+    self.owner:get(entity, CircleColliderSetComponent):activate_all(is_active)
+    self.owner:get(entity, QuadSetComponent):activate_all(is_active)
 end
 
 -- Return a projectile to the pool

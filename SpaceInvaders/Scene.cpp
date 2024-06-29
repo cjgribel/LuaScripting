@@ -23,6 +23,123 @@ namespace {
     //         << std::endl; });
     // }
 
+    void registerCircleColliderSetComponent(sol::state& lua)
+    {
+        lua.new_usertype<CircleColliderSetComponent>("CircleColliderSetComponent",
+            "type_id",
+            &entt::type_hash<CircleColliderSetComponent>::value,
+            sol::call_constructor,
+            sol::factories([](bool is_active) {
+                return CircleColliderSetComponent{ .is_active = is_active };
+                }),
+            "add_circle", [](CircleColliderSetComponent& c, float x, float y, float radius, bool is_active) {
+                if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+                c.pos[c.count].x = x;
+                c.pos[c.count].y = y;
+                c.radii[c.count] = radius;
+                c.is_active_flags[c.count] = is_active;
+                c.count++;
+            },
+            "activate_all", [](CircleColliderSetComponent& c, bool is_active) {
+                for (int i = 0; i < c.count; i++)
+                    c.is_active_flags[i] = is_active;
+                c.is_active = is_active;
+            },
+            // "get_radius", [](CircleColliderSetComponent& ccsc, int index) -> float {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     return ccsc.radii[index];
+            // },
+            // "set_radius", [](CircleColliderSetComponent& ccsc, int index, float value) {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     ccsc.radii[index] = value;
+            // },
+            // "get_is_active_flag", [](CircleColliderSetComponent& ccsc, int index) -> float {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     return ccsc.is_active_flags[index];
+            // },
+            "set_active_flag", [](CircleColliderSetComponent& ccsc, int index, bool is_active) {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                //std::cout << index << std::endl;
+                ccsc.is_active_flags[index] = is_active;
+            },
+            // TODO
+            "is_any_active", [](CircleColliderSetComponent& c) -> bool {
+                for (int i = 0; i < c.count; i++)
+                {
+                    if (c.is_active_flags[i]) return true;
+                }
+                return false;
+            },
+            "count",
+            &CircleColliderSetComponent::count,
+            sol::meta_function::to_string,
+            &CircleColliderSetComponent::to_string
+        );
+    }
+
+    void registerQuadSetComponent(sol::state& lua)
+    {
+        lua.new_usertype<QuadSetComponent>("QuadSetComponent",
+            "type_id",
+            &entt::type_hash<QuadSetComponent>::value,
+            sol::call_constructor,
+            sol::factories([](bool is_active) {
+                return QuadSetComponent{ .is_active = is_active };
+                }),
+            "add_quad", [](QuadSetComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
+                if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+                c.pos[c.count].x = x;
+                c.pos[c.count].y = y;
+                c.sizes[c.count] = size;
+                c.colors[c.count] = color;
+                c.is_active_flags[c.count] = is_active;
+                c.count++;
+            },
+            "activate_all", [](QuadSetComponent& c, bool is_active) {
+                for (int i = 0; i < c.count; i++)
+                    c.is_active_flags[i] = is_active;
+                c.is_active = is_active;
+            },
+            // "get_pos", [](QuadSetComponent& c, int index) {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     return std::make_tuple(c.pos[index].x, c.pos[index].y);
+            // },
+            // "set_pos", [](QuadSetComponent& c, int index, float x, float y) {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     c.pos[index].x = x;
+            //     c.pos[index].y = y;
+            // },
+            "get_size", [](QuadSetComponent& c, int index) -> float {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                return c.sizes[index];
+            },
+            // "set_size", [](QuadSetComponent& c, int index, float value) {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     c.sizes[index] = value;
+            // },
+            "get_color", [](QuadSetComponent& c, int index) -> uint32_t {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                return c.colors[index];
+            },
+            // "set_color", [](QuadSetComponent& c, int index, float value) {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     c.colors[index] = value;
+            // },
+            // "get_is_active_flag", [](QuadSetComponent& c, int index) -> float {
+            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     return c.is_active_flags[index];
+            // },
+            "set_active_flag", [](QuadSetComponent& c, int index, bool is_active) {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                c.is_active_flags[index] = is_active;
+            },
+            "count",
+            &QuadSetComponent::count,
+            sol::meta_function::to_string,
+            &QuadSetComponent::to_string
+        );
+    }
+
     void registerQuadComponent(sol::state& lua)
     {
         lua.new_usertype<QuadComponent>("QuadComponent",
@@ -308,6 +425,9 @@ bool Scene::init(const v2i& windowSize)
     register_meta_component<QuadComponent>();
     register_meta_component<CircleColliderComponent>();
     register_meta_component<ScriptedBehaviorComponent>();
+    //
+    register_meta_component<CircleColliderSetComponent>();
+    register_meta_component<QuadSetComponent>();
 
     try
     {
@@ -380,6 +500,9 @@ bool Scene::init(const v2i& windowSize)
         registerQuadComponent(lua);
         registerCircleColliderComponent(lua);
         registerScriptedBehaviorComponent(lua);
+        //
+        registerCircleColliderSetComponent(lua);
+        registerQuadSetComponent(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);
@@ -459,6 +582,99 @@ void Scene::update(float time_s, float deltaTime_s)
     script_system_update(registry, deltaTime_s);
 
     // Placeholder collision system
+#if 1
+    {
+        const auto dispatch_collision_event_to_scripts = [&](
+            float x,
+            float y,
+            float nx,
+            float ny,
+            int collider_index,
+            entt::entity entity,
+            entt::entity other_entity)
+            {
+                if (!registry.all_of<ScriptedBehaviorComponent>(entity)) return;
+                auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+                for (auto& script : script_comp.scripts)
+                {
+                    assert(script.self.valid());
+                    script.on_collision(script.self, x, y, nx, ny, collider_index, other_entity);
+                }
+            };
+
+        auto view = registry.view<CircleColliderSetComponent>();
+        for (auto it1 = view.begin(); it1 != view.end(); ++it1)
+        {
+            auto entity1 = *it1;
+            const auto& transform1 = registry.get<Transform>(entity1);
+            const auto& collider1 = view.get<CircleColliderSetComponent>(entity1);
+            if (!collider1.is_active) continue;
+
+            for (auto it2 = it1; ++it2 != view.end(); )
+            {
+                auto entity2 = *it2;
+                const auto& transform2 = registry.get<Transform>(entity2);
+                const auto& collider2 = view.get<CircleColliderSetComponent>(entity2);
+
+                if (!collider2.is_active) continue;
+                // LAYER CHECK
+
+                for (auto i = 0; i < collider1.count; i++)
+                {
+                    if (!collider1.is_active_flags[i]) continue;
+
+                    for (auto j = 0; j < collider2.count; j++)
+                    {
+                        if (!collider2.is_active_flags[j]) continue;
+
+                        float x1 = transform1.x + collider1.pos[i].x;
+                        float y1 = transform1.y + collider1.pos[i].y;
+                        float x2 = transform2.x + collider2.pos[j].x;
+                        float y2 = transform2.y + collider2.pos[j].y;
+                        const float r1 = collider1.radii[i];
+                        const float r2 = collider2.radii[j];
+
+                        // Calculate the distance between the two entities
+                        float dx = x1 - x2; // transform1.x - transform2.x;
+                        float dy = y1 - y2; // transform1.y - transform2.y;
+                        float distanceSquared = dx * dx + dy * dy;
+                        float radiusSum = r1 + r2;
+
+                        // Check for collision
+                        if (distanceSquared < radiusSum * radiusSum)
+                        {
+                            // Collision detected
+
+                            // Calculate distance
+                            float distance = std::sqrt(distanceSquared);
+
+                            // Calculate penetration depth
+                            float penetrationDepth = radiusSum - distance;
+
+                            // Calculate contact normal
+                            float nx = dx / distance;
+                            float ny = dy / distance;
+
+                            // Calculate point of contact
+                            float px = x1 - r1 * nx + r2 * nx;
+                            float py = y1 - r1 * ny + r2 * ny;
+
+                            // std::cout << "Collision detected between entity " << (uint32_t)entity1
+                            //     << " and entity " << (uint32_t)entity2 << std::endl;
+                            // std::cout << "Contact Point: (" << px << ", " << py << ")\n";
+                            // std::cout << "Contact Normal: (" << nx << ", " << ny << ")\n";
+                            // std::cout << "Penetration Depth: " << penetrationDepth << "\n";
+
+                            // (nx, ny) points 2 -> 1
+                            dispatch_collision_event_to_scripts(px, py, -nx, -ny, i, entity1, entity2);
+                            dispatch_collision_event_to_scripts(px, py, nx, ny, j, entity2, entity1);
+                        }
+                    } // j
+                } // i
+            }
+        }
+    } // anon
+#else
     {
         const auto dispatch_collision_event_to_scripts = [&](
             float x,
@@ -530,7 +746,7 @@ void Scene::update(float time_s, float deltaTime_s)
             }
         }
     } // anon
-
+#endif
 }
 
 void Scene::renderUI()
@@ -593,24 +809,51 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     renderer->pop_states<Renderer::Color4u>();
 
     // Render QuadComponents
-    auto view = registry.view<Transform, QuadComponent>();
-    float z = 0.0f;
-    for (auto entity : view)
+    // Todo: Remove Transform from view
     {
-        auto& transform_comp = registry.get<Transform>(entity);
+        auto view = registry.view<Transform, QuadComponent>();
+        float z = 0.0f;
+        for (auto entity : view)
+        {
+            auto& transform_comp = registry.get<Transform>(entity);
 
-        auto& quad_comp = registry.get<QuadComponent>(entity);
-        if (!quad_comp.is_visible) continue;
+            auto& quad_comp = registry.get<QuadComponent>(entity);
+            if (!quad_comp.is_visible) continue;
 
-        const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
-        const auto& size = quad_comp.w;
-        const auto& color = quad_comp.color;
+            const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
+            const auto& size = quad_comp.w;
+            const auto& color = quad_comp.color;
 
-        // renderer->push_states(Renderer::Color4u::Blue);
-        // renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
-        renderer->push_states(Renderer::Color4u{ color });
-        renderer->push_quad(pos, size);
-        renderer->pop_states<Renderer::Color4u>();
+            // renderer->push_states(Renderer::Color4u::Blue);
+            // renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
+            renderer->push_states(Renderer::Color4u{ color });
+            renderer->push_quad(pos, size);
+            renderer->pop_states<Renderer::Color4u>();
+        }
+    }
+
+    // Render all QuadSetComponent
+    {
+        auto view = registry.view<QuadSetComponent>();
+        // float z = 0.0f;
+        for (auto entity : view)
+        {
+            auto& transform_comp = registry.get<Transform>(entity);
+            auto& qc = view.get<QuadSetComponent>(entity);
+
+            for (int i = 0; i < qc.count; i++)
+            {
+                if (!qc.is_active_flags[i]) continue;
+
+                const auto pos = xy0(qc.pos[i]) + v3f{ transform_comp.x, transform_comp.y, 0.0f };
+                const auto& size = qc.sizes[i];
+                const auto& color = qc.colors[i];
+
+                renderer->push_states(Renderer::Color4u{ color });
+                renderer->push_quad(pos, size);
+                renderer->pop_states<Renderer::Color4u>();
+            }
+        }
     }
 
     // Add some test particles

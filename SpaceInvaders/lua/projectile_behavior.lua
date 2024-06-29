@@ -35,7 +35,7 @@ function node:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, entity)
+function node:on_collision(x, y, nx, ny, collider_index, entity)
 
     if not self.projectile_pool:is_active(self.id()) then
         return

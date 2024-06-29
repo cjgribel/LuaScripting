@@ -13,6 +13,49 @@
 #include "SceneBase.h"
 #include "ParticleBuffer.hpp"
 
+#define EntitySetSize 32
+struct CircleColliderSetComponent
+{
+    v2f pos[EntitySetSize];
+    float radii[EntitySetSize];
+    float is_active_flags[EntitySetSize];
+    int count = 0;
+    bool is_active = true; // TODO ctor
+
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ radii = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
+        ss << "{ is_active_flags = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+        return ss.str();
+    }
+};
+
+struct QuadSetComponent
+{
+    // static constexpr auto in_place_delete = true;
+
+    v2f pos[EntitySetSize];
+    float sizes[EntitySetSize];
+    uint32_t colors[EntitySetSize];
+    bool is_active_flags[EntitySetSize];
+    int count = 0;
+    bool is_active = true; // TODO ctor
+
+    // Todo: pos
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ size = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(sizes[i]) << ", ";
+        ss << "{ colors = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(colors[i]) << ", ";
+        ss << "{ is_active_flags = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+        return ss.str();
+    }
+};
+
 struct QuadComponent
 {
     // static constexpr auto in_place_delete = true;
@@ -23,7 +66,7 @@ struct QuadComponent
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
-        ss << "{ w " << std::to_string(w) << ", color " << color << ", is_visible " << is_visible <<" }";
+        ss << "{ w " << std::to_string(w) << ", color " << color << ", is_visible " << is_visible << " }";
         return ss.str();
     }
 };
