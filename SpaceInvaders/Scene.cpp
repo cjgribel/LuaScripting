@@ -100,10 +100,10 @@ namespace {
                     c.is_active_flags[i] = is_active;
                 c.is_active = is_active;
             },
-            // "get_pos", [](QuadSetComponent& c, int index) {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
-            //     return std::make_tuple(c.pos[index].x, c.pos[index].y);
-            // },
+            "get_pos", [](QuadSetComponent& c, int index) {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                return std::make_tuple(c.pos[index].x, c.pos[index].y);
+            },
             // "set_pos", [](QuadSetComponent& c, int index, float x, float y) {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     c.pos[index].x = x;
@@ -618,6 +618,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
                 if (!collider2.is_active) continue;
                 // LAYER CHECK
+                // if (!(collider1.collision_layer_bit & collider2.collision_layer_mask)) continue;
 
                 for (auto i = 0; i < collider1.count; i++)
                 {

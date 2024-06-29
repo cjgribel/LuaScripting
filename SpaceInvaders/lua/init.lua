@@ -22,18 +22,37 @@ local function create_bouncy_entity(index)
     
     -- QuadSetComponent
     local qsc = QuadSetComponent(true)
-    qsc:add_quad(0.25, -0.25, 0.5, 0xff0000ff, true)
-    qsc:add_quad(0.25, 0.25, 0.5, 0xff00ff00, true)
-    qsc:add_quad(-0.25, 0.25, 0.5, 0xffff0000, true)
-    qsc:add_quad(-0.25, -0.25, 0.5, 0xffff00ff, true)
+    --qsc:add_quad(0.25, -0.25, 0.5, 0xffff00ff, true)
+    --qsc:add_quad(0.25, 0.25, 0.5, 0xffff00ff, true)
+    --qsc:add_quad(-0.25, 0.25, 0.5, 0xffff00ff, true)
+    --qsc:add_quad(-0.25, -0.25, 0.5, 0xffff00ff, true)
+    local N = 6
+    local W = 2.5
+    local size = W / N
+    for i = 0, N-1 do
+        for j = 0, N-1 do
+            -- Calculate the position of each quad
+            local x = (i * size) + (size / 2) - (W / 2)
+            local y = (j * size) + (size / 2) - (W / 2)
+            qsc:add_quad(x, y, size, 0xffff00ff, true)
+        end
+    end
     registry:emplace(entity, qsc)
 
     -- CircleColliderSetComponent
     local ccs = CircleColliderSetComponent(true)
-    ccs:add_circle(0.25, -0.25, 0.25, true)
-    ccs:add_circle(0.25, 0.25, 0.25, true)
-    ccs:add_circle(-0.25, 0.25, 0.25, true)
-    ccs:add_circle(-0.25, -0.25, 0.25, true)
+    --ccs:add_circle(0.25, -0.25, 0.25, true)
+    --ccs:add_circle(0.25, 0.25, 0.25, true)
+    --ccs:add_circle(-0.25, 0.25, 0.25, true)
+    --ccs:add_circle(-0.25, -0.25, 0.25, true)
+    for i = 0, N-1 do
+        for j = 0, N-1 do
+            -- Calculate the position of each quad
+            local x = (i * size) + (size / 2) - (W / 2)
+            local y = (j * size) + (size / 2) - (W / 2)
+            ccs:add_circle(x, y, size, true)
+        end
+    end
     registry:emplace(entity, ccs)
 
     -- Bounce behavior
@@ -96,7 +115,7 @@ local projectileBehavior = get_script(registry, projectile_pool_entity, "project
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 15 do
+for i = 1, 1 do
     create_bouncy_entity(i)
 end
 

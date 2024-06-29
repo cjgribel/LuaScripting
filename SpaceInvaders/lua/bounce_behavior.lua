@@ -60,8 +60,10 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         local transform = self.owner:get(self.id(), Transform)
         
         -- Explosion
+
         --emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
-        emit_explosion(transform.x, transform.y, projectileBehavior.velocity.x, projectileBehavior.velocity.y, quad_color)
+        collider_x, collider_y = self.owner:get(self.id(), QuadSetComponent):get_pos(collider_index)
+        emit_explosion(transform.x + collider_x, transform.y + collider_y, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y, quad_color)
         
         -- Kill counter
         config.enemy_kill_count = config.enemy_kill_count + 1

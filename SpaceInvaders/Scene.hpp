@@ -13,14 +13,16 @@
 #include "SceneBase.h"
 #include "ParticleBuffer.hpp"
 
-#define EntitySetSize 32
+#define EntitySetSize 36
 struct CircleColliderSetComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
     float is_active_flags[EntitySetSize];
     int count = 0;
-    bool is_active = true; // TODO ctor
+    bool is_active = true;
+
+    // unsigned char collision_layer_bit, collision_layer_mask;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
@@ -41,7 +43,7 @@ struct QuadSetComponent
     uint32_t colors[EntitySetSize];
     bool is_active_flags[EntitySetSize];
     int count = 0;
-    bool is_active = true; // TODO ctor
+    bool is_active = true;
 
     // Todo: pos
     [[nodiscard]] std::string to_string() const {

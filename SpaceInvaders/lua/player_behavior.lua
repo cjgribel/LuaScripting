@@ -1,7 +1,7 @@
 local node = {
     --MIN_BOUND = -5.0,
     --MAX_BOUND = 5.0,
-    fire_cooldown = 0.1,
+    fire_cooldown = 0.075,
     fire_delay = 0.0,
     projectile_pool = nil,
     projectiles_fired = 0
