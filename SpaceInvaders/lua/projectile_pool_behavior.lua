@@ -27,7 +27,7 @@ function ProjectilePool:init()
         registry:emplace(entity, qsc)
 
         -- CircleColliderSetComponent
-        local ccs = CircleColliderSetComponent(false)
+        local ccs = CircleColliderSetComponent(false, ProjectileCollisionBit, EnemyCollisionBit)
         ccs:add_circle(0.0, 0.0, size * 0.75, false)
         registry:emplace(entity, ccs)
 

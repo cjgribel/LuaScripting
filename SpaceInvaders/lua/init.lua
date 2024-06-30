@@ -1,4 +1,8 @@
 
+PlayerCollisionBit = 0x1
+EnemyCollisionBit = 0x2
+ProjectileCollisionBit = 0x4
+
 function random_color()
     local alpha = 0x80
     local red = math.random(0, 255)
@@ -40,7 +44,7 @@ local function create_bouncy_entity(index)
     registry:emplace(entity, qsc)
 
     -- CircleColliderSetComponent
-    local ccs = CircleColliderSetComponent(true)
+    local ccs = CircleColliderSetComponent(true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
     --ccs:add_circle(0.25, -0.25, 0.25, true)
     --ccs:add_circle(0.25, 0.25, 0.25, true)
     --ccs:add_circle(-0.25, 0.25, 0.25, true)
@@ -81,7 +85,7 @@ local function create_player_entity(size, color, projectile_pool)
     registry:emplace(entity, qsc)
 
     -- CircleColliderSetComponent
-    local ccs = CircleColliderSetComponent(true)
+    local ccs = CircleColliderSetComponent(true, PlayerCollisionBit, EnemyCollisionBit)
     ccs:add_circle(0.0, 0.0, size * 0.5, true)
     registry:emplace(entity, ccs)
 
@@ -115,7 +119,7 @@ local projectileBehavior = get_script(registry, projectile_pool_entity, "project
 local player_entity = create_player_entity(0.5, 0xffffffff, projectileBehavior)
 
 -- Create 5 bouncing entities
-for i = 1, 1 do
+for i = 1, 3 do
     create_bouncy_entity(i)
 end
 

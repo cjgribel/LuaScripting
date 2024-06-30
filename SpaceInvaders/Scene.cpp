@@ -29,8 +29,8 @@ namespace {
             "type_id",
             &entt::type_hash<CircleColliderSetComponent>::value,
             sol::call_constructor,
-            sol::factories([](bool is_active) {
-                return CircleColliderSetComponent{ .is_active = is_active };
+            sol::factories([](bool is_active, unsigned char layer_bit, unsigned char layer_mask) {
+                return CircleColliderSetComponent{ .is_active = is_active, .layer_bit = layer_bit, .layer_mask = layer_mask };
                 }),
             "add_circle", [](CircleColliderSetComponent& c, float x, float y, float radius, bool is_active) {
                 if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
@@ -618,7 +618,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
                 if (!collider2.is_active) continue;
                 // LAYER CHECK
-                // if (!(collider1.collision_layer_bit & collider2.collision_layer_mask)) continue;
+                if (!(collider1.layer_bit & collider2.layer_mask)) continue;
 
                 for (auto i = 0; i < collider1.count; i++)
                 {

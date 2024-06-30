@@ -22,7 +22,7 @@ struct CircleColliderSetComponent
     int count = 0;
     bool is_active = true;
 
-    // unsigned char collision_layer_bit, collision_layer_mask;
+    unsigned char layer_bit, layer_mask;
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
