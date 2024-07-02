@@ -22,13 +22,15 @@ function ProjectilePool:init()
         --registry:emplace(entity, CircleColliderComponent(size * 0.75, false))
         
         -- QuadSetComponent
-        local qsc = QuadSetComponent(false)
-        qsc:add_quad(0.0, 0.0, size, 0xff00ffff, false)
+        local qsc = QuadSetComponent(1, 1, false)
+        --qsc:add_quad(0.0, 0.0, size, 0xff00ffff, false)
+        qsc:set_quad(0, 0, 0.0, 0.0, size, 0xff00ffff, false)
         registry:emplace(entity, qsc)
 
         -- CircleColliderSetComponent
-        local ccs = CircleColliderSetComponent(false, ProjectileCollisionBit, EnemyCollisionBit)
-        ccs:add_circle(0.0, 0.0, size * 0.75, false)
+        local ccs = CircleColliderSetComponent(1, 1, false, ProjectileCollisionBit, EnemyCollisionBit)
+        --ccs:add_circle(0.0, 0.0, size * 0.75, false)
+        ccs:set_circle(0, 0, 0.0, 0.0, size * 0.75, false)
         registry:emplace(entity, ccs)
 
         print('Adding projectile_behavior to: ', entity)

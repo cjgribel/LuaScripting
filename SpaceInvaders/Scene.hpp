@@ -13,14 +13,14 @@
 #include "SceneBase.h"
 #include "ParticleBuffer.hpp"
 
-#define EntitySetSize 36
+#define EntitySetSize 64
 struct CircleColliderSetComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
-    float is_active_flags[EntitySetSize];
+    bool is_active_flags[EntitySetSize] {false};
 
-    int count = 0;
+    int count = 0, width = 0;
     bool is_active = true;
     unsigned char layer_bit, layer_mask;
 
@@ -36,10 +36,9 @@ struct CircleColliderSetComponent
 
 struct IslandFinderComponent
 {
-    // Entity with QuadSetComponent
-    // entt::entity colliderset_entity;
+    int core_x, core_y;
 
-    // For floo-fill
+    // For flood-fill
     std::vector<bool> visited;
     std::queue<std::pair<int, int>> visit_queue;
     
@@ -55,7 +54,7 @@ struct QuadSetComponent
     float sizes[EntitySetSize];
     uint32_t colors[EntitySetSize];
     bool is_active_flags[EntitySetSize];
-    int count = 0;
+    int count = 0, width = 0;
     bool is_active = true;
 
     // Todo: pos

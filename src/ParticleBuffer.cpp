@@ -138,7 +138,8 @@ void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
         };
         const float speed = rnd(1.0f, 12.0f);
 
-        v3f prnd = { p.x + rnd(-0.25f, 0.25f), p.y + rnd(-0.25f, 0.25f), p.z };
+        // v3f prnd = { p.x + rnd(-0.25f, 0.25f), p.y + rnd(-0.25f, 0.25f), p.z };
+        v3f prnd = { p.x + rnd(-0.1f, 0.1f), p.y + rnd(-0.1f, 0.1f), p.z };
 
         push_point(prnd, pvn * speed, color);
     }

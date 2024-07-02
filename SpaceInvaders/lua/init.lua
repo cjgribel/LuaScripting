@@ -24,43 +24,49 @@ local function create_bouncy_entity(index)
     
     --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     
-    -- QuadSetComponent
-    local qsc = QuadSetComponent(true)
-    local W = 14 -- Number of columns
-    local H = 2 -- Number of rows
-    local D = 0.4 -- Size of each quad (width/height)
+    local W = 8 -- Number of columns
+    local H = 8 -- Number of rows
+    local D = 0.2 -- Size of each quad (width/height)
     local color = 0xffff00ff -- Color of the quads
     local visible = true -- Visibility flag
-    for j = 0, H - 1 do
-        for i = 0, W - 1 do
+    local core_x = math.floor(W / 2)
+    local core_y = math.floor(H / 2)
+    
+    -- QuadSetComponent
+    local qsc = QuadSetComponent(W, H, true)
+    for i = 0, W - 1 do
+        for j = 0, H - 1 do
             local x = (i - (W - 1) / 2) * D
             local y = (j - (H - 1) / 2) * D
-            if i == 0 and j == 0 then
-                qsc:add_quad(x, y, D, 0xff0000ff, visible)
+            if i == core_x and j == core_y then
+                --qsc:add_quad(x, y, D, 0xff0000ff, visible)
+                qsc:set_quad(i, j, x, y, D, 0xff0000ff, visible)
             else
-                qsc:add_quad(x, y, D, color, visible)
+                --qsc:add_quad(x, y, D, color, visible)
+                qsc:set_quad(i, j, x, y, D, color, visible)
             end
         end
     end
     registry:emplace(entity, qsc)
 
     -- CircleColliderSetComponent
-    local ccs = CircleColliderSetComponent(true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
+    local ccs = CircleColliderSetComponent(W, H, true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
     --ccs:add_circle(0.25, -0.25, 0.25, true)
     --ccs:add_circle(0.25, 0.25, 0.25, true)
     --ccs:add_circle(-0.25, 0.25, 0.25, true)
     --ccs:add_circle(-0.25, -0.25, 0.25, true)
-    for j = 0, H - 1 do
-        for i = 0, W - 1 do
+    for i = 0, W - 1 do
+        for j = 0, H - 1 do
             local x = (i - (W - 1) / 2) * D
             local y = (j - (H - 1) / 2) * D
-            ccs:add_circle(x, y, D, visible)
+            --ccs:add_circle(x, y, D, visible)
+            ccs:set_circle(i, j, x, y, D, visible)
         end
     end
     registry:emplace(entity, ccs)
 
     -- Island finder component
-    registry:emplace(entity, IslandFinderComponent())
+    registry:emplace(entity, IslandFinderComponent(core_x, core_y))
 
     -- Bounce behavior
     add_script(registry, entity, dofile("../../SpaceInvaders/lua/bounce_behavior.lua"), "bounce_behavior")
@@ -83,13 +89,15 @@ local function create_player_entity(size, color, projectile_pool)
     --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
 
     -- QuadSetComponent
-    local qsc = QuadSetComponent(true)
-    qsc:add_quad(0.0, 0.0, size, 0xffffffff, true)
+    local qsc = QuadSetComponent(1, 1, true)
+    --qsc:add_quad(0.0, 0.0, size, 0xffffffff, true)
+    qsc:set_quad(0, 0, 0.0, 0.0, size, 0xffffffff, true)
     registry:emplace(entity, qsc)
 
     -- CircleColliderSetComponent
-    local ccs = CircleColliderSetComponent(true, PlayerCollisionBit, EnemyCollisionBit)
-    ccs:add_circle(0.0, 0.0, size * 0.5, true)
+    local ccs = CircleColliderSetComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
+    --ccs:add_circle(0.0, 0.0, size * 0.5, true)
+    ccs:set_circle(0, 0, 0.0, 0.0, size * 0.5, true)
     registry:emplace(entity, ccs)
 
     -- Behavior

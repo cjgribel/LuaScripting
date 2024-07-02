@@ -28,17 +28,49 @@ namespace {
         lua.new_usertype<CircleColliderSetComponent>("CircleColliderSetComponent",
             "type_id",
             &entt::type_hash<CircleColliderSetComponent>::value,
+
             sol::call_constructor,
-            sol::factories([](bool is_active, unsigned char layer_bit, unsigned char layer_mask) {
-                return CircleColliderSetComponent{ .is_active = is_active, .layer_bit = layer_bit, .layer_mask = layer_mask };
+            sol::factories([](
+                int width,
+                int height,
+                bool is_active,
+                unsigned char layer_bit,
+                unsigned char layer_mask)
+                {
+                    assert(width * height <= EntitySetSize);
+                    return CircleColliderSetComponent{
+                        .count = width * height,
+                        .width = width,
+                        .is_active = is_active,
+                        .layer_bit = layer_bit,
+                        .layer_mask = layer_mask };
                 }),
-            "add_circle", [](CircleColliderSetComponent& c, float x, float y, float radius, bool is_active) {
-                if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
-                c.pos[c.count].x = x;
-                c.pos[c.count].y = y;
-                c.radii[c.count] = radius;
-                c.is_active_flags[c.count] = is_active;
-                c.count++;
+
+            // "add_circle",
+            // [](CircleColliderSetComponent& c, float x, float y, float radius, bool is_active)
+            // {
+            //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     c.pos[c.count].x = x;
+            //     c.pos[c.count].y = y;
+            //     c.radii[c.count] = radius;
+            //     c.is_active_flags[c.count] = is_active;
+            //     c.count++;
+            // },
+            "set_circle",
+            [](CircleColliderSetComponent& c,
+                int i,
+                int j,
+                float x,
+                float y,
+                float radius,
+                bool is_active)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.pos[index].x = x;
+                c.pos[index].y = y;
+                c.radii[index] = radius;
+                c.is_active_flags[index] = is_active;
             },
             "activate_all", [](CircleColliderSetComponent& c, bool is_active) {
                 for (int i = 0; i < c.count; i++)
@@ -83,8 +115,11 @@ namespace {
             "type_id",
             &entt::type_hash<IslandFinderComponent>::value,
             sol::call_constructor,
-            sol::factories([]() {
-                return IslandFinderComponent{  };
+            sol::factories([](int core_x, int core_y) {
+                return IslandFinderComponent{  
+                    .core_x = core_x,
+                    .core_y = core_y
+                };
                 }),
             "get_nbr_islands", [](IslandFinderComponent& c) {
                 return c.islands.size();
@@ -105,17 +140,44 @@ namespace {
             "type_id",
             &entt::type_hash<QuadSetComponent>::value,
             sol::call_constructor,
-            sol::factories([](bool is_active) {
-                return QuadSetComponent{ .is_active = is_active };
+            sol::factories([](
+                int width,
+                int height,
+                bool is_active)
+                {
+                    assert(width * height <= EntitySetSize);
+                    return QuadSetComponent{
+                        .count = width * height,
+                        .width = width,
+                        .is_active = is_active
+                    };
                 }),
-            "add_quad", [](QuadSetComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
-                if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
-                c.pos[c.count].x = x;
-                c.pos[c.count].y = y;
-                c.sizes[c.count] = size;
-                c.colors[c.count] = color;
-                c.is_active_flags[c.count] = is_active;
-                c.count++;
+            // "add_quad", [](QuadSetComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
+            //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     c.pos[c.count].x = x;
+            //     c.pos[c.count].y = y;
+            //     c.sizes[c.count] = size;
+            //     c.colors[c.count] = color;
+            //     c.is_active_flags[c.count] = is_active;
+            //     c.count++;
+            // },
+            "set_quad",
+            [](QuadSetComponent& c,
+                int i,
+                int j,
+                float x,
+                float y,
+                float size,
+                uint32_t color,
+                bool is_active)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.pos[index].x = x;
+                c.pos[index].y = y;
+                c.sizes[index] = size;
+                c.colors[index] = color;
+                c.is_active_flags[index] = is_active;
             },
             "activate_all", [](QuadSetComponent& c, bool is_active) {
                 for (int i = 0; i < c.count; i++)
@@ -397,8 +459,12 @@ namespace {
         IslandFinderComponent& grid_comp,
         const CircleColliderSetComponent& colliderset_comp)
     {
-        const int core_x = 0, core_y = 0;
-        const int w = 14, h = 2;
+        //const int core_x = 0, core_y = 0;
+        const int core_x = grid_comp.core_x;
+        const int core_y = grid_comp.core_y;
+        // const int w = 14, h = 2;
+        int w = colliderset_comp.width;
+        int h = colliderset_comp.count / w;
 
         // set all is_island to true
         // visit from core, set (active) visited to false
