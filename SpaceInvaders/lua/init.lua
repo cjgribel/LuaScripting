@@ -26,19 +26,20 @@ local function create_bouncy_entity(index)
     
     -- QuadSetComponent
     local qsc = QuadSetComponent(true)
-    --qsc:add_quad(0.25, -0.25, 0.5, 0xffff00ff, true)
-    --qsc:add_quad(0.25, 0.25, 0.5, 0xffff00ff, true)
-    --qsc:add_quad(-0.25, 0.25, 0.5, 0xffff00ff, true)
-    --qsc:add_quad(-0.25, -0.25, 0.5, 0xffff00ff, true)
-    local N = 6
-    local W = 2.5
-    local size = W / N
-    for i = 0, N-1 do
-        for j = 0, N-1 do
-            -- Calculate the position of each quad
-            local x = (i * size) + (size / 2) - (W / 2)
-            local y = (j * size) + (size / 2) - (W / 2)
-            qsc:add_quad(x, y, size, 0xffff00ff, true)
+    local W = 14 -- Number of columns
+    local H = 2 -- Number of rows
+    local D = 0.4 -- Size of each quad (width/height)
+    local color = 0xffff00ff -- Color of the quads
+    local visible = true -- Visibility flag
+    for j = 0, H - 1 do
+        for i = 0, W - 1 do
+            local x = (i - (W - 1) / 2) * D
+            local y = (j - (H - 1) / 2) * D
+            if i == 0 and j == 0 then
+                qsc:add_quad(x, y, D, 0xff0000ff, visible)
+            else
+                qsc:add_quad(x, y, D, color, visible)
+            end
         end
     end
     registry:emplace(entity, qsc)
@@ -49,15 +50,17 @@ local function create_bouncy_entity(index)
     --ccs:add_circle(0.25, 0.25, 0.25, true)
     --ccs:add_circle(-0.25, 0.25, 0.25, true)
     --ccs:add_circle(-0.25, -0.25, 0.25, true)
-    for i = 0, N-1 do
-        for j = 0, N-1 do
-            -- Calculate the position of each quad
-            local x = (i * size) + (size / 2) - (W / 2)
-            local y = (j * size) + (size / 2) - (W / 2)
-            ccs:add_circle(x, y, size, true)
+    for j = 0, H - 1 do
+        for i = 0, W - 1 do
+            local x = (i - (W - 1) / 2) * D
+            local y = (j - (H - 1) / 2) * D
+            ccs:add_circle(x, y, D, visible)
         end
     end
     registry:emplace(entity, ccs)
+
+    -- Island finder component
+    registry:emplace(entity, IslandFinderComponent())
 
     -- Bounce behavior
     add_script(registry, entity, dofile("../../SpaceInvaders/lua/bounce_behavior.lua"), "bounce_behavior")

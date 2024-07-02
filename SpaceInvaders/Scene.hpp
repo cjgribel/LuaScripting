@@ -19,9 +19,9 @@ struct CircleColliderSetComponent
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
     float is_active_flags[EntitySetSize];
+
     int count = 0;
     bool is_active = true;
-
     unsigned char layer_bit, layer_mask;
 
     [[nodiscard]] std::string to_string() const {
@@ -32,6 +32,19 @@ struct CircleColliderSetComponent
         for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
         return ss.str();
     }
+};
+
+struct IslandFinderComponent
+{
+    // Entity with QuadSetComponent
+    // entt::entity colliderset_entity;
+
+    // For floo-fill
+    std::vector<bool> visited;
+    std::queue<std::pair<int, int>> visit_queue;
+    
+    // Exposed to Lua
+    std::vector<int> islands;
 };
 
 struct QuadSetComponent
@@ -58,6 +71,7 @@ struct QuadSetComponent
     }
 };
 
+// NOT USED
 struct QuadComponent
 {
     // static constexpr auto in_place_delete = true;
@@ -73,6 +87,7 @@ struct QuadComponent
     }
 };
 
+// NOT USED
 struct CircleColliderComponent
 {
     // static constexpr auto in_place_delete = true;

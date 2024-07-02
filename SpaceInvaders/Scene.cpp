@@ -77,6 +77,28 @@ namespace {
         );
     }
 
+    void registerIslandFinderComponent(sol::state& lua)
+    {
+        lua.new_usertype<IslandFinderComponent>("IslandFinderComponent",
+            "type_id",
+            &entt::type_hash<IslandFinderComponent>::value,
+            sol::call_constructor,
+            sol::factories([]() {
+                return IslandFinderComponent{  };
+                }),
+            "get_nbr_islands", [](IslandFinderComponent& c) {
+                return c.islands.size();
+            },
+            "get_island_index_at", [](IslandFinderComponent& c, int index) {
+                assert(index < c.islands.size());
+                return c.islands[index];
+            }
+            // TODO
+//            sol::meta_function::to_string,
+//            &IslandFinderComponent::to_string
+);
+    }
+
     void registerQuadSetComponent(sol::state& lua)
     {
         lua.new_usertype<QuadSetComponent>("QuadSetComponent",
@@ -366,6 +388,130 @@ namespace {
         //assert(0);
         return sol::lua_nil;
     }
+
+    void update_IslandFinderComponent(
+        IslandFinderComponent& grid_comp,
+        const CircleColliderSetComponent& colliderset_comp)
+    {
+        const int core_x = 0, core_y = 0;
+        const int w = 14, h = 2;
+
+        // set all is_island to true
+        // visit from core, set (active) visited to false
+        // set all inactive to false (only active collider can be islands)
+
+        grid_comp.visited.assign(w * h, false);
+        grid_comp.islands.clear(); // assign(w * h, false);
+
+        if (!colliderset_comp.is_active_flags[core_y * w + core_x])
+        {
+            std::cout << "Core inactive" << std::endl;
+            return;
+            // assert(0);
+        } // ???
+
+        auto& q = grid_comp.visit_queue;
+        auto& v = grid_comp.visited;
+        auto& islands = grid_comp.islands;
+        const auto& is_active = colliderset_comp.is_active_flags;
+
+        q.push({ core_x, core_y });
+        v[core_y * w + core_x] = true;
+
+        while (!q.empty()) {
+            auto [cx, cy] = q.front();
+            q.pop();
+
+            int directions[4][2] = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
+            for (auto& dir : directions) {
+                int nx = cx + dir[0];
+                int ny = cy + dir[1];
+
+                if (nx >= 0 &&
+                    ny >= 0 &&
+                    nx < w &&
+                    ny < h &&
+                    !v[ny * w + nx] &&
+                    is_active[ny * w + nx])
+                {
+                    v[ny * w + nx] = true;
+                    q.push({ nx, ny });
+                }
+                // if (isValid(nx, ny) && !visited[ny * NbrColumns + nx] && grid[ny * NbrColumns + nx].is_active) {
+                //     visited[ny * NbrColumns + nx] = true;
+                //     q.push({ nx, ny });
+                // }
+            }
+        }
+
+        for (int i = 0; i < w * h; i++)
+        {
+            if (is_active[i] && !v[i])
+                islands.push_back(i);
+        }
+
+        // Mark all unvisited active nodes as islands
+        // for (int y = 0; y < NbrRows; ++y) {
+        //     for (int x = 0; x < NbrColumns; ++x) {
+        //         if (grid[y * NbrColumns + x].is_active && !visited[y * NbrColumns + x]) {
+        //             grid[y * NbrColumns + x].is_island = true;
+        //         }
+        //         else {
+        //             grid[y * NbrColumns + x].is_island = false;
+        //         }
+        //     }
+        // }
+
+#if 0
+        for (int y = 0; y < h; ++y)
+        {
+            for (int x = 0; x < w; ++x)
+            {
+                if (x == core_x && (h - y - 1) == core_y)
+                    std::cout << "C ";
+                else
+                {
+                    if (is_active[(h - y - 1) * w + x])
+                        std::cout << "1 ";
+                    else
+                        std::cout << "0 ";
+                }
+            }
+            std::cout << '\n';
+        }
+#endif
+#if 0
+        for (int y = 0; y < h; ++y)
+        {
+            for (int x = 0; x < w; ++x)
+            {
+                if (x == core_x && (h - y - 1) == core_y)
+                    std::cout << "C ";
+                else
+                {
+                    if (v[(h - y - 1) * w + x])
+                        std::cout << "1 ";
+                    else
+                        std::cout << "0 ";
+                }
+            }
+            std::cout << '\n';
+        }
+#endif
+        // for (auto& island_index : islands)
+        //     std::cout << island_index << std::endl;
+    }
+
+    void IslandFinderSystem(entt::registry& registry, float delta_time)
+    {
+        auto view = registry.view<IslandFinderComponent>();
+        for (auto entity : view)
+        {
+            auto& grid_comp = view.get<IslandFinderComponent>(entity);
+            auto& colliderset_comp = registry.get<CircleColliderSetComponent>(entity);
+            update_IslandFinderComponent(grid_comp, colliderset_comp);
+        }
+    }
 }
 
 // ImGui -> Lua integration
@@ -428,6 +574,7 @@ bool Scene::init(const v2i& windowSize)
     //
     register_meta_component<CircleColliderSetComponent>();
     register_meta_component<QuadSetComponent>();
+    register_meta_component<IslandFinderComponent>();
 
     try
     {
@@ -503,6 +650,7 @@ bool Scene::init(const v2i& windowSize)
         //
         registerCircleColliderSetComponent(lua);
         registerQuadSetComponent(lua);
+        registerIslandFinderComponent(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);
@@ -748,6 +896,9 @@ void Scene::update(float time_s, float deltaTime_s)
         }
     } // anon
 #endif
+
+    IslandFinderSystem(registry, deltaTime_s);
+
 }
 
 void Scene::renderUI()
@@ -841,10 +992,12 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         {
             auto& transform_comp = registry.get<Transform>(entity);
             auto& qc = view.get<QuadSetComponent>(entity);
+            auto& cc = registry.get<CircleColliderSetComponent>(entity); // DEBUG
 
             for (int i = 0; i < qc.count; i++)
             {
                 if (!qc.is_active_flags[i]) continue;
+                assert(cc.is_active_flags[i] == qc.is_active_flags[i]);  // DEBUG
 
                 const auto pos = xy0(qc.pos[i]) + v3f{ transform_comp.x, transform_comp.y, 0.0f };
                 const auto& size = qc.sizes[i];

@@ -34,6 +34,32 @@ function node:update(dt)
     -- Clamp to bounds
     transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
     transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
+
+    -- Check for islands
+    local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
+    local nbr_islands = islandFinder:get_nbr_islands()
+    if nbr_islands > 0 then
+        for i = 0, nbr_islands-1 do
+            local island_index = islandFinder:get_island_index_at(i)
+            self:deactivate_quad_and_collider_at(island_index, 0.0, 0.0)
+        end
+    end
+    --print(nbr_islands)
+end
+
+function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
+
+    local transform = self.owner:get(self.id(), Transform)
+    local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+    local quad = self.owner:get(self.id(), QuadSetComponent)
+    
+    -- Emit particles
+    local x, y = quad:get_pos(index)
+    emit_explosion(transform.x + x, transform.y + y, vel_x, vel_y, quad:get_color(index))
+
+    -- Deactivate
+    collider:set_active_flag(index, false)
+    quad:set_active_flag(index, false)
 end
 
 -- (nx, ny) points away from this entity
@@ -57,28 +83,36 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     -- Hit by projectile?
     local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
+
         local transform = self.owner:get(self.id(), Transform)
         
         -- Explosion
 
         --emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
-        collider_x, collider_y = self.owner:get(self.id(), QuadSetComponent):get_pos(collider_index)
-        emit_explosion(transform.x + collider_x, transform.y + collider_y, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y, quad_color)
+        --collider_x, collider_y = self.owner:get(self.id(), QuadSetComponent):get_pos(collider_index)
+        --emit_explosion(transform.x + collider_x, transform.y + collider_y, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y, quad_color)
         
         -- Kill counter
         config.enemy_kill_count = config.enemy_kill_count + 1
 
         -- Deactivate collider & quad that was hit
-        local collider = self.owner:get(self.id(), CircleColliderSetComponent)
-        local quad = self.owner:get(self.id(), QuadSetComponent)
-        collider:set_active_flag(collider_index, false)
-        quad:set_active_flag(collider_index, false)
+        --local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+        --local quad = self.owner:get(self.id(), QuadSetComponent)
+        --collider:set_active_flag(collider_index, false)
+        --quad:set_active_flag(collider_index, false)
         
-        -- Reset object
-        if (not collider:is_any_active()) then
+        self:deactivate_quad_and_collider_at(collider_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
 
-            collider:activate_all(true) -- activates all colliders
-            quad:activate_all(true) -- activates all quads
+        -- Reset object if all parts are inactive
+        local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+        if (not collider:is_any_active()) then
+            
+            local transform = self.owner:get(self.id(), Transform)
+            local quad = self.owner:get(self.id(), QuadSetComponent)
+
+            -- Activate all quads and colliders
+            collider:activate_all(true)
+            quad:activate_all(true)
             
             transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
             transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
