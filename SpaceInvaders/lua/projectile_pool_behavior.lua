@@ -23,7 +23,7 @@ function ProjectilePool:init()
         
         -- QuadSetComponent
         local qsc = QuadSetComponent(false)
-        qsc:add_quad(0.0, 0.0, size, 0xffffffff, false)
+        qsc:add_quad(0.0, 0.0, size, 0xff00ffff, false)
         registry:emplace(entity, qsc)
 
         -- CircleColliderSetComponent

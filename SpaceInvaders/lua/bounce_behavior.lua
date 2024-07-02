@@ -35,7 +35,7 @@ function node:update(dt)
     transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
     transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
 
-    -- Check for islands
+    -- Deactivate islands
     local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
     local nbr_islands = islandFinder:get_nbr_islands()
     if nbr_islands > 0 then
@@ -44,7 +44,34 @@ function node:update(dt)
             self:deactivate_quad_and_collider_at(island_index, 0.0, 0.0)
         end
     end
+    self:check_if_destroyed()
     --print(nbr_islands)
+end
+
+function node:check_if_destroyed()
+
+    -- Reset object if all parts are inactive
+    local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+    if (not collider:is_any_active()) then
+        
+        local transform = self.owner:get(self.id(), Transform)
+        local quad = self.owner:get(self.id(), QuadSetComponent)
+
+        -- Activate all quads and colliders
+        collider:activate_all(true)
+        quad:activate_all(true)
+        
+        transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
+        transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
+        
+        self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+        self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+        
+        -- TODO
+        --quad:set_color(collider_index)
+
+    end
+
 end
 
 function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
@@ -65,7 +92,7 @@ end
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, collider_index, entity)
     --local quad = self.owner:get(self.id(), QuadComponent)
-    local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(collider_index)
+    --local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(collider_index)
 
     --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
     --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
@@ -84,7 +111,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
 
-        local transform = self.owner:get(self.id(), Transform)
+        --local transform = self.owner:get(self.id(), Transform)
         
         -- Explosion
 
@@ -104,25 +131,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         self:deactivate_quad_and_collider_at(collider_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
 
         -- Reset object if all parts are inactive
-        local collider = self.owner:get(self.id(), CircleColliderSetComponent)
-        if (not collider:is_any_active()) then
-            
-            local transform = self.owner:get(self.id(), Transform)
-            local quad = self.owner:get(self.id(), QuadSetComponent)
-
-            -- Activate all quads and colliders
-            collider:activate_all(true)
-            quad:activate_all(true)
-            
-            transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
-            transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
-            
-            self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-            self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-            
-            quad_color = random_color()
-
-        end
+        self:check_if_destroyed()
     end
 end
 

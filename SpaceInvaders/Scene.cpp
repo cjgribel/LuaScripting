@@ -400,20 +400,29 @@ namespace {
         // visit from core, set (active) visited to false
         // set all inactive to false (only active collider can be islands)
 
-        grid_comp.visited.assign(w * h, false);
-        grid_comp.islands.clear(); // assign(w * h, false);
-
-        if (!colliderset_comp.is_active_flags[core_y * w + core_x])
-        {
-            std::cout << "Core inactive" << std::endl;
-            return;
-            // assert(0);
-        } // ???
-
         auto& q = grid_comp.visit_queue;
         auto& v = grid_comp.visited;
         auto& islands = grid_comp.islands;
         const auto& is_active = colliderset_comp.is_active_flags;
+
+        v.assign(w * h, false);
+        islands.clear(); // assign(w * h, false);
+
+        // Core is inactive => all elements are islands
+        if (!colliderset_comp.is_active_flags[core_y * w + core_x])
+        {
+            // std::cout << "Core inactive" << std::endl;
+            // return;
+
+            for (int i = 0; i < w * h; i++)
+            {
+                //    islands.push_back(i);
+                if (is_active[i])
+                    islands.push_back(i);
+            }
+            return;
+        } // ???
+
 
         q.push({ core_x, core_y });
         v[core_y * w + core_x] = true;
@@ -478,7 +487,7 @@ namespace {
                 }
             }
             std::cout << '\n';
-        }
+    }
 #endif
 #if 0
         for (int y = 0; y < h; ++y)
@@ -496,7 +505,7 @@ namespace {
                 }
             }
             std::cout << '\n';
-        }
+}
 #endif
         // for (auto& island_index : islands)
         //     std::cout << island_index << std::endl;
@@ -679,9 +688,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -894,7 +903,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-    } // anon
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1019,7 +1028,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
