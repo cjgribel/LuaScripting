@@ -60,15 +60,17 @@ function node:check_if_destroyed()
         -- Activate all quads and colliders
         collider:activate_all(true)
         quad:activate_all(true)
-        
+        -- Random position
         transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
         transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
-        
+        -- Random velocity
         self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
         self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-        
-        -- TODO
-        --quad:set_color(collider_index)
+        -- Random color
+        --quad:set_color_all(random_color())
+
+        -- Kill counter
+        config.enemy_kill_count = config.enemy_kill_count + 1
 
     end
 
@@ -119,8 +121,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         --collider_x, collider_y = self.owner:get(self.id(), QuadSetComponent):get_pos(collider_index)
         --emit_explosion(transform.x + collider_x, transform.y + collider_y, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y, quad_color)
         
-        -- Kill counter
-        config.enemy_kill_count = config.enemy_kill_count + 1
+
 
         -- Deactivate collider & quad that was hit
         --local collider = self.owner:get(self.id(), CircleColliderSetComponent)

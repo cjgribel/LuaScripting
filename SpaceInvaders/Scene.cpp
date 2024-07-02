@@ -143,10 +143,14 @@ namespace {
                 if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 return c.colors[index];
             },
-            // "set_color", [](QuadSetComponent& c, int index, float value) {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
-            //     c.colors[index] = value;
-            // },
+            "set_color", [](QuadSetComponent& c, int index, uint32_t color) {
+                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                c.colors[index] = color;
+            },
+            "set_color_all", [](QuadSetComponent& c, uint32_t color) {
+                for (int i = 0; i < c.count; i++)
+                    c.colors[i] = color;
+            },
             // "get_is_active_flag", [](QuadSetComponent& c, int index) -> float {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     return c.is_active_flags[index];
@@ -487,7 +491,7 @@ namespace {
                 }
             }
             std::cout << '\n';
-    }
+        }
 #endif
 #if 0
         for (int y = 0; y < h; ++y)
@@ -505,7 +509,7 @@ namespace {
                 }
             }
             std::cout << '\n';
-}
+        }
 #endif
         // for (auto& island_index : islands)
         //     std::cout << island_index << std::endl;
@@ -688,9 +692,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -903,7 +907,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-} // anon
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1028,7 +1032,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
