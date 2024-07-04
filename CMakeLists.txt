@@ -171,10 +171,10 @@ message(STATUS "sol2 include dir: ${sol2_SOURCE_DIR}")
 #
 
 # Module1
-message(STATUS "Creating executable target for SpaceInvaders")
-add_executable(SpaceInvaders 
-    SpaceInvaders/main.cpp
-    SpaceInvaders/Scene.cpp
+message(STATUS "Creating executable target for LuaGame")
+add_executable(LuaGame 
+    LuaGame/main.cpp
+    LuaGame/Scene.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -192,11 +192,11 @@ add_executable(SpaceInvaders
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/ray.cpp
     )
 
-set_target_properties(SpaceInvaders PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/SpaceInvaders"
+set_target_properties(LuaGame PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/LuaGame"
 )
 target_link_libraries(
-    SpaceInvaders PRIVATE 
+    LuaGame PRIVATE 
     ${SDL2_LIBRARIES} 
     libglew_static 
     ${OPENGL_LIBRARIES}
@@ -207,15 +207,15 @@ target_link_libraries(
 #target_include_directories(Module1 PRIVATE ${imgui_SOURCE_DIR}/backends)
 
 # Post-build commands
-add_custom_command(TARGET SpaceInvaders POST_BUILD
+add_custom_command(TARGET LuaGame POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:SDL2::SDL2>
-        $<TARGET_FILE_DIR:SpaceInvaders>
+        $<TARGET_FILE_DIR:LuaGame>
 )
 message(STATUS "Post-build commands to copy SDL2 DLLs to Module1 folder")
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_property(TARGET SpaceInvaders PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    set_property(TARGET LuaGame PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
     message(STATUS "Set Visual Studio debugger working directory")
 endif()
 

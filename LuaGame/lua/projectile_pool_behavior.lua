@@ -34,7 +34,7 @@ function ProjectilePool:init()
         registry:emplace(entity, ccs)
 
         print('Adding projectile_behavior to: ', entity)
-        local projectile_behavior = add_script(registry, entity, dofile("../../SpaceInvaders/lua/projectile_behavior.lua"), "projectile_behavior")
+        local projectile_behavior = add_script(registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
         projectile_behavior.projectile_pool = self
 
         table.insert(self.pool, { entity = entity })
