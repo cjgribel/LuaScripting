@@ -6,7 +6,7 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include <entt/entt.hpp> // -> Scene source
+#include <entt/entt.hpp>
 #include <vector>
 
 #include "vec.h"

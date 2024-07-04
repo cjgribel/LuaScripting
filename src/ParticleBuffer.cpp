@@ -110,7 +110,7 @@ void ParticleBuffer::push_trail(const v3f& p, const v3f& v, int nbr_particles, u
     }
 }
 
-void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
+void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, int nbr_particle, uint color)
 {
     const float vel_len = length(v);
     const float vel_max = 5.0f;
@@ -126,7 +126,7 @@ void ParticleBuffer::push_explosion(const v3f& p, const v3f& v, uint color)
     else
         vn = v3f{ v.x / vel_len, v.y / vel_len, 0.0f };
 
-    for (int i = 0; i < 40; i++)
+    for (int i = 0; i < nbr_particle; i++)
     {
         const float theta = rnd(-theta_spread, theta_spread);
         const float sin_theta = std::sin(theta);

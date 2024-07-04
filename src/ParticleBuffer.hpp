@@ -25,7 +25,7 @@ public:
 
     void push_trail(const v3f& p, const v3f& v, int nbr_particles, uint color);
 
-    void push_explosion(const v3f& p, const v3f& v, uint color);
+    void push_explosion(const v3f& p, const v3f& v, int nbr_particle, uint color);
 
     int size();
 

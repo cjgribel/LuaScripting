@@ -84,7 +84,7 @@ function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
     
     -- Emit particles
     local x, y = quad:get_pos(index)
-    emit_explosion(transform.x + x, transform.y + y, vel_x, vel_y, quad:get_color(index))
+    emit_explosion(transform.x + x, transform.y + y, vel_x, vel_y, 20, quad:get_color(index))
 
     -- Deactivate
     collider:set_active_flag(index, false)

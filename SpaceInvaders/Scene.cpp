@@ -116,7 +116,7 @@ namespace {
             &entt::type_hash<IslandFinderComponent>::value,
             sol::call_constructor,
             sol::factories([](int core_x, int core_y) {
-                return IslandFinderComponent{  
+                return IslandFinderComponent{
                     .core_x = core_x,
                     .core_y = core_y
                 };
@@ -434,10 +434,7 @@ namespace {
         add_script(registry, entity, script_function(), identifier);
     }
 
-    sol::table get_script(
-        entt::registry& registry,
-        entt::entity entity,
-        const std::string& identifier)
+    sol::table get_script(entt::registry& registry, entt::entity entity, const std::string& identifier)
     {
         if (!registry.all_of<ScriptedBehaviorComponent>(entity))
             return sol::lua_nil;
@@ -459,50 +456,40 @@ namespace {
         IslandFinderComponent& grid_comp,
         const CircleColliderSetComponent& colliderset_comp)
     {
-        //const int core_x = 0, core_y = 0;
         const int core_x = grid_comp.core_x;
         const int core_y = grid_comp.core_y;
-        // const int w = 14, h = 2;
-        int w = colliderset_comp.width;
-        int h = colliderset_comp.count / w;
-
-        // set all is_island to true
-        // visit from core, set (active) visited to false
-        // set all inactive to false (only active collider can be islands)
-
+        const int w = colliderset_comp.width;
+        const int h = colliderset_comp.count / w;
         auto& q = grid_comp.visit_queue;
         auto& v = grid_comp.visited;
         auto& islands = grid_comp.islands;
         const auto& is_active = colliderset_comp.is_active_flags;
 
         v.assign(w * h, false);
-        islands.clear(); // assign(w * h, false);
+        islands.clear();
 
-        // Core is inactive => all elements are islands
+        // Core is inactive => mark aall nodes as islands
         if (!colliderset_comp.is_active_flags[core_y * w + core_x])
         {
-            // std::cout << "Core inactive" << std::endl;
-            // return;
-
             for (int i = 0; i < w * h; i++)
             {
-                //    islands.push_back(i);
                 if (is_active[i])
                     islands.push_back(i);
             }
             return;
-        } // ???
-
+        }
 
         q.push({ core_x, core_y });
         v[core_y * w + core_x] = true;
 
-        while (!q.empty()) {
+        while (!q.empty())
+        {
             auto [cx, cy] = q.front();
             q.pop();
 
             int directions[4][2] = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
-            for (auto& dir : directions) {
+            for (auto& dir : directions)
+            {
                 int nx = cx + dir[0];
                 int ny = cy + dir[1];
 
@@ -516,30 +503,15 @@ namespace {
                     v[ny * w + nx] = true;
                     q.push({ nx, ny });
                 }
-                // if (isValid(nx, ny) && !visited[ny * NbrColumns + nx] && grid[ny * NbrColumns + nx].is_active) {
-                //     visited[ny * NbrColumns + nx] = true;
-                //     q.push({ nx, ny });
-                // }
             }
         }
 
+        // Mark all unvisited active nodes as islands
         for (int i = 0; i < w * h; i++)
         {
             if (is_active[i] && !v[i])
                 islands.push_back(i);
         }
-
-        // Mark all unvisited active nodes as islands
-        // for (int y = 0; y < NbrRows; ++y) {
-        //     for (int x = 0; x < NbrColumns; ++x) {
-        //         if (grid[y * NbrColumns + x].is_active && !visited[y * NbrColumns + x]) {
-        //             grid[y * NbrColumns + x].is_island = true;
-        //         }
-        //         else {
-        //             grid[y * NbrColumns + x].is_island = false;
-        //         }
-        //     }
-        // }
 
 #if 0
         for (int y = 0; y < h; ++y)
@@ -610,11 +582,6 @@ namespace {
         ImVec2 pos(x, y);
         ImGui::SetNextWindowPos(pos);
     }
-
-    // void ImGui_SetNextWindowSize(float width, float height) {
-    //     ImVec2 size(width, height);
-    //     ImGui::SetNextWindowSize(size);
-    // }
 
     void ImGui_Begin(const char* name)
     {
@@ -690,9 +657,10 @@ bool Scene::init(const v2i& windowSize)
             float y,
             float vx,
             float vy,
+            int nbr_particles,
             uint32_t color)
             {
-                particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
+                particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
         const auto emit_trail = [&](
             float x,
@@ -978,7 +946,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
-}
+    }
 
 void Scene::renderUI()
 {

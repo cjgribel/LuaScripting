@@ -74,7 +74,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     if bounceBehavior then
         local transform = self.owner:get(self.id(), Transform)
         -- Particles
-        emit_explosion(transform.x, transform.y, 0.0, 0.0, 0xff0000ff)
+        emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
         -- Reset
         transform.x, transform.y = config.bounds.right, config.bounds.bottom
         
