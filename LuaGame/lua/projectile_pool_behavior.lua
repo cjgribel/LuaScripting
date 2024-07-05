@@ -13,7 +13,7 @@ function ProjectilePool:init()
         local entity = registry:create()
         --print('Entity created:', entity)
 
-        registry:emplace(entity, Transform(0.0, 0.0))
+        registry:emplace(entity, Transform(0.0, 0.0, 0.0))
         --print('Transform component added to entity:', entity)
         --registry:emplace(entity, "Velocity", { dx = 0, dy = 0 })
 

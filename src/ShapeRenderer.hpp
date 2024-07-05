@@ -390,9 +390,7 @@ namespace Renderer {
         void push_quad(const v3f points[4],
             const v3f& n);
 
-        void push_quad(
-            const vec3f& pos,
-            float scale);
+        void push_quad();
 
         void push_quad_wireframe();
 

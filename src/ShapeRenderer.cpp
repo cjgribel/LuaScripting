@@ -642,16 +642,16 @@ namespace Renderer {
     }
 
     // TODO: What's this? A 2D quad in the xy-plane?
-    void ImPrimitiveRenderer::push_quad(const vec3f& pos, float scale)
+    void ImPrimitiveRenderer::push_quad()
     {
-        const auto [color, depth_test, cull_face] = get_states<Color4u, DepthTest, BackfaceCull>();
+        const auto [M, color, depth_test, cull_face] = get_states<m4f, Color4u, DepthTest, BackfaceCull>();
 
-        static const v3f quad_vertices[] =
+        static const v4f quad_vertices[] =
         {
-            v3f {-0.5f, -0.5f, 0.0f},
-            v3f {0.5f, -0.5f, 0.0f},
-            v3f {0.5f, 0.5f, 0.0f},
-            v3f {-0.5f, 0.5f, 0.0f}
+            v4f {-0.5f, -0.5f, 0.0f, 1.0f},
+            v4f {0.5f, -0.5f, 0.0f, 1.0f},
+            v4f {0.5f, 0.5f, 0.0f, 1.0f},
+            v4f {-0.5f, 0.5f, 0.0f, 1.0f}
         };
         static const unsigned tri_indices[] = { 0, 1, 2, 0, 2, 3 };
 
@@ -660,7 +660,7 @@ namespace Renderer {
         vec3f N = v3f_001; // = linalg::normalize(vec3f(qua))
 
         for (auto& v : quad_vertices)
-            polygon_vertices.push_back(PolyVertex{ pos + v * scale, N, color });
+            polygon_vertices.push_back(PolyVertex{ xyz(M * v), N, color });
 
         polygon_indices.insert(polygon_indices.end(),
             tri_indices,

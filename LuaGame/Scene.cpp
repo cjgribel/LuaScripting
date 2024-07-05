@@ -805,6 +805,7 @@ void Scene::update(float time_s, float deltaTime_s)
             const auto& collider1 = view.get<CircleColliderSetComponent>(entity1);
             if (!collider1.is_active) continue;
 
+            const auto R1 = m2f::rotation(transform1.rot);
             for (auto it2 = it1; ++it2 != view.end(); )
             {
                 auto entity2 = *it2;
@@ -815,53 +816,51 @@ void Scene::update(float time_s, float deltaTime_s)
                 // LAYER CHECK
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
 
+                const auto R2 = m2f::rotation(transform2.rot);
                 for (auto i = 0; i < collider1.count; i++)
                 {
                     if (!collider1.is_active_flags[i]) continue;
+                    const auto pos1 = R1 * collider1.pos[i];
 
                     for (auto j = 0; j < collider2.count; j++)
                     {
                         if (!collider2.is_active_flags[j]) continue;
+                        const auto pos2 = R2 * collider2.pos[j];
 
-                        float x1 = transform1.x + collider1.pos[i].x;
-                        float y1 = transform1.y + collider1.pos[i].y;
-                        float x2 = transform2.x + collider2.pos[j].x;
-                        float y2 = transform2.y + collider2.pos[j].y;
+                        const float x1 = transform1.x + pos1.x;
+                        const float y1 = transform1.y + pos1.y;
+                        const float x2 = transform2.x + pos2.x;
+                        const float y2 = transform2.y + pos2.y;
+
                         const float r1 = collider1.radii[i];
                         const float r2 = collider2.radii[j];
 
-                        // Calculate the distance between the two entities
-                        float dx = x1 - x2; // transform1.x - transform2.x;
-                        float dy = y1 - y2; // transform1.y - transform2.y;
-                        float distanceSquared = dx * dx + dy * dy;
-                        float radiusSum = r1 + r2;
+                        // Distance between colliders
+                        const float dx = x1 - x2;
+                        const float dy = y1 - y2;
+                        const float distanceSquared = dx * dx + dy * dy;
+                        const float radiusSum = r1 + r2;
 
                         // Check for collision
                         if (distanceSquared < radiusSum * radiusSum)
                         {
                             // Collision detected
 
-                            // Calculate distance
+                            // Distance
                             float distance = std::sqrt(distanceSquared);
 
-                            // Calculate penetration depth
+                            // Penetration depth
                             float penetrationDepth = radiusSum - distance;
 
-                            // Calculate contact normal
+                            // Contact normal
                             float nx = dx / distance;
                             float ny = dy / distance;
+                            // auto n = d * (1.0f / distance);
 
-                            // Calculate point of contact
+                            // Point of contact
                             float px = x1 - r1 * nx + r2 * nx;
                             float py = y1 - r1 * ny + r2 * ny;
 
-                            // std::cout << "Collision detected between entity " << (uint32_t)entity1
-                            //     << " and entity " << (uint32_t)entity2 << std::endl;
-                            // std::cout << "Contact Point: (" << px << ", " << py << ")\n";
-                            // std::cout << "Contact Normal: (" << nx << ", " << ny << ")\n";
-                            // std::cout << "Penetration Depth: " << penetrationDepth << "\n";
-
-                            // (nx, ny) points 2 -> 1
                             dispatch_collision_event_to_scripts(px, py, -nx, -ny, i, entity1, entity2);
                             dispatch_collision_event_to_scripts(px, py, nx, ny, j, entity2, entity1);
                         }
@@ -946,7 +945,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
-    }
+}
 
 void Scene::renderUI()
 {
@@ -1002,10 +1001,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 {
     assert(is_initialized);
 
-    // Background quad
-    renderer->push_states(Renderer::Color4u{ 0x40ffffff });
-    renderer->push_quad(v3f{ 0.0f, 0.0f, 0.0f }, 10.0f);
-    renderer->pop_states<Renderer::Color4u>();
+    // Background quad - TODO script this
+    {
+        const auto M = set_translation(m4f::scaling(15.0f, 10.0f, 1.0f), v3f{ 2.5f, 0.0f, 0.0f });
+        renderer->push_states(M, Renderer::Color4u{ 0x40ffffff });
+        renderer->push_quad();
+        renderer->pop_states<m4f, Renderer::Color4u>();
+    }
 
     // Render QuadComponents
     // Todo: Remove Transform from view
@@ -1026,36 +1028,73 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             // renderer->push_states(Renderer::Color4u::Blue);
             // renderer->push_states(Renderer::Color4u{ 0x80ff0000 });
             renderer->push_states(Renderer::Color4u{ color });
-            renderer->push_quad(pos, size);
+            // renderer->push_quad(pos, size);
             renderer->pop_states<Renderer::Color4u>();
         }
     }
 
+#if 1
     // Render all QuadSetComponent
     {
         auto view = registry.view<QuadSetComponent>();
-        // float z = 0.0f;
         for (auto entity : view)
         {
             auto& transform_comp = registry.get<Transform>(entity);
-            auto& qc = view.get<QuadSetComponent>(entity);
-            auto& cc = registry.get<CircleColliderSetComponent>(entity); // DEBUG
+            const auto G = m4f::TRS(
+                v3f{ transform_comp.x, transform_comp.y, 0.0f },
+                transform_comp.rot, v3f_001,
+                v3f_111
+            );
 
-            for (int i = 0; i < qc.count; i++)
+            auto& quadset = view.get<QuadSetComponent>(entity);
+            // auto& cc = registry.get<CircleColliderSetComponent>(entity); // DEBUG
+            for (int i = 0; i < quadset.count; i++)
             {
-                if (!qc.is_active_flags[i]) continue;
-                assert(cc.is_active_flags[i] == qc.is_active_flags[i]);  // DEBUG
+                if (!quadset.is_active_flags[i]) continue;
+                // assert(cc.is_active_flags[i] == qc.is_active_flags[i]);  // DEBUG
 
-                const auto pos = xy0(qc.pos[i]) + v3f{ transform_comp.x, transform_comp.y, 0.0f };
-                const auto& size = qc.sizes[i];
-                const auto& color = qc.colors[i];
+                const auto& pos = xy0(quadset.pos[i]);
+                const auto& size = quadset.sizes[i];
+                const auto& color = quadset.colors[i];
+                const auto M = set_translation(m4f::scaling(size, size, 1.0f), pos);
 
-                renderer->push_states(Renderer::Color4u{ color });
-                renderer->push_quad(pos, size);
-                renderer->pop_states<Renderer::Color4u>();
+                renderer->push_states(G * M, Renderer::Color4u{ color });
+                renderer->push_quad();
+                renderer->pop_states<m4f, Renderer::Color4u>();
             }
         }
     }
+#endif
+
+#if 0
+    // Render all CircleColliderSetComponent
+    {
+        auto view = registry.view<CircleColliderSetComponent>();
+        for (auto entity : view)
+        {
+            auto& transform_comp = registry.get<Transform>(entity);
+            const auto G = m4f::TRS(
+                v3f{ transform_comp.x, transform_comp.y, 0.0f },
+                transform_comp.rot, v3f_001,
+                v3f_111
+            );
+
+            auto& circleset = view.get<CircleColliderSetComponent>(entity);
+            for (int i = 0; i < circleset.count; i++)
+            {
+                if (!circleset.is_active_flags[i]) continue;
+
+                const auto& pos = xy0(circleset.pos[i]);
+                const auto& r = circleset.radii[i];
+                const auto M = set_translation(m4f::scaling(r, r, 1.0f), pos);
+
+                renderer->push_states(G * M, Renderer::Color4u{ 0xffffffff });
+                renderer->push_circle_ring<8>();
+                renderer->pop_states<m4f, Renderer::Color4u>();
+            }
+        }
+    }
+#endif
 
     // Add some test particles
 #if 0

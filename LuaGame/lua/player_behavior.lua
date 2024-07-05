@@ -1,6 +1,4 @@
 local node = {
-    --MIN_BOUND = -5.0,
-    --MAX_BOUND = 5.0,
     fire_cooldown = 0.075,
     fire_delay = 0.0,
     projectile_pool = nil,
@@ -13,16 +11,17 @@ end
 
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
-    local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(0)
-    local radius = 0.5 --quad.w / 2
+    local quad = self.owner:get(self.id(), QuadSetComponent)
+    local quad_color = quad:get_color(0) -- self.owner:get(self.id(), QuadSetComponent):get_color(0)
+    local quad_r = 0.25 --TODO getter
 
     -- Apply input to transform
-    transform.x = transform.x + input.axis_left_x * dt * 10.0
-    transform.y = transform.y - input.axis_left_y * dt * 10.0
+    transform.x = transform.x + input.axis_left_x * dt * config.player_speed
+    transform.y = transform.y - input.axis_left_y * dt * config.player_speed
 
     -- Clamp to bounds
-    transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
-    transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
+    transform.x = math.max(config.bounds.left + quad_r, math.min(transform.x, config.bounds.right - quad_r))
+    transform.y = math.max(config.bounds.bottom + quad_r, math.min(transform.y, config.bounds.top - quad_r))
 
     --if input.button_x then
         --print('button pressed')

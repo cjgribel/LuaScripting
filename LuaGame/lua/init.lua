@@ -3,6 +3,14 @@ PlayerCollisionBit = 0x1
 EnemyCollisionBit = 0x2
 ProjectileCollisionBit = 0x4
 
+function rotate(x, y, theta)
+
+    local cos_theta = math.cos(theta)
+    local sin_theta = math.sin(theta)
+    return x * cos_theta - y * sin_theta, x * sin_theta + y * cos_theta
+
+end
+
 function random_color()
     local alpha = 0xff
     local red = math.random(0, 255)
@@ -17,7 +25,7 @@ local function create_bouncy_entity(index)
     local entity = registry:create()
     print("Created entity ID:", entity)
     
-    registry:emplace(entity, Transform(0.0, 0.0))
+    registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
 
     --local size = 0.5 + math.random() * 0.0
     --registry:emplace(entity, QuadComponent(size, random_color(), true))
@@ -53,7 +61,7 @@ local function create_bouncy_entity(index)
         for j = 0, H - 1 do
             local x = (i - (W - 1) / 2) * D
             local y = (j - (H - 1) / 2) * D
-            circleset:set_circle(i, j, x, y, D, visible)
+            circleset:set_circle(i, j, x, y, D * 0.5, visible)
         end
     end
     registry:emplace(entity, circleset)
@@ -77,7 +85,7 @@ local function create_player_entity(size, color, projectile_pool)
     local entity = registry:create()
 
     -- Transform
-    registry:emplace(entity, Transform(0.0, 0.0))
+    registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
     -- QuadSetComponent
     local quadset = QuadSetComponent(1, 1, true)
@@ -101,6 +109,7 @@ print('Lua init script...')
 math.randomseed(os.time())
 
 config = {
+    player_speed = 10.0,
     bounds = { left = -5, right = 10, bottom = -5, top = 5 },
     is_out_of_bounds = function(self, x, y)
         return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top

@@ -8,7 +8,8 @@ local node = {
 function node:init()
     self.velocity = {
         x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
-        y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+        y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
+        angle = -math.pi * 0.5 + math.random() * math.pi
     }
 
 	print('bounce_behavior [#' .. self.id() .. '] init ()', self)
@@ -22,6 +23,7 @@ function node:update(dt)
     -- Apply velocity
     transform.x = transform.x + self.velocity.x * dt
     transform.y = transform.y + self.velocity.y * dt
+    transform.rot = transform.rot + self.velocity.angle * dt
 
     -- Bounce at bounds
     if transform.x - radius <= config.bounds.left or transform.x + radius >= config.bounds.right then
@@ -60,7 +62,7 @@ function node:check_if_destroyed()
         -- Activate all quads and colliders
         collider:activate_all(true)
         quad:activate_all(true)
-        -- Random position
+        -- Random transform
         transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
         transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
         -- Random velocity
@@ -82,9 +84,16 @@ function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
     local collider = self.owner:get(self.id(), CircleColliderSetComponent)
     local quad = self.owner:get(self.id(), QuadSetComponent)
     
-    -- Emit particles
+    -- Emit particles in the (vel_x, vel_y) direction
     local x, y = quad:get_pos(index)
-    emit_explosion(transform.x + x, transform.y + y, vel_x, vel_y, 20, quad:get_color(index))
+    xrot, yrot = rotate(x, y, transform.rot)
+    emit_explosion(
+        transform.x + xrot, 
+        transform.y + yrot, 
+        vel_x, 
+        vel_y, 
+        20, 
+        quad:get_color(index))
 
     -- Deactivate
     collider:set_active_flag(index, false)
