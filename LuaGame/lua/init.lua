@@ -104,6 +104,30 @@ local function create_player_entity(size, color, projectile_pool)
     return entity
 end
 
+local function create_background_entity(size, color)
+    local entity = registry:create()
+
+    -- Transform
+    -- TODO: non-uniform size
+    registry:emplace(entity, Transform(0.0, 0.0, 0.0))
+
+    -- QuadSetComponent
+    local quadset = QuadSetComponent(1, 1, true)
+    quadset:set_quad(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
+    registry:emplace(entity, quadset)
+
+    return entity
+end
+
+local function create_phasemanager_entity()
+
+    local entity = registry:create()
+    
+    add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
+    
+    return entity
+end
+
 print('Lua init script...')
 
 math.randomseed(os.time())
@@ -131,5 +155,7 @@ local player_entity = create_player_entity(0.5, 0xffffffff, projectilePool)
 for i = 1, 3 do
     create_bouncy_entity(i)
 end
+
+create_phasemanager_entity()
 
 print('Lua init script done')

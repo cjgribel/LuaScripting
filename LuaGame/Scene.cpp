@@ -951,6 +951,13 @@ void Scene::renderUI()
 {
     assert(is_initialized);
 
+    {
+        size_t nbr_entities = 0;
+        auto view = registry.view<entt::entity>();
+        for (auto entity : view) nbr_entities++;
+        ImGui::Text("Nbr of active entities %i", nbr_entities);
+    }
+
     ImGui::Text("Drawcall count %i", drawcallCount);
 
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
@@ -1118,8 +1125,10 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 
 void Scene::destroy()
 {
-    // Explicitly destroy all ScriptedBehaviorComponent in order to
-    // invoke on_destroy. Must be done before the Lua state is detroyed.
+    // Explicitly destroy all ScriptedBehaviorComponent in order to invoke 
+    // registry.on_destroy<ScriptedBehaviorComponent> which in turn calls 
+    // destroy for all scripts. Simply clearing the registry won't achieve this.
+    // This must be done before the Lua state is de stroyed.
     registry.clear<ScriptedBehaviorComponent>();
     registry.clear();
 
