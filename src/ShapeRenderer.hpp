@@ -497,7 +497,7 @@ namespace Renderer {
             unsigned nbr_points,
             unsigned size);
 
-        void render(const mat4f& PROJ_VIEW);
+        int render(const mat4f& PROJ_VIEW);
 
         void post_render();
     };

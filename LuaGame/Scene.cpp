@@ -1073,7 +1073,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     particleBuffer.render(renderer);
 
     // Render shapes
-    renderer->render(P * V);
+    drawcallCount = renderer->render(P * V);
     renderer->post_render();
 }
 

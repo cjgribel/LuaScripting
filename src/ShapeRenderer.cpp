@@ -1274,7 +1274,7 @@ namespace Renderer {
             points + nbr_points);
     }
 
-    void ImPrimitiveRenderer::render(const mat4f& PROJ_VIEW /* Proj * WorldToView */)
+    int ImPrimitiveRenderer::render(const mat4f& PROJ_VIEW /* Proj * WorldToView */)
     {
         //push_arrow({1,2,0}, {1,0,0}, YELLOW);
         //push_sphere(1, 1, linalg::mat4f_identity, BLUE);
@@ -1338,11 +1338,12 @@ namespace Renderer {
     //
 #endif
 
+        int dc_count = 0;
 
 #if 1
-    //
-    // Render polygons
-    //
+        //
+        // Render polygons
+        //
         if (polygon_hash.size())
         {
             glUseProgram(lambert_shader);
@@ -1476,6 +1477,7 @@ namespace Renderer {
                     &start[0],        // const void * const *indices
                     count,            // GLsizei drawcount
                     &ofs[0]);         // const GLint *basevertex
+                dc_count++;
             }
 
             glBindVertexArray(0);
@@ -1527,6 +1529,7 @@ namespace Renderer {
 
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned) * size, &it.second[0], GL_STREAM_DRAW);
                 glDrawElements(dc.topology, size, GL_UNSIGNED_INT, BUFOFS(0));
+                dc_count++;
             }
             glLineWidth(1);
             glBindVertexArray(0);
@@ -1567,6 +1570,7 @@ namespace Renderer {
                 glBufferData(GL_ARRAY_BUFFER, sizeof(PointVertex) * size, &it.second[0], GL_STREAM_DRAW);
                 glPointSize(dc.size);
                 glDrawArrays(GL_POINTS, 0, size);
+                dc_count++;
             }
             CheckAndThrowGLErrors();
         }
@@ -1589,6 +1593,8 @@ namespace Renderer {
 #ifdef GL_POLYGON_MODE
         //    glPolygonMode(GL_FRONT_AND_BACK, (GLenum)last_polygon_mode[0]);
 #endif
+
+        return dc_count;
     }
 
     void ImPrimitiveRenderer::post_render()
