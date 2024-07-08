@@ -50,6 +50,22 @@ function node:update(dt)
     --print(nbr_islands)
 end
 
+function node:destroy()
+	print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
+end
+
+--function node:reset()
+--
+--    local transform = self.owner:get(self.id(), Transform)
+--    transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
+--    transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
+--
+--    self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+--    self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+--    self.velocity.angle = -math.pi * 0.5 + math.random() * math.pi
+--
+--end
+
 function node:check_if_destroyed()
 
     -- Reset object if all parts are inactive
@@ -122,31 +138,11 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
 
-        --local transform = self.owner:get(self.id(), Transform)
-        
-        -- Explosion
-
-        --emit_explosion(transform.x, transform.y, self.velocity.x, self.velocity.y, quad.color)
-        --collider_x, collider_y = self.owner:get(self.id(), QuadSetComponent):get_pos(collider_index)
-        --emit_explosion(transform.x + collider_x, transform.y + collider_y, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y, quad_color)
-        
-
-
-        -- Deactivate collider & quad that was hit
-        --local collider = self.owner:get(self.id(), CircleColliderSetComponent)
-        --local quad = self.owner:get(self.id(), QuadSetComponent)
-        --collider:set_active_flag(collider_index, false)
-        --quad:set_active_flag(collider_index, false)
-        
         self:deactivate_quad_and_collider_at(collider_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
 
         -- Reset object if all parts are inactive
         self:check_if_destroyed()
     end
-end
-
-function node:destroy()
-	print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
 end
 
 return node
