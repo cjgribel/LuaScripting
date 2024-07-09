@@ -11,6 +11,7 @@
 
 #include "vec.h"
 #include "SceneBase.h"
+#include "Observer.h"
 #include "ParticleBuffer.hpp"
 
 #define EntitySetSize 64
@@ -18,7 +19,7 @@ struct CircleColliderSetComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
-    bool is_active_flags[EntitySetSize] {false};
+    bool is_active_flags[EntitySetSize]{ false };
 
     int count = 0, width = 0;
     bool is_active = true;
@@ -41,7 +42,7 @@ struct IslandFinderComponent
     // For flood-fill
     std::vector<bool> visited;
     std::queue<std::pair<int, int>> visit_queue;
-    
+
     // Exposed to Lua
     std::vector<int> islands;
 };
@@ -53,7 +54,7 @@ struct QuadSetComponent
     v2f pos[EntitySetSize];
     float sizes[EntitySetSize];
     uint32_t colors[EntitySetSize];
-    bool is_active_flags[EntitySetSize] {false};
+    bool is_active_flags[EntitySetSize]{ false };
     int count = 0, width = 0;
     bool is_active = true;
 
@@ -147,6 +148,14 @@ struct ScriptedBehaviorComponent
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
+struct LuaEvent {
+    sol::table data;
+    std::string event_name;
+
+    LuaEvent(const sol::table& data, const std::string& event_name)
+        : data(data), event_name(event_name) {}
+};
+
 inline void my_panic(sol::optional<std::string> maybe_msg)
 {
     std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
@@ -169,6 +178,7 @@ protected:
 
     m4f VP, P, V;
 
+    ConditionalObserver observer;
     ParticleBuffer particleBuffer{};
 
 public:

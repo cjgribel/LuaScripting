@@ -604,6 +604,42 @@ namespace {
     }
 }
 
+// Bind the ConditionalObserver to Lua
+void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
+{
+    lua.new_usertype<ConditionalObserver>("ConditionalObserver",
+        "register_callback", [](ConditionalObserver& observer, const sol::table& lua_table, const std::string& event_name) {
+            auto lua_callback = [lua_table, event_name](const LuaEvent& luaEvent) {
+                if (lua_table.valid())
+                {
+                    sol::function lua_function = lua_table[event_name];
+                    if (lua_function.valid())
+                    {
+                        lua_function(luaEvent.data);
+                    }
+                    else
+                    {
+                        std::cerr << "Error: Lua function " << event_name << " is not valid." << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cerr << "Error: Lua table is not valid." << std::endl;
+                }
+                };
+
+            observer.register_callback(lua_callback);
+        },
+        "enqueue_event", [](ConditionalObserver& observer, const sol::table& lua_data, const std::string& event_name) {
+            observer.enqueue_event(LuaEvent{ lua_data, event_name });
+        },
+        "dispatch_all_events", &ConditionalObserver::dispatch_all_events,
+        "clear", &ConditionalObserver::clear
+    );
+
+    lua["observer"] = &observer;
+}
+
 bool Scene::init(const v2i& windowSize)
 {
     assert(!is_initialized);
@@ -711,9 +747,52 @@ bool Scene::init(const v2i& windowSize)
                 ImGui_SetNextWindowPos(pos_ss.x / pos_ss.w, SceneBase::windowSize.y - pos_ss.y / pos_ss.w);
             });
 
+        // Bind observer
+        bind_conditional_observer(lua, observer);
+
         // Run init script
-        // lua.safe_script_file("lua/init.lua");
         lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
+
+        // Send event C++ <-> C++
+        struct MyEvent {float x;} event {5.0f};
+        observer.register_callback([](const MyEvent& e) { std::cout << "C++: MyEvent: " << e.x << std::endl; });
+        observer.enqueue_event(event);
+        observer.dispatch_all_events();
+        observer.clear();
+
+        // C++ listens to event sent from Lua (ever needed?)
+        observer.register_callback([](const LuaEvent& e) { std::cout << "C++: LuaEvent: " << e.event_name << std::endl; });
+
+        // Script with internal events via Observer (can be listened to from C+ as well)
+        lua.script(R"(
+
+        print("Hello!")
+
+        -- Define a Lua table with functions
+        local event_handler = {
+            on_event1 = function(data)
+                print("Event1 received with data: " .. data.some_key)
+            end,
+
+            on_event2 = function(data)
+                print("Event2 received with data: " .. data.some_other_key)
+            end
+        }
+
+        -- Register Lua callbacks
+        observer:register_callback(event_handler, "on_event1")
+        observer:register_callback(event_handler, "on_event2")
+
+        -- Enqueue events
+        observer:enqueue_event({ some_key = "value1" }, "on_event1")
+        observer:enqueue_event({ some_other_key = "value2" }, "on_event2")
+
+        -- Dispatch events
+        observer:dispatch_all_events()
+
+        -- Clear events
+        observer:clear()
+    )");
 
         // Run engine-side init code
 #if 0
@@ -955,7 +1034,7 @@ void Scene::renderUI()
         size_t nbr_entities = 0;
         auto view = registry.view<entt::entity>();
         for (auto entity : view) nbr_entities++;
-        ImGui::Text("Nbr of active entities %i", nbr_entities);
+        ImGui::Text("Nbr of active entities %i", (int)nbr_entities);
     }
 
     ImGui::Text("Drawcall count %i", drawcallCount);
