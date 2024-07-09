@@ -753,8 +753,9 @@ bool Scene::init(const v2i& windowSize)
         // Run init script
         lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
 
+#if 0
         // Send event C++ <-> C++
-        struct MyEvent {float x;} event {5.0f};
+        struct MyEvent { float x; } event{ 5.0f };
         observer.register_callback([](const MyEvent& e) { std::cout << "C++: MyEvent: " << e.x << std::endl; });
         observer.enqueue_event(event);
         observer.dispatch_all_events();
@@ -793,6 +794,7 @@ bool Scene::init(const v2i& windowSize)
         -- Clear events
         observer:clear()
     )");
+#endif
 
         // Run engine-side init code
 #if 0
