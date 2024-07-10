@@ -1,7 +1,6 @@
+local prefabloaders = {}
 
-local prefabloaders = require("prefabs")
-
-local function create_bouncy_entity()
+function prefabloaders.bouncing_mosaic()
 
     local entity = registry:create()
     print("Created entity ID:", entity)
@@ -54,48 +53,7 @@ local function create_bouncy_entity()
     add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
 
     return entity
+
 end
 
-local phase1 = {
-    name = 'Phase 1',
-    entities = {},
-    timer = 0.0
-}
-
-function phase1:init()
-    
-    print("phase1:init() called")
-    
-    table.insert(self.entities, create_bouncy_entity())
-    table.insert(self.entities, create_bouncy_entity())
-
-    local ent = prefabloaders:bouncing_mosaic()
-    
-end
-
-function phase1:update(dt)
-    --print("phase1:update() called with dt:", dt)
-
-    self.timer = self.timer + dt
-end
-
-function phase1:has_finished()
-    --print("phase1:has_finished() called")
-    
-    if self.timer > 2.0 then
-        return true
-    else
-        return false
-    end
-end
-
-function phase1:destroy()
-    print("phase1:destroy() called")
-    for _, entity in ipairs(self.entities) do
-        registry:destroy(entity)
-    end
-    -- Clear the entities list after destroying them
-    self.entities = {}
-end
-
-return phase1
+return prefabloaders
