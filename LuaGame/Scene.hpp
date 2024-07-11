@@ -19,7 +19,7 @@ struct CircleColliderSetComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
-    bool is_active_flags[EntitySetSize]{ false };
+    bool is_active_flags[EntitySetSize] = { false };
 
     int count = 0, width = 0;
     bool is_active = true;
@@ -54,7 +54,8 @@ struct QuadSetComponent
     v2f pos[EntitySetSize];
     float sizes[EntitySetSize];
     uint32_t colors[EntitySetSize];
-    bool is_active_flags[EntitySetSize]{ false };
+    bool is_active_flags[EntitySetSize] = { false };
+    
     int count = 0, width = 0;
     bool is_active = true;
 

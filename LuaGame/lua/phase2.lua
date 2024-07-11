@@ -2,7 +2,7 @@
 local function create_bouncy_entity()
 
     local entity = registry:create()
-    print("Created entity ID:", entity)
+    print("create_bouncy_entity(): Created entity ID:", entity)
     
     registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
 
@@ -65,6 +65,12 @@ function phase2:init()
     print("phase2:init() called")
 
     table.insert(self.entities, create_bouncy_entity())
+
+    -- Debug print 
+    print("phase2 created entities")
+    for _, entity in ipairs(self.entities) do
+        print(entity, registry:valid(entity))
+    end
 end
 
 function phase2:update(dt)
@@ -84,12 +90,19 @@ function phase2:has_finished()
 end
 
 function phase2:destroy()
-    print("phase2:destroy() called")
+
+    print("phase2 about to destroy entities:")
     for _, entity in ipairs(self.entities) do
-        registry:destroy(entity)
+        print(entity)
+    end
+
+    for _, entity in ipairs(self.entities) do
+        registry:destroy(entity, registry:valid(entity))
     end
     -- Clear the entities list after destroying them
     self.entities = {}
+    
+    print("phase2:destroy() called")
 end
 
 return phase2

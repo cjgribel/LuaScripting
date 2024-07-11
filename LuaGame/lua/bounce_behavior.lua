@@ -75,15 +75,17 @@ function node:check_if_destroyed()
         local transform = self.owner:get(self.id(), Transform)
         local quad = self.owner:get(self.id(), QuadSetComponent)
 
+        -- TODO set is_active = false for quadset & circleset
+
         -- Activate all quads and colliders
-        collider:activate_all(true)
-        quad:activate_all(true)
+    --    collider:activate_all(true)
+    --    quad:activate_all(true)
         -- Random transform
-        transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
-        transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
+    --    transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
+    --    transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
         -- Random velocity
-        self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
-        self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+    --    self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+    --    self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
         -- Random color
         --quad:set_color_all(random_color())
 

@@ -322,7 +322,10 @@ namespace {
         auto view = registry.view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
-            auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+            if (!registry.valid(entity)) continue;
+            // assert(entity != entt::null);
+
+            auto& script_comp = view.get<ScriptedBehaviorComponent>(entity);
             for (auto& script : script_comp.scripts)
             {
                 // auto& script = view.get<ScriptedBehaviorComponent>(entity);
@@ -662,6 +665,8 @@ bool Scene::init(const v2i& windowSize)
     {
         // Create enTT registry
         registry = entt::registry{};
+        
+        // Or, rely on RAII to unload scripts?
         registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         // Create Lua state
@@ -1211,6 +1216,7 @@ void Scene::destroy()
     // destroy for all scripts. Simply clearing the registry won't achieve this.
     // This must be done before the Lua state is de stroyed.
     registry.clear<ScriptedBehaviorComponent>();
+    
     registry.clear();
 
     is_initialized = false;

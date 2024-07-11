@@ -57,7 +57,7 @@ end
 
 function behavior:destroy()
     if self.current_phase then
-        self.current_phase:destroy()
+        --self.current_phase:destroy()
     end
 end
 
