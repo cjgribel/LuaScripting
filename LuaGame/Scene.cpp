@@ -23,65 +23,6 @@ namespace {
     //         << std::endl; });
     // }
 
-    void registeGridDataComponent(sol::state& lua)
-    {
-        lua.new_usertype<DataGridComponent>("DataGridComponent",
-            "type_id",
-            &entt::type_hash<DataGridComponent>::value,
-
-            sol::call_constructor,
-            sol::factories([](
-                int width,
-                int height)
-                {
-                    assert(width * height <= EntitySetSize);
-                    return DataGridComponent{
-                        .count = width * height,
-                        .width = width };
-                }),
-            "set_slot1_at",
-            [](DataGridComponent& c,
-                int i,
-                int j,
-                float value)
-            {
-                int index = j * c.width + i;
-                assert(index < c.count);
-                c.slot1[index] = value;
-            },
-            "set_slot2_at",
-            [](DataGridComponent& c,
-                int i,
-                int j,
-                float value)
-            {
-                int index = j * c.width + i;
-                assert(index < c.count);
-                c.slot2[index] = value;
-            },
-            "get_slot1_at",
-            [](DataGridComponent& c,
-                int i,
-                int j)
-            {
-                int index = j * c.width + i;
-                assert(index < c.count);
-                return c.slot1[index];
-            },
-            "get_slot2_at",
-            [](DataGridComponent& c,
-                int i,
-                int j)
-            {
-                int index = j * c.width + i;
-                assert(index < c.count);
-                return c.slot2[index];
-            }
-            //sol::meta_function::to_string,
-            //&CircleColliderGridComponent::to_string
-        );
-    }
-
     void registerCircleColliderSetComponent(sol::state& lua)
     {
         lua.new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
@@ -297,6 +238,65 @@ namespace {
             &QuadGridComponent::is_active,
             sol::meta_function::to_string,
             &QuadGridComponent::to_string
+        );
+    }
+
+    void registeGridDataComponent(sol::state& lua)
+    {
+        lua.new_usertype<DataGridComponent>("DataGridComponent",
+            "type_id",
+            &entt::type_hash<DataGridComponent>::value,
+
+            sol::call_constructor,
+            sol::factories([](
+                int width,
+                int height)
+                {
+                    assert(width * height <= EntitySetSize);
+                    return DataGridComponent{
+                        .count = width * height,
+                        .width = width };
+                }),
+            "set_slot1_at",
+            [](DataGridComponent& c,
+                int i,
+                int j,
+                float value)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.slot1[index] = value;
+            },
+            "set_slot2_at",
+            [](DataGridComponent& c,
+                int i,
+                int j,
+                float value)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.slot2[index] = value;
+            },
+            "get_slot1_at",
+            [](DataGridComponent& c,
+                int i,
+                int j)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                return c.slot1[index];
+            },
+            "get_slot2_at",
+            [](DataGridComponent& c,
+                int i,
+                int j)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                return c.slot2[index];
+            }
+            //sol::meta_function::to_string,
+            //&CircleColliderGridComponent::to_string
         );
     }
 
@@ -743,6 +743,7 @@ bool Scene::init(const v2i& windowSize)
     register_meta_component<CircleColliderGridComponent>();
     register_meta_component<QuadGridComponent>();
     register_meta_component<IslandFinderComponent>();
+    register_meta_component<DataGridComponent>();
 
     try
     {
@@ -830,6 +831,7 @@ bool Scene::init(const v2i& windowSize)
         registerCircleColliderSetComponent(lua);
         registerQuadSetComponent(lua);
         registerIslandFinderComponent(lua);
+        registeGridDataComponent(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);

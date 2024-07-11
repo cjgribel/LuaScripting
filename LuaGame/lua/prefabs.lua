@@ -49,6 +49,7 @@ function prefabloaders.bouncing_enemy_block(color)
     -- QuadGridComponent & CircleColliderGridComponent
     local quadgrid = QuadGridComponent(W, H, true)
     local collidergrid = CircleColliderGridComponent(W, H, true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
+    local datagrid = DataGridComponent(W, H)
 
     for i = 0, W - 1 do
         for j = 0, H - 1 do
@@ -65,6 +66,7 @@ function prefabloaders.bouncing_enemy_block(color)
 
     registry:emplace(entity, quadgrid)
     registry:emplace(entity, collidergrid)
+    registry:emplace(entity, datagrid)
 
     -- Island finder component
     registry:emplace(entity, IslandFinderComponent(core_x, core_y))
