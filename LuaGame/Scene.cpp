@@ -330,18 +330,25 @@ namespace {
         }
     }
 
+    /// @brief Run update for all scripts
+    /// @param registry 
+    /// @param delta_time 
+    /// Entities inside scripts that need to be destroyed are flagged for 
+    /// destruction and then destroyed after this function. Destroying entities
+    /// inside a view (i.e. inside scripts) while the view is iterated leads to
+    /// undefined behavior: 
+    /// https://github.com/skypjack/entt/issues/772#issuecomment-907814984
     void script_system_update(entt::registry& registry, float delta_time)
     {
         auto view = registry.view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
-            if (!registry.valid(entity)) continue;
-            // assert(entity != entt::null);
+            assert(entity != entt::null);
+            assert(registry.valid(entity));
 
             auto& script_comp = view.get<ScriptedBehaviorComponent>(entity);
             for (auto& script : script_comp.scripts)
             {
-                // auto& script = view.get<ScriptedBehaviorComponent>(entity);
                 assert(script.self.valid());
                 script.update(script.self, delta_time);
             }
@@ -696,6 +703,17 @@ bool Scene::init(const v2i& windowSize)
         lua["add_script"] = &add_script;
         lua["get_script"] = &get_script;
 
+        // Entities are destroyed outside the regular update loop
+        lua["flag_entity_for_destruction"] = [&](entt::entity entity)
+            {
+                entities_pending_destruction.push_back(entity);
+            };
+
+        lua["log"] = [&](const std::string& text)
+            {
+                eeng::Log::log((std::string("[Lua] ") + text).c_str());
+            };
+
         // Placeholder particle emitter functions
         const auto emit_particle = [&](
             float x,
@@ -874,6 +892,14 @@ void Scene::update(float time_s, float deltaTime_s)
     particleBuffer.update(deltaTime_s);
 
     script_system_update(registry, deltaTime_s);
+    // Entity destruction takes place outside the update loop
+    if (entities_pending_destruction.size())
+    {
+        eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
+        for (auto entity : entities_pending_destruction)
+            registry.destroy(entity);
+        entities_pending_destruction.clear();
+    }
 
     // Placeholder collision system
 #if 1

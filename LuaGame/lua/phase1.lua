@@ -21,11 +21,7 @@ function phase1:init()
         table.insert(self.entities, prefabloaders:bouncing_enemy_cross())
     end
 
-    -- Debug print 
-    print("phase1 created entities")
-    for _, entity in ipairs(self.entities) do
-        print(entity, registry:valid(entity))
-    end
+    log("phase1 begins, " .. #self.entities .. " entities created")
 end
 
 function phase1:update(dt)
@@ -49,18 +45,16 @@ end
 
 function phase1:destroy()
 
-    print("phase1 about to destroy entities:")
-    for _, entity in ipairs(self.entities) do
-        print(entity, registry:valid(entity))
-    end
+    log("phase1 ends, flagging " .. #self.entities .. " entities for destruction")
 
     for _, entity in ipairs(self.entities) do
-        registry:destroy(entity)
+        --registry:destroy(entity)
+        flag_entity_for_destruction(entity)
     end
     -- Clear the entities list after destroying them
     self.entities = {}
     
-    print("phase1:destroy() called")
+    --print("phase1:destroy() called")
 end
 
 return phase1

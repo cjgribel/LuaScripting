@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "vec.h"
+#include "Log.hpp"
 #include "SceneBase.h"
 #include "Observer.h"
 #include "ParticleBuffer.hpp"
@@ -171,7 +172,9 @@ class Scene : public eeng::SceneBase
 {
 protected:
     sol::state lua{};
+    
     entt::registry registry{};
+    std::vector<entt::entity> entities_pending_destruction;
 
     linalg::v3f lightPos, eyePos;
     const float nearPlane = 1.0f, farPlane = 10.0f;
