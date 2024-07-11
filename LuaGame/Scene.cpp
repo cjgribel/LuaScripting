@@ -1046,6 +1046,8 @@ void Scene::renderUI()
 
     ImGui::Text("Drawcall count %i", drawcallCount);
 
+    ImGui::Checkbox("Debug render", &debug_render);
+
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
 
     // float available_width = ImGui::GetContentRegionAvail().x;
@@ -1159,8 +1161,8 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     }
 #endif
 
-#if 0
     // Render all CircleColliderSetComponent
+    if (debug_render)
     {
         auto view = registry.view<CircleColliderSetComponent>();
         for (auto entity : view)
@@ -1175,19 +1177,20 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             auto& circleset = view.get<CircleColliderSetComponent>(entity);
             for (int i = 0; i < circleset.count; i++)
             {
-                if (!circleset.is_active_flags[i]) continue;
+                // if (!circleset.is_active_flags[i]) continue;
 
                 const auto& pos = xy0(circleset.pos[i]);
                 const auto& r = circleset.radii[i];
                 const auto M = set_translation(m4f::scaling(r, r, 1.0f), pos);
+                const bool visible =  circleset.is_active_flags[i];
+                const auto color = 0xffffffff * visible + 0xff808080 * (1 - visible);
 
-                renderer->push_states(G * M, Renderer::Color4u{ 0xffffffff });
+                renderer->push_states(G * M, Renderer::Color4u{ color });
                 renderer->push_circle_ring<8>();
                 renderer->pop_states<m4f, Renderer::Color4u>();
             }
         }
     }
-#endif
 
     // Add some test particles
 #if 0

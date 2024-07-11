@@ -176,6 +176,7 @@ protected:
     linalg::v3f lightPos, eyePos;
     const float nearPlane = 1.0f, farPlane = 10.0f;
     int drawcallCount = 0;
+    bool debug_render = false;
 
     m4f VP, P, V;
 
