@@ -23,7 +23,7 @@ namespace {
     //         << std::endl; });
     // }
 
-    void registerCircleColliderSetComponent(sol::state& lua)
+    void registerCircleColliderGridComponent(sol::state& lua)
     {
         lua.new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
             "type_id",
@@ -137,7 +137,7 @@ namespace {
 );
     }
 
-    void registerQuadSetComponent(sol::state& lua)
+    void registerQuadGridComponent(sol::state& lua)
     {
         lua.new_usertype<QuadGridComponent>("QuadGridComponent",
             "type_id",
@@ -828,8 +828,8 @@ bool Scene::init(const v2i& windowSize)
         registerCircleColliderComponent(lua);
         registerScriptedBehaviorComponent(lua);
         //
-        registerCircleColliderSetComponent(lua);
-        registerQuadSetComponent(lua);
+        registerCircleColliderGridComponent(lua);
+        registerQuadGridComponent(lua);
         registerIslandFinderComponent(lua);
         registeGridDataComponent(lua);
 
