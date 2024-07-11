@@ -18,7 +18,7 @@ function phase1:init()
     --local ent1 = prefabloaders:bouncing_enemy_block()
 
     for i = 1, 10 do
-        table.insert(self.entities, prefabloaders:bouncing_enemy_cross())
+        table.insert(self.entities, prefabloaders.bouncing_enemy_cross(0xffffffff))
     end
 
     log("phase1 begins, " .. #self.entities .. " entities created")

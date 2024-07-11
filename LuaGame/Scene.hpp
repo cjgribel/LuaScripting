@@ -16,7 +16,7 @@
 #include "ParticleBuffer.hpp"
 
 #define EntitySetSize 64
-struct CircleColliderSetComponent
+struct CircleColliderGridComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
@@ -48,7 +48,7 @@ struct IslandFinderComponent
     std::vector<int> islands;
 };
 
-struct QuadSetComponent
+struct QuadGridComponent
 {
     // static constexpr auto in_place_delete = true;
 
@@ -75,8 +75,8 @@ struct QuadSetComponent
 
 struct DataGridComponent
 {
-    float slot1[EntitySetSize];
-    float slot2[EntitySetSize];
+    float slot1[EntitySetSize] = {0.0f};
+    float slot2[EntitySetSize] = {0.0f};
     int count = 0, width = 0;
 };
 

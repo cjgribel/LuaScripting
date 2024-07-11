@@ -71,11 +71,11 @@ function ProjectilePool:is_active(entity)
 end
 
 function ProjectilePool:activate_entity(entity, is_active)
-    self.owner:get(entity, CircleColliderSetComponent).is_active = is_active
-    self.owner:get(entity, QuadSetComponent).is_active = is_active
+    self.owner:get(entity, CircleColliderGridComponent).is_active = is_active
+    self.owner:get(entity, QuadGridComponent).is_active = is_active
 
---    self.owner:get(entity, CircleColliderSetComponent):set_active_flag_all(is_active)
---    self.owner:get(entity, QuadSetComponent):set_active_flag_all(is_active)
+--    self.owner:get(entity, CircleColliderGridComponent):set_active_flag_all(is_active)
+--    self.owner:get(entity, QuadGridComponent):set_active_flag_all(is_active)
 end
 
 -- Return a projectile to the pool

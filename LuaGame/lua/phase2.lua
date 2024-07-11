@@ -11,7 +11,7 @@ function phase2:init()
     print("phase2:init() called")
 
     --table.insert(self.entities, create_bouncy_entity())
-    table.insert(self.entities, prefabloaders.bouncing_enemy_block())
+    table.insert(self.entities, prefabloaders.bouncing_enemy_block(0xffff0000))
 
     log("phase2 begins, " .. #self.entities .. " entities created")
 end

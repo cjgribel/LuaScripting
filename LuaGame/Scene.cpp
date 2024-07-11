@@ -78,15 +78,15 @@ namespace {
                 return c.slot2[index];
             }
             //sol::meta_function::to_string,
-            //&CircleColliderSetComponent::to_string
+            //&CircleColliderGridComponent::to_string
         );
     }
 
     void registerCircleColliderSetComponent(sol::state& lua)
     {
-        lua.new_usertype<CircleColliderSetComponent>("CircleColliderSetComponent",
+        lua.new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
             "type_id",
-            &entt::type_hash<CircleColliderSetComponent>::value,
+            &entt::type_hash<CircleColliderGridComponent>::value,
 
             sol::call_constructor,
             sol::factories([](
@@ -97,7 +97,7 @@ namespace {
                 unsigned char layer_mask)
                 {
                     assert(width * height <= EntitySetSize);
-                    return CircleColliderSetComponent{
+                    return CircleColliderGridComponent{
                         .count = width * height,
                         .width = width,
                         .is_active = is_active,
@@ -106,7 +106,7 @@ namespace {
                 }),
 
             // "add_circle",
-            // [](CircleColliderSetComponent& c, float x, float y, float radius, bool is_active)
+            // [](CircleColliderGridComponent& c, float x, float y, float radius, bool is_active)
             // {
             //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     c.pos[c.count].x = x;
@@ -116,7 +116,7 @@ namespace {
             //     c.count++;
             // },
             "set_circle_at",
-            [](CircleColliderSetComponent& c,
+            [](CircleColliderGridComponent& c,
                 int i,
                 int j,
                 float x,
@@ -131,43 +131,43 @@ namespace {
                 c.radii[index] = radius;
                 c.is_active_flags[index] = is_active;
             },
-            "set_active_flag_all", [](CircleColliderSetComponent& c, bool is_active) {
+            "set_active_flag_all", [](CircleColliderGridComponent& c, bool is_active) {
                 for (int i = 0; i < c.count; i++)
                     c.is_active_flags[i] = is_active;
                 c.is_active = is_active;
             },
-            // "get_radius", [](CircleColliderSetComponent& ccsc, int index) -> float {
+            // "get_radius", [](CircleColliderGridComponent& ccsc, int index) -> float {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     return ccsc.radii[index];
             // },
-            // "set_radius", [](CircleColliderSetComponent& ccsc, int index, float value) {
+            // "set_radius", [](CircleColliderGridComponent& ccsc, int index, float value) {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     ccsc.radii[index] = value;
             // },
-            // "get_is_active_flag", [](CircleColliderSetComponent& ccsc, int index) -> float {
+            // "get_is_active_flag", [](CircleColliderGridComponent& ccsc, int index) -> float {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     return ccsc.is_active_flags[index];
             // },
-            "set_active_flag_at", [](CircleColliderSetComponent& ccsc, int index, bool is_active) {
+            "set_active_flag_at", [](CircleColliderGridComponent& ccsc, int index, bool is_active) {
                 if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 //std::cout << index << std::endl;
                 ccsc.is_active_flags[index] = is_active;
             },
             // TODO
-            "is_any_active", [](CircleColliderSetComponent& c) -> bool {
+            "is_any_active", [](CircleColliderGridComponent& c) -> bool {
                 for (int i = 0; i < c.count; i++)
                 {
                     if (c.is_active_flags[i]) return true;
                 }
                 return false;
             },
-            "get_element_count", [](CircleColliderSetComponent& c) {
+            "get_element_count", [](CircleColliderGridComponent& c) {
                 return c.count;
             },
             "is_active",
-            &CircleColliderSetComponent::is_active,
+            &CircleColliderGridComponent::is_active,
             sol::meta_function::to_string,
-            &CircleColliderSetComponent::to_string
+            &CircleColliderGridComponent::to_string
         );
     }
 
@@ -198,9 +198,9 @@ namespace {
 
     void registerQuadSetComponent(sol::state& lua)
     {
-        lua.new_usertype<QuadSetComponent>("QuadSetComponent",
+        lua.new_usertype<QuadGridComponent>("QuadGridComponent",
             "type_id",
-            &entt::type_hash<QuadSetComponent>::value,
+            &entt::type_hash<QuadGridComponent>::value,
             sol::call_constructor,
             sol::factories([](
                 int width,
@@ -208,13 +208,13 @@ namespace {
                 bool is_active)
                 {
                     assert(width * height <= EntitySetSize);
-                    return QuadSetComponent{
+                    return QuadGridComponent{
                         .count = width * height,
                         .width = width,
                         .is_active = is_active
                     };
                 }),
-            // "add_quad", [](QuadSetComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
+            // "add_quad", [](QuadGridComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
             //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     c.pos[c.count].x = x;
             //     c.pos[c.count].y = y;
@@ -224,7 +224,7 @@ namespace {
             //     c.count++;
             // },
             "set_quad_at",
-            [](QuadSetComponent& c,
+            [](QuadGridComponent& c,
                 int i,
                 int j,
                 float x,
@@ -241,62 +241,62 @@ namespace {
                 c.colors[index] = color;
                 c.is_active_flags[index] = is_active;
             },
-            "set_active_flag_all", [](QuadSetComponent& c, bool is_active) {
+            "set_active_flag_all", [](QuadGridComponent& c, bool is_active) {
                 for (int i = 0; i < c.count; i++)
                     c.is_active_flags[i] = is_active;
                 c.is_active = is_active;
             },
-            "get_pos_at", [](QuadSetComponent& c, int index) {
+            "get_pos_at", [](QuadGridComponent& c, int index) {
                 //if (index < 0 || index >= c.count) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 return std::make_tuple(c.pos[index].x, c.pos[index].y);
             },
-            // "set_pos", [](QuadSetComponent& c, int index, float x, float y) {
+            // "set_pos", [](QuadGridComponent& c, int index, float x, float y) {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     c.pos[index].x = x;
             //     c.pos[index].y = y;
             // },
-            "get_size_at", [](QuadSetComponent& c, int index) -> float {
+            "get_size_at", [](QuadGridComponent& c, int index) -> float {
                 //if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 return c.sizes[index];
             },
-            // "set_size", [](QuadSetComponent& c, int index, float value) {
+            // "set_size", [](QuadGridComponent& c, int index, float value) {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     c.sizes[index] = value;
             // },
-            "get_color_at", [](QuadSetComponent& c, int index) -> uint32_t {
+            "get_color_at", [](QuadGridComponent& c, int index) -> uint32_t {
                 // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 return c.colors[index];
             },
-            "set_color_at", [](QuadSetComponent& c, int index, uint32_t color) {
+            "set_color_at", [](QuadGridComponent& c, int index, uint32_t color) {
                 // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 c.colors[index] = color;
             },
-            "set_color_all", [](QuadSetComponent& c, uint32_t color) {
+            "set_color_all", [](QuadGridComponent& c, uint32_t color) {
                 for (int i = 0; i < c.count; i++)
                     c.colors[i] = color;
             },
-            // "get_is_active_flag", [](QuadSetComponent& c, int index) -> float {
+            // "get_is_active_flag", [](QuadGridComponent& c, int index) -> float {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     return c.is_active_flags[index];
             // },
-            "set_active_flag_at", [](QuadSetComponent& c, int index, bool is_active) {
+            "set_active_flag_at", [](QuadGridComponent& c, int index, bool is_active) {
                 // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 c.is_active_flags[index] = is_active;
             },
-            "get_element_count", [](QuadSetComponent& c) {
+            "get_element_count", [](QuadGridComponent& c) {
                 return c.count;
             },
             //"count",
-            //&QuadSetComponent::count,
+            //&QuadGridComponent::count,
             "is_active",
-            &QuadSetComponent::is_active,
+            &QuadGridComponent::is_active,
             sol::meta_function::to_string,
-            &QuadSetComponent::to_string
+            &QuadGridComponent::to_string
         );
     }
 
@@ -536,7 +536,7 @@ namespace {
 
     void update_IslandFinderComponent(
         IslandFinderComponent& grid_comp,
-        const CircleColliderSetComponent& colliderset_comp)
+        const CircleColliderGridComponent& colliderset_comp)
     {
         const int core_x = grid_comp.core_x;
         const int core_y = grid_comp.core_y;
@@ -641,7 +641,7 @@ namespace {
         for (auto entity : view)
         {
             auto& grid_comp = view.get<IslandFinderComponent>(entity);
-            auto& colliderset_comp = registry.get<CircleColliderSetComponent>(entity);
+            auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
             update_IslandFinderComponent(grid_comp, colliderset_comp);
         }
     }
@@ -728,6 +728,10 @@ bool Scene::init(const v2i& windowSize)
 
     std::cout << "Scene::init()" << std::endl;
 
+    std::cout << "sizeof(CircleColliderGridComponent) " << sizeof(CircleColliderGridComponent) << std::endl;
+    std::cout << "sizeof(QuadGridComponent) " << sizeof(QuadGridComponent) << std::endl;
+    std::cout << "sizeof(DataGridComponent) " << sizeof(DataGridComponent) << std::endl;
+
     SceneBase::windowSize = windowSize;
 
     // Register registry meta functions to components
@@ -736,8 +740,8 @@ bool Scene::init(const v2i& windowSize)
     register_meta_component<CircleColliderComponent>();
     register_meta_component<ScriptedBehaviorComponent>();
     //
-    register_meta_component<CircleColliderSetComponent>();
-    register_meta_component<QuadSetComponent>();
+    register_meta_component<CircleColliderGridComponent>();
+    register_meta_component<QuadGridComponent>();
     register_meta_component<IslandFinderComponent>();
 
     try
@@ -773,8 +777,8 @@ bool Scene::init(const v2i& windowSize)
                 eeng::Log::log((std::string("[Lua] ") + text).c_str());
             };
 
-        // Placeholder particle emitter functions
-        const auto emit_particle = [&](
+        // Particle emitter functions
+        lua["emit_particle"] = [&](
             float x,
             float y,
             float vx,
@@ -783,7 +787,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_point(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
             };
-        const auto emit_explosion = [&](
+        lua["emit_explosion"] = [&](
             float x,
             float y,
             float vx,
@@ -793,7 +797,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
-        const auto emit_trail = [&](
+        lua["emit_trail"] = [&](
             float x,
             float y,
             float vx,
@@ -803,9 +807,6 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_trail(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
-        lua["emit_particle"] = emit_particle;
-        lua["emit_explosion"] = emit_explosion;
-        lua["emit_trail"] = emit_trail;
 
         // Register to Lua: input module
         register_input_script(lua);
@@ -981,12 +982,12 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             };
 
-        auto view = registry.view<CircleColliderSetComponent>();
+        auto view = registry.view<CircleColliderGridComponent>();
         for (auto it1 = view.begin(); it1 != view.end(); ++it1)
         {
             auto entity1 = *it1;
             const auto& transform1 = registry.get<Transform>(entity1);
-            const auto& collider1 = view.get<CircleColliderSetComponent>(entity1);
+            const auto& collider1 = view.get<CircleColliderGridComponent>(entity1);
             if (!collider1.is_active) continue;
 
             const auto R1 = m2f::rotation(transform1.rot);
@@ -994,7 +995,7 @@ void Scene::update(float time_s, float deltaTime_s)
             {
                 auto entity2 = *it2;
                 const auto& transform2 = registry.get<Transform>(entity2);
-                const auto& collider2 = view.get<CircleColliderSetComponent>(entity2);
+                const auto& collider2 = view.get<CircleColliderGridComponent>(entity2);
 
                 if (!collider2.is_active) continue;
                 // LAYER CHECK
@@ -1227,13 +1228,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     }
 
 #if 1
-    // Render all QuadSetComponent
+    // Render all QuadGridComponent
     {
-        auto view = registry.view<QuadSetComponent>();
+        auto view = registry.view<QuadGridComponent>();
         for (auto entity : view)
         {
-            auto& quadset = view.get<QuadSetComponent>(entity);
-            if (!quadset.is_active) continue;
+            auto& quadgrid = view.get<QuadGridComponent>(entity);
+            if (!quadgrid.is_active) continue;
 
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
@@ -1242,13 +1243,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
                 v3f_111
             );
 
-            for (int i = 0; i < quadset.count; i++)
+            for (int i = 0; i < quadgrid.count; i++)
             {
-                if (!quadset.is_active_flags[i]) continue;
+                if (!quadgrid.is_active_flags[i]) continue;
 
-                const auto& pos = xy0(quadset.pos[i]);
-                const auto& size = quadset.sizes[i];
-                const auto& color = quadset.colors[i];
+                const auto& pos = xy0(quadgrid.pos[i]);
+                const auto& size = quadgrid.sizes[i];
+                const auto& color = quadgrid.colors[i];
                 const auto M = set_translation(m4f::scaling(size, size, 1.0f), pos);
 
                 renderer->push_states(G * M, Renderer::Color4u{ color });
@@ -1259,13 +1260,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     }
 #endif
 
-    // Render all CircleColliderSetComponent
+    // Render all CircleColliderGridComponent
     if (debug_render)
     {
-        auto view = registry.view<CircleColliderSetComponent>();
+        auto view = registry.view<CircleColliderGridComponent>();
         for (auto entity : view)
         {
-            auto& colliderset = view.get<CircleColliderSetComponent>(entity);
+            auto& collidergrid = view.get<CircleColliderGridComponent>(entity);
 
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
@@ -1274,12 +1275,12 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
                 v3f_111
             );
 
-            for (int i = 0; i < colliderset.count; i++)
+            for (int i = 0; i < collidergrid.count; i++)
             {
-                const auto& pos = xy0(colliderset.pos[i]);
-                const auto& r = colliderset.radii[i];
+                const auto& pos = xy0(collidergrid.pos[i]);
+                const auto& r = collidergrid.radii[i];
                 const auto M = set_translation(m4f::scaling(r, r, 1.0f), pos);
-                const bool visible = colliderset.is_active_flags[i];
+                const bool visible = collidergrid.is_active_flags[i];
                 const auto color = 0xffffffff * visible + 0xff808080 * (1 - visible);
 
                 renderer->push_states(G * M, Renderer::Color4u{ color });

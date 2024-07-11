@@ -17,8 +17,8 @@ end
 
 function node:update(dt)
 
-    local colliderset = self.owner:get(self.id(), CircleColliderSetComponent)
-    if not colliderset.is_active then
+    local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
+    if not collidergrid.is_active then
         return
     end
 
@@ -63,16 +63,16 @@ end
 function node:check_if_destroyed()
 
     -- Reset object if all parts are inactive
-    local collider = self.owner:get(self.id(), CircleColliderSetComponent)
+    local collider = self.owner:get(self.id(), CircleColliderGridComponent)
     if (not collider:is_any_active()) then
         
         --local transform = self.owner:get(self.id(), Transform)
-        local quadset = self.owner:get(self.id(), QuadSetComponent)
-        local colliderset = self.owner:get(self.id(), CircleColliderSetComponent)
+        local quadgrid = self.owner:get(self.id(), QuadGridComponent)
+        local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
 
-        -- TODO set is_active = false for quadset & colliderset
-        quadset.is_active = false
-        colliderset.is_active = false
+        -- TODO set is_active = false for quadgrid & collidergrid
+        quadgrid.is_active = false
+        collidergrid.is_active = false
 
         -- Activate all quads and colliders
     --    collider:set_active_flag_all(true)
@@ -96,8 +96,8 @@ end
 function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
 
     local transform = self.owner:get(self.id(), Transform)
-    local collider = self.owner:get(self.id(), CircleColliderSetComponent)
-    local quad = self.owner:get(self.id(), QuadSetComponent)
+    local collider = self.owner:get(self.id(), CircleColliderGridComponent)
+    local quad = self.owner:get(self.id(), QuadGridComponent)
     
     -- Emit particles in the (vel_x, vel_y) direction
     local x, y = quad:get_pos_at(index)
@@ -118,7 +118,7 @@ end
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, collider_index, entity)
     --local quad = self.owner:get(self.id(), QuadComponent)
-    --local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color_at(collider_index)
+    --local quad_color = self.owner:get(self.id(), QuadGridComponent):get_color_at(collider_index)
 
     --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
     --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)

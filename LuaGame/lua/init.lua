@@ -2,6 +2,8 @@
 -- Adjust the package path to include the "../../LuaGame/lua" directory
 package.path = package.path .. ";../../LuaGame/lua/?.lua"
 
+local prefabloaders = require("prefabs")
+
 PlayerCollisionBit = 0x1
 EnemyCollisionBit = 0x2
 ProjectileCollisionBit = 0x4
@@ -24,58 +26,6 @@ function random_color()
     return color
 end
 
-local function create_bouncy_entity(index)
-    local entity = registry:create()
-    print("Created entity ID:", entity)
-    
-    registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
-
-    --local size = 0.5 + math.random() * 0.0
-    --registry:emplace(entity, QuadComponent(size, random_color(), true))
-    
-    --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
-    
-    local W = 7 -- Number of columns
-    local H = 7 -- Number of rows
-    local D = 0.25 -- Size of each quad (width/height)
-    local color = 0xffff00ff -- Color of the quads
-    local visible = true -- Visibility flag
-    local core_x = math.floor(W / 2)
-    local core_y = math.floor(H / 2)
-    
-    -- QuadSetComponent
-    local quadset = QuadSetComponent(W, H, true)
-    for i = 0, W - 1 do
-        for j = 0, H - 1 do
-            local x = (i - (W - 1) / 2) * D
-            local y = (j - (H - 1) / 2) * D
-            if i == core_x and j == core_y then
-                quadset:set_quad_at(i, j, x, y, D, 0xff0000ff, visible)
-            else
-                quadset:set_quad_at(i, j, x, y, D, random_color(), visible)
-            end
-        end
-    end
-    registry:emplace(entity, quadset)
-
-    -- CircleColliderSetComponent
-    local colliderset = CircleColliderSetComponent(W, H, true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
-    for i = 0, W - 1 do
-        for j = 0, H - 1 do
-            local x = (i - (W - 1) / 2) * D
-            local y = (j - (H - 1) / 2) * D
-            colliderset:set_circle_at(i, j, x, y, D * 0.5, visible)
-        end
-    end
-    registry:emplace(entity, colliderset)
-
-    -- Island finder component
-    registry:emplace(entity, IslandFinderComponent(core_x, core_y))
-
-    -- Bounce behavior
-    add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
-end
-
 local function create_projectile_pool_entity()
     local entity = registry:create()
 
@@ -90,15 +40,15 @@ local function create_player_entity(size, color, projectile_pool)
     -- Transform
     registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
-    -- QuadSetComponent
-    local quadset = QuadSetComponent(1, 1, true)
-    quadset:set_quad_at(0, 0, 0.0, 0.0, size, 0xffffffff, true)
-    registry:emplace(entity, quadset)
+    -- QuadGridComponent
+    local quadgrid = QuadGridComponent(1, 1, true)
+    quadgrid:set_quad_at(0, 0, 0.0, 0.0, size, 0xffffffff, true)
+    registry:emplace(entity, quadgrid)
 
-    -- CircleColliderSetComponent
-    local colliderset = CircleColliderSetComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
-    colliderset:set_circle_at(0, 0, 0.0, 0.0, size * 0.5, true)
-    registry:emplace(entity, colliderset)
+    -- CircleColliderGridComponent
+    local collidergrid = CircleColliderGridComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
+    collidergrid:set_circle_at(0, 0, 0.0, 0.0, size * 0.5, true)
+    registry:emplace(entity, collidergrid)
 
     -- Behavior
     local player_table = add_script(registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
@@ -114,10 +64,10 @@ local function create_background_entity(size, color)
     -- TODO: non-uniform size
     registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
-    -- QuadSetComponent
-    local quadset = QuadSetComponent(1, 1, true)
-    quadset:set_quad_at(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
-    registry:emplace(entity, quadset)
+    -- QuadGridComponent
+    local quadgrid = QuadGridComponent(1, 1, true)
+    quadgrid:set_quad_at(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
+    registry:emplace(entity, quadgrid)
 
     return entity
 end
@@ -146,15 +96,16 @@ config = {
 }
 
 -- Projectile pool
-local projectile_pool_entity = create_projectile_pool_entity()
-local projectilePool = get_script(registry, projectile_pool_entity, "projectile_pool_behavior")
+local projectilepool_entity = create_projectile_pool_entity()
+local projectilepool_table = get_script(registry, projectilepool_entity, "projectile_pool_behavior")
 
 -- Create player(s)
-local player_entity = create_player_entity(0.5, 0xffffffff, projectilePool)
+local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
 
--- Create 5 bouncing entities
+-- Create bouncing entities
 for i = 1, 1 do
-    create_bouncy_entity(i)
+    --create_bouncy_entity(i)
+    prefabloaders.bouncing_enemy_block(0xffff00ff)
 end
 
 create_phasemanager_entity()
