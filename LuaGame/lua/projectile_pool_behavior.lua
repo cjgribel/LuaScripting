@@ -1,3 +1,6 @@
+
+local prefabloaders = require("prefabs")
+
 -- Define the ProjectilePool
 ProjectilePool = {
     pool = {},
@@ -8,39 +11,15 @@ ProjectilePool = {
 
 -- Initialize the pool
 function ProjectilePool:init()
-    print('ProjectilePool:init() start')
+
+    -- Create projectiles
     for i = 1, self.poolSize do
-        local entity = registry:create()
-        --print('Entity created:', entity)
-
-        registry:emplace(entity, Transform(0.0, 0.0, 0.0))
-        --print('Transform component added to entity:', entity)
-        --registry:emplace(entity, "Velocity", { dx = 0, dy = 0 })
-
-        local size = 0.2
-        --registry:emplace(entity, QuadComponent(size, 0xff00ffff, false))
-        --registry:emplace(entity, CircleColliderComponent(size * 0.75, false))
-        
-        -- QuadSetComponent
-        local qsc = QuadSetComponent(1, 1, false)
-        --qsc:add_quad(0.0, 0.0, size, 0xff00ffff, false)
-        qsc:set_quad(0, 0, 0.0, 0.0, size, 0xff00ffff, false)
-        registry:emplace(entity, qsc)
-
-        -- CircleColliderSetComponent
-        local ccs = CircleColliderSetComponent(1, 1, false, ProjectileCollisionBit, EnemyCollisionBit)
-        --ccs:add_circle(0.0, 0.0, size * 0.75, false)
-        ccs:set_circle(0, 0, 0.0, 0.0, size * 0.75, false)
-        registry:emplace(entity, ccs)
-
-        print('Adding projectile_behavior to: ', entity)
-        local projectile_behavior = add_script(registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
-        projectile_behavior.projectile_pool = self
+        local entity = prefabloaders.projectile(0.2, self)
 
         table.insert(self.pool, { entity = entity })
         self.entityToIndex[entity] = i
     end
-    print('ProjectilePool:init() ended')
+
 end
 
 -- Update function for projectiles
@@ -92,11 +71,11 @@ function ProjectilePool:is_active(entity)
 end
 
 function ProjectilePool:activate_entity(entity, is_active)
-    --self.owner:get(entity, CircleColliderComponent).is_active = is_active
-    --self.owner:get(entity, QuadComponent).is_visible = is_active
+    self.owner:get(entity, CircleColliderSetComponent).is_active = is_active
+    self.owner:get(entity, QuadSetComponent).is_active = is_active
 
-    self.owner:get(entity, CircleColliderSetComponent):activate_all(is_active)
-    self.owner:get(entity, QuadSetComponent):activate_all(is_active)
+--    self.owner:get(entity, CircleColliderSetComponent):set_active_flag_all(is_active)
+--    self.owner:get(entity, QuadSetComponent):set_active_flag_all(is_active)
 end
 
 -- Return a projectile to the pool

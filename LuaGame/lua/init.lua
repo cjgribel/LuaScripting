@@ -1,4 +1,7 @@
 
+-- Adjust the package path to include the "../../LuaGame/lua" directory
+package.path = package.path .. ";../../LuaGame/lua/?.lua"
+
 PlayerCollisionBit = 0x1
 EnemyCollisionBit = 0x2
 ProjectileCollisionBit = 0x4
@@ -47,24 +50,24 @@ local function create_bouncy_entity(index)
             local x = (i - (W - 1) / 2) * D
             local y = (j - (H - 1) / 2) * D
             if i == core_x and j == core_y then
-                quadset:set_quad(i, j, x, y, D, 0xff0000ff, visible)
+                quadset:set_quad_at(i, j, x, y, D, 0xff0000ff, visible)
             else
-                quadset:set_quad(i, j, x, y, D, random_color(), visible)
+                quadset:set_quad_at(i, j, x, y, D, random_color(), visible)
             end
         end
     end
     registry:emplace(entity, quadset)
 
     -- CircleColliderSetComponent
-    local circleset = CircleColliderSetComponent(W, H, true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
+    local colliderset = CircleColliderSetComponent(W, H, true, EnemyCollisionBit, PlayerCollisionBit | ProjectileCollisionBit)
     for i = 0, W - 1 do
         for j = 0, H - 1 do
             local x = (i - (W - 1) / 2) * D
             local y = (j - (H - 1) / 2) * D
-            circleset:set_circle(i, j, x, y, D * 0.5, visible)
+            colliderset:set_circle_at(i, j, x, y, D * 0.5, visible)
         end
     end
-    registry:emplace(entity, circleset)
+    registry:emplace(entity, colliderset)
 
     -- Island finder component
     registry:emplace(entity, IslandFinderComponent(core_x, core_y))
@@ -89,13 +92,13 @@ local function create_player_entity(size, color, projectile_pool)
 
     -- QuadSetComponent
     local quadset = QuadSetComponent(1, 1, true)
-    quadset:set_quad(0, 0, 0.0, 0.0, size, 0xffffffff, true)
+    quadset:set_quad_at(0, 0, 0.0, 0.0, size, 0xffffffff, true)
     registry:emplace(entity, quadset)
 
     -- CircleColliderSetComponent
-    local circleset = CircleColliderSetComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
-    circleset:set_circle(0, 0, 0.0, 0.0, size * 0.5, true)
-    registry:emplace(entity, circleset)
+    local colliderset = CircleColliderSetComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
+    colliderset:set_circle_at(0, 0, 0.0, 0.0, size * 0.5, true)
+    registry:emplace(entity, colliderset)
 
     -- Behavior
     local player_table = add_script(registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
@@ -113,7 +116,7 @@ local function create_background_entity(size, color)
 
     -- QuadSetComponent
     local quadset = QuadSetComponent(1, 1, true)
-    quadset:set_quad(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
+    quadset:set_quad_at(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
     registry:emplace(entity, quadset)
 
     return entity
@@ -142,10 +145,8 @@ config = {
     player_deaths = 0
 }
 
--- Projectile entity
-local projectile_pool_entity = create_projectile_pool_entity()
-
 -- Projectile pool
+local projectile_pool_entity = create_projectile_pool_entity()
 local projectilePool = get_script(registry, projectile_pool_entity, "projectile_pool_behavior")
 
 -- Create player(s)

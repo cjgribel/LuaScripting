@@ -12,7 +12,7 @@ end
 function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
     local quad = self.owner:get(self.id(), QuadSetComponent)
-    local quad_color = quad:get_color(0) -- self.owner:get(self.id(), QuadSetComponent):get_color(0)
+    local quad_color = quad:get_color_at(0) -- self.owner:get(self.id(), QuadSetComponent):get_color_at(0)
     local quad_r = 0.25 --TODO getter
 
     -- Apply input to transform

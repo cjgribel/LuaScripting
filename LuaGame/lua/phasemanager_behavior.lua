@@ -1,5 +1,3 @@
--- Adjust the package path to include the "../../LuaGame/lua" directory
-package.path = package.path .. ";../../LuaGame/lua/?.lua"
 
 -- Require the phase modules
 local phase1 = require("phase1")

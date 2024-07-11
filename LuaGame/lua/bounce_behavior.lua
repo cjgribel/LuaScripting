@@ -16,6 +16,12 @@ function node:init()
 end
 
 function node:update(dt)
+
+    local colliderset = self.owner:get(self.id(), CircleColliderSetComponent)
+    if not colliderset.is_active then
+        return
+    end
+
 	local transform = self.owner:get(self.id(), Transform)
     --local quad = self.owner:get(self.id(), QuadComponent)
     local radius = 0.5 --quad.w / 2
@@ -37,7 +43,7 @@ function node:update(dt)
     transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
     transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
 
-    -- Deactivate islands
+    -- Destroy detected islands
     local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
     local nbr_islands = islandFinder:get_nbr_islands()
     if nbr_islands > 0 then
@@ -54,32 +60,23 @@ function node:destroy()
 	print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
 end
 
---function node:reset()
---
---    local transform = self.owner:get(self.id(), Transform)
---    transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
---    transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
---
---    self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
---    self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
---    self.velocity.angle = -math.pi * 0.5 + math.random() * math.pi
---
---end
-
 function node:check_if_destroyed()
 
     -- Reset object if all parts are inactive
     local collider = self.owner:get(self.id(), CircleColliderSetComponent)
     if (not collider:is_any_active()) then
         
-        local transform = self.owner:get(self.id(), Transform)
-        local quad = self.owner:get(self.id(), QuadSetComponent)
+        --local transform = self.owner:get(self.id(), Transform)
+        local quadset = self.owner:get(self.id(), QuadSetComponent)
+        local colliderset = self.owner:get(self.id(), CircleColliderSetComponent)
 
-        -- TODO set is_active = false for quadset & circleset
+        -- TODO set is_active = false for quadset & colliderset
+        quadset.is_active = false
+        colliderset.is_active = false
 
         -- Activate all quads and colliders
-    --    collider:activate_all(true)
-    --    quad:activate_all(true)
+    --    collider:set_active_flag_all(true)
+    --    quad:set_active_flag_all(true)
         -- Random transform
     --    transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
     --    transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
@@ -103,7 +100,7 @@ function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
     local quad = self.owner:get(self.id(), QuadSetComponent)
     
     -- Emit particles in the (vel_x, vel_y) direction
-    local x, y = quad:get_pos(index)
+    local x, y = quad:get_pos_at(index)
     xrot, yrot = rotate(x, y, transform.rot)
     emit_explosion(
         transform.x + xrot, 
@@ -111,17 +108,17 @@ function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
         vel_x, 
         vel_y, 
         20, 
-        quad:get_color(index))
+        quad:get_color_at(index))
 
     -- Deactivate
-    collider:set_active_flag(index, false)
-    quad:set_active_flag(index, false)
+    collider:set_active_flag_at(index, false)
+    quad:set_active_flag_at(index, false)
 end
 
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, collider_index, entity)
     --local quad = self.owner:get(self.id(), QuadComponent)
-    --local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color(collider_index)
+    --local quad_color = self.owner:get(self.id(), QuadSetComponent):get_color_at(collider_index)
 
     --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
     --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
