@@ -23,6 +23,65 @@ namespace {
     //         << std::endl; });
     // }
 
+    void registeGridDataComponent(sol::state& lua)
+    {
+        lua.new_usertype<DataGridComponent>("DataGridComponent",
+            "type_id",
+            &entt::type_hash<DataGridComponent>::value,
+
+            sol::call_constructor,
+            sol::factories([](
+                int width,
+                int height)
+                {
+                    assert(width * height <= EntitySetSize);
+                    return DataGridComponent{
+                        .count = width * height,
+                        .width = width };
+                }),
+            "set_slot1_at",
+            [](DataGridComponent& c,
+                int i,
+                int j,
+                float value)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.slot1[index] = value;
+            },
+            "set_slot2_at",
+            [](DataGridComponent& c,
+                int i,
+                int j,
+                float value)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                c.slot2[index] = value;
+            },
+            "get_slot1_at",
+            [](DataGridComponent& c,
+                int i,
+                int j)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                return c.slot1[index];
+            },
+            "get_slot2_at",
+            [](DataGridComponent& c,
+                int i,
+                int j)
+            {
+                int index = j * c.width + i;
+                assert(index < c.count);
+                return c.slot2[index];
+            }
+            //sol::meta_function::to_string,
+            //&CircleColliderSetComponent::to_string
+        );
+    }
+
     void registerCircleColliderSetComponent(sol::state& lua)
     {
         lua.new_usertype<CircleColliderSetComponent>("CircleColliderSetComponent",

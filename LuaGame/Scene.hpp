@@ -73,6 +73,13 @@ struct QuadSetComponent
     }
 };
 
+struct DataGridComponent
+{
+    float slot1[EntitySetSize];
+    float slot2[EntitySetSize];
+    int count = 0, width = 0;
+};
+
 // NOT USED
 struct QuadComponent
 {
