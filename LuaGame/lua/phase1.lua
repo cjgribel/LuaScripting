@@ -5,7 +5,7 @@ local phase1 = {
     name = 'Phase 1',
     entities = {},
     timer = 0.0,
-    dur = 5.0
+    dur = 15.0
 }
 
 function phase1:init()
@@ -17,7 +17,7 @@ function phase1:init()
 
     --local ent1 = prefabloaders:bouncing_enemy_block()
 
-    for i = 1, 10 do
+    for i = 1, 3 do
         table.insert(self.entities, prefabloaders.bouncing_enemy_cross(0xffffffff))
     end
 

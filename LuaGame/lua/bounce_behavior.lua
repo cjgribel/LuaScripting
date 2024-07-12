@@ -44,12 +44,14 @@ function node:update(dt)
     transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
 
     -- Destroy detected islands
+    -- Edit: Break one at a time with some frequency, rather than all at once
     local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
     local nbr_islands = islandFinder:get_nbr_islands()
-    if nbr_islands > 0 then
+    if nbr_islands > 0 and math.random() < 0.5 then 
         for i = 0, nbr_islands-1 do
             local island_index = islandFinder:get_island_index_at(i)
-            self:deactivate_quad_and_collider_at(island_index, 0.0, 0.0)
+            self:hit_element(island_index, 0.0, 0.0)
+            break
         end
     end
     self:check_if_destroyed()
@@ -60,11 +62,81 @@ function node:destroy()
 	print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
 end
 
+-- (nx, ny) points away from this entity
+function node:on_collision(x, y, nx, ny, element_index, entity)
+
+    -- Check script in the other entity
+    --local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    --if bounceBehavior then
+    --    -- Interact with the scoreBehavior script
+    --    --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
+    --end
+
+    -- Hit by projectile?
+    local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+    if projectileBehavior then
+
+        -- Hit by projectile
+
+        -- Obtain current armor
+        --local datagrid = self.owner:get(self.id(), DataGridComponent)
+        --local element_armor = datagrid:get_slot1_at(element_index)
+        --element_armor = element_armor - 1.0
+        --datagrid:set_slot1_at(element_index, element_armor)
+
+        -- Alter element color
+        --local quadgrid = self.owner:get(self.id(), QuadGridComponent)
+        --local new_color = self:scale_alpha(quadgrid:get_color_at(element_index), element_armor, 2.0)
+        --quadgrid:set_color_at(element_index, new_color)
+
+        --if element_armor == 0 then
+        self:hit_element(element_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
+        self:check_if_destroyed()
+        --end
+    end
+end
+
+function node:hit_element(element_index, vel_x, vel_y)
+
+    local transform = self.owner:get(self.id(), Transform)
+    local collider = self.owner:get(self.id(), CircleColliderGridComponent)
+    local quad = self.owner:get(self.id(), QuadGridComponent)
+    
+    -- Emit particles in the (vel_x, vel_y) direction
+    local x, y = quad:get_pos_at(element_index)
+    xrot, yrot = rotate(x, y, transform.rot)
+    emit_explosion(
+        transform.x + xrot, 
+        transform.y + yrot, 
+        vel_x, 
+        vel_y, 
+        20, 
+        quad:get_color_at(element_index))
+
+    -- Reduce armor
+    local datagrid = self.owner:get(self.id(), DataGridComponent)
+    local element_armor = datagrid:get_slot1_at(element_index)
+    element_armor = element_armor - 1.0
+    datagrid:set_slot1_at(element_index, element_armor)
+
+    -- Update element color based on current armor
+    local quadgrid = self.owner:get(self.id(), QuadGridComponent)
+    local new_color = self:scale_alpha(quadgrid:get_color_at(element_index), element_armor, 2.0)
+    quadgrid:set_color_at(element_index, new_color)
+
+    -- Deactivate element if armor is exhausted
+    if element_armor == 0 then
+        collider:set_active_flag_at(element_index, false)
+        quad:set_active_flag_at(element_index, false)
+    end
+end
+
 function node:check_if_destroyed()
 
-    -- Reset object if all parts are inactive
     local collider = self.owner:get(self.id(), CircleColliderGridComponent)
     if (not collider:is_any_active()) then
+
+        -- Object is destroyed (has no active element left)
         
         --local transform = self.owner:get(self.id(), Transform)
         local quadgrid = self.owner:get(self.id(), QuadGridComponent)
@@ -93,55 +165,23 @@ function node:check_if_destroyed()
 
 end
 
-function node:deactivate_quad_and_collider_at(index, vel_x, vel_y)
+function node:scale_alpha(color, f, fmax)
+    -- Extract the RGBA components from the color
+    local a = (color >> 24) & 0xFF
+    local r = (color >> 16) & 0xFF
+    local g = (color >> 8) & 0xFF
+    local b = color & 0xFF
 
-    local transform = self.owner:get(self.id(), Transform)
-    local collider = self.owner:get(self.id(), CircleColliderGridComponent)
-    local quad = self.owner:get(self.id(), QuadGridComponent)
-    
-    -- Emit particles in the (vel_x, vel_y) direction
-    local x, y = quad:get_pos_at(index)
-    xrot, yrot = rotate(x, y, transform.rot)
-    emit_explosion(
-        transform.x + xrot, 
-        transform.y + yrot, 
-        vel_x, 
-        vel_y, 
-        20, 
-        quad:get_color_at(index))
+    -- Calculate the scaling factor
+    local scale = f / fmax
 
-    -- Deactivate
-    collider:set_active_flag_at(index, false)
-    quad:set_active_flag_at(index, false)
-end
+    -- Scale the alpha component
+    local a_scaled = math.floor(a * scale)
 
--- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, collider_index, entity)
-    --local quad = self.owner:get(self.id(), QuadComponent)
-    --local quad_color = self.owner:get(self.id(), QuadGridComponent):get_color_at(collider_index)
+    -- Recompose the scaled alpha with the unchanged RGB components into a single color value
+    local scaled_color = (a_scaled << 24) | (r << 16) | (g << 8) | b
 
-    --local vel_length = math.sqrt(self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y)
-    --emit_particle(x, y, nx * vel_length, ny * vel_length, quad_color)
-    --print(collider_index)
-
-    -- Check script in the other entity
-    --local scriptComponent = self.owner:get(self.id(), ScriptedBehaviorComponent)
-    --local bounceBehavior = scriptComponent:get_script_by_id("bounce_behavior")
-    local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
-    if bounceBehavior then
-        -- Interact with the scoreBehavior script
-        --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
-    end
-
-    -- Hit by projectile?
-    local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
-    if projectileBehavior then
-
-        self:deactivate_quad_and_collider_at(collider_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
-
-        -- Reset object if all parts are inactive
-        self:check_if_destroyed()
-    end
+    return scaled_color
 end
 
 return node

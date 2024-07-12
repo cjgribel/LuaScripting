@@ -42,12 +42,12 @@ local function create_player_entity(size, color, projectile_pool)
 
     -- QuadGridComponent
     local quadgrid = QuadGridComponent(1, 1, true)
-    quadgrid:set_quad_at(0, 0, 0.0, 0.0, size, 0xffffffff, true)
+    quadgrid:set_quad_at(0, 0.0, 0.0, size, 0xffffffff, true)
     registry:emplace(entity, quadgrid)
 
     -- CircleColliderGridComponent
     local collidergrid = CircleColliderGridComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
-    collidergrid:set_circle_at(0, 0, 0.0, 0.0, size * 0.5, true)
+    collidergrid:set_circle_at(0, 0.0, 0.0, size * 0.5, true)
     registry:emplace(entity, collidergrid)
 
     -- Behavior
@@ -57,6 +57,7 @@ local function create_player_entity(size, color, projectile_pool)
     return entity
 end
 
+-- NOT USED YET
 local function create_background_entity(size, color)
     local entity = registry:create()
 
@@ -66,7 +67,7 @@ local function create_background_entity(size, color)
 
     -- QuadGridComponent
     local quadgrid = QuadGridComponent(1, 1, true)
-    quadgrid:set_quad_at(0, 0, 0.0, 0.0, size, 0x40ffffff, true)
+    quadgrid:set_quad_at(0, 0.0, 0.0, size, 0x40ffffff, true)
     registry:emplace(entity, quadgrid)
 
     return entity

@@ -58,15 +58,13 @@ namespace {
             // },
             "set_circle_at",
             [](CircleColliderGridComponent& c,
-                int i,
-                int j,
+                int index,
                 float x,
                 float y,
                 float radius,
                 bool is_active)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 c.pos[index].x = x;
                 c.pos[index].y = y;
                 c.radii[index] = radius;
@@ -166,16 +164,14 @@ namespace {
             // },
             "set_quad_at",
             [](QuadGridComponent& c,
-                int i,
-                int j,
+                int index,
                 float x,
                 float y,
                 float size,
                 uint32_t color,
                 bool is_active)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 c.pos[index].x = x;
                 c.pos[index].y = y;
                 c.sizes[index] = size;
@@ -241,7 +237,7 @@ namespace {
         );
     }
 
-    void registeGridDataComponent(sol::state& lua)
+    void registeDataGridComponent(sol::state& lua)
     {
         lua.new_usertype<DataGridComponent>("DataGridComponent",
             "type_id",
@@ -259,40 +255,30 @@ namespace {
                 }),
             "set_slot1_at",
             [](DataGridComponent& c,
-                int i,
-                int j,
+                int index,
                 float value)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 c.slot1[index] = value;
             },
             "set_slot2_at",
             [](DataGridComponent& c,
-                int i,
-                int j,
+                int index,
                 float value)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 c.slot2[index] = value;
             },
             "get_slot1_at",
-            [](DataGridComponent& c,
-                int i,
-                int j)
+            [](DataGridComponent& c, int index)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 return c.slot1[index];
             },
             "get_slot2_at",
-            [](DataGridComponent& c,
-                int i,
-                int j)
+            [](DataGridComponent& c, int index)
             {
-                int index = j * c.width + i;
-                assert(index < c.count);
+                assert(index >= 0 && index < c.count);
                 return c.slot2[index];
             }
             //sol::meta_function::to_string,
@@ -831,7 +817,7 @@ bool Scene::init(const v2i& windowSize)
         registerCircleColliderGridComponent(lua);
         registerQuadGridComponent(lua);
         registerIslandFinderComponent(lua);
-        registeGridDataComponent(lua);
+        registeDataGridComponent(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);

@@ -25,6 +25,7 @@ function behavior:load_phase(phase)
 end
 
 function behavior:update(dt)
+    
     if self.current_phase then
         self.current_phase:update(dt)
         if self.current_phase:has_finished() then
