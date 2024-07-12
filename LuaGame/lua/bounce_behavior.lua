@@ -100,10 +100,10 @@ function node:hit_element(element_index, vel_x, vel_y)
 
     local transform = self.owner:get(self.id(), Transform)
     local collider = self.owner:get(self.id(), CircleColliderGridComponent)
-    local quad = self.owner:get(self.id(), QuadGridComponent)
+    local quadgrid = self.owner:get(self.id(), QuadGridComponent)
     
     -- Emit particles in the (vel_x, vel_y) direction
-    local x, y = quad:get_pos_at(element_index)
+    local x, y = quadgrid:get_pos_at(element_index)
     xrot, yrot = rotate(x, y, transform.rot)
     emit_explosion(
         transform.x + xrot, 
@@ -111,7 +111,7 @@ function node:hit_element(element_index, vel_x, vel_y)
         vel_x, 
         vel_y, 
         20, 
-        quad:get_color_at(element_index))
+        quadgrid:get_color_at(element_index))
 
     -- Reduce armor
     local datagrid = self.owner:get(self.id(), DataGridComponent)
@@ -120,14 +120,14 @@ function node:hit_element(element_index, vel_x, vel_y)
     datagrid:set_slot1_at(element_index, element_armor)
 
     -- Update element color based on current armor
-    local quadgrid = self.owner:get(self.id(), QuadGridComponent)
+    --local quadgrid = self.owner:get(self.id(), QuadGridComponent)
     local new_color = self:scale_alpha(quadgrid:get_color_at(element_index), element_armor, 2.0)
     quadgrid:set_color_at(element_index, new_color)
 
     -- Deactivate element if armor is exhausted
     if element_armor == 0 then
         collider:set_active_flag_at(element_index, false)
-        quad:set_active_flag_at(element_index, false)
+        quadgrid:set_active_flag_at(element_index, false)
     end
 end
 
