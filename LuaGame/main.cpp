@@ -28,7 +28,7 @@
 using namespace linalg;
 //const int WINDOW_WIDTH = 1600;
 //const int WINDOW_HEIGHT = 900;
-v2i gWindowSize {1600, 900};
+v2i gWindowSize{ 1600, 900 };
 float FRAMETIME_MIN_MS = 1000.0f / 60;
 bool WIREFRAME = false;
 bool SOUND_PLAY = false;
@@ -52,6 +52,34 @@ namespace
 
         return nullptr;
     }
+
+    // Circular buffer class
+    class CircularBuffer {
+    public:
+        CircularBuffer(size_t size) : buffer(size), head(0), full(false) {}
+
+        void add(float value) {
+            buffer[head] = value;
+            head = (head + 1) % buffer.size();
+            if (head == 0) {
+                full = true;
+            }
+        }
+
+        std::vector<float> getBuffer() const {
+            std::vector<float> result;
+            if (full) {
+                result.insert(result.end(), buffer.begin() + head, buffer.end());
+            }
+            result.insert(result.end(), buffer.begin(), buffer.begin() + head);
+            return result;
+        }
+
+    private:
+        std::vector<float> buffer;
+        size_t head;
+        bool full;
+    };
 }
 
 int main(int argc, char* argv[])
@@ -245,6 +273,11 @@ int main(int argc, char* argv[])
 
     // Main loop
     float time_s = 0.0f, time_ms, deltaTime_s = 0.016f;
+    Uint32 elapsed_ms = 0; // Effective frame time
+
+    unsigned int stable_refresh_time = 0, stable_refresh_dt = 200;
+    bool stable_refresh = false;
+
     bool quit = false;
     SDL_Event event;
     eeng::Log::log("Entering main loop...");
@@ -256,6 +289,14 @@ int main(int argc, char* argv[])
         deltaTime_s = now_s - time_s;
         time_ms = now_ms;
         time_s = now_s;
+
+        if (stable_refresh_time < time_ms)
+        {
+            stable_refresh_time = time_ms + stable_refresh_dt;
+            stable_refresh = true;
+        }
+        else
+            stable_refresh = false;
 
         while (SDL_PollEvent(&event))
         {
@@ -303,7 +344,8 @@ int main(int argc, char* argv[])
 
         if (ImGui::CollapsingHeader("Backend", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            float fps = 1000.0f / ImGui::GetIO().Framerate;
+            ImGui::Text("%.3f ms/frame (%.1f FPS)", fps, ImGui::GetIO().Framerate);
 
             // ImGui::Text("Drawcall count %i", DRAWCALL_COUNT);
 
@@ -333,6 +375,22 @@ int main(int argc, char* argv[])
                 FRAMETIME_MIN_MS = 1000.0f / 120;
             else if (currentItem == 4)
                 FRAMETIME_MIN_MS = 0.0f;
+
+            // Frame time plot
+            static CircularBuffer fpsBuffer(100);
+            static unsigned int stable_elapsed_ms = 0;
+            if (stable_refresh) {
+                fpsBuffer.add(elapsed_ms);
+                stable_elapsed_ms = elapsed_ms;
+            }
+            auto buffer = fpsBuffer.getBuffer();
+            if (!buffer.empty())
+            {
+                //ImGui::Text("time_ms %i", (int)time_ms);
+                ImGui::Text("Frame time %i", stable_elapsed_ms);
+                //ImGui::Text("FPS Over Time");
+                ImGui::PlotLines("", buffer.data(), static_cast<int>(buffer.size()), 0, nullptr, 0.0f, 33.0f, ImVec2(0, 80)); // Cap to 30 fps
+            }
 
             ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
@@ -466,7 +524,7 @@ int main(int argc, char* argv[])
         SDL_GL_SwapWindow(window);
 
         // Add a delay if frame time was faster than the target frame time
-        const Uint32 elapsed_ms = SDL_GetTicks() - time_ms;
+        /*const Uint32*/ elapsed_ms = SDL_GetTicks() - time_ms;
         if (elapsed_ms < FRAMETIME_MIN_MS)
             SDL_Delay(FRAMETIME_MIN_MS - elapsed_ms);
 

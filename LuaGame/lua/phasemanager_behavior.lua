@@ -2,10 +2,11 @@
 -- Require the phase modules
 local phase1 = require("phase1")
 local phase2 = require("phase2")
+local phase3 = require("phase3")
 
 local behavior = {
     current_phase = nil,
-    phases = {phase1, phase2}, -- Add your phases here
+    phases = {phase1, phase2, phase3}, -- Add your phases here
     current_phase_index = 1,
 }
 
@@ -25,7 +26,7 @@ function behavior:load_phase(phase)
 end
 
 function behavior:update(dt)
-    
+
     if self.current_phase then
         self.current_phase:update(dt)
         if self.current_phase:has_finished() then

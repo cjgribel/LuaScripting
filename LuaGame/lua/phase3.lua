@@ -1,38 +1,37 @@
 
 local prefabloaders = require("prefabs")
 
-local phase2 = {
-    name = 'Phase 2',
+local phase3 = {
+    name = 'Phase 3',
     entities = {},
     timer = 0.0,
     nbr_enemies = 30,
     start_nbr_killed
 }
 
-function phase2:init()
+function phase3:init()
 
     for i = 1, self.nbr_enemies do
-        table.insert(self.entities, prefabloaders.bouncing_enemy_block(7, 7, 0.25, 2.0, 0xffff8080))
+        table.insert(self.entities, prefabloaders.bouncing_enemy_block(1, 1, 0.25, 1.0, 0xffff8080))
     end
 
     self.start_nbr_killed = config.enemy_kill_count
 
-    log("phase2 begins, " .. #self.entities .. " entities created")
+    log("phase3 begins, " .. #self.entities .. " entities created")
 end
 
-function phase2:update(dt)
-    --print("phase2:update() called with dt:", dt)
+function phase3:update(dt)
 
     self.timer = self.timer + dt
 
     ImGui_SetNextWindowWorldPos(5, 6.5)
-    ImGui_Begin("Phase2Text")
+    ImGui_Begin("Phase3Text")
     --ImGui_Text('Time ' .. tostring(self.timer) .. "/" .. tostring(self.dur))
     ImGui_Text("Kill all enemies")
     ImGui_End()
 end
 
-function phase2:has_finished()
+function phase3:has_finished()
 
     return (config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
 
@@ -43,9 +42,9 @@ function phase2:has_finished()
     --end
 end
 
-function phase2:destroy()
+function phase3:destroy()
 
-    log("phase2 ends, flagging " .. #self.entities .. " entities for destruction")
+    log("phase3 ends, flagging " .. #self.entities .. " entities for destruction")
 
     for _, entity in ipairs(self.entities) do
         --registry:destroy(entity, registry:valid(entity))
@@ -54,7 +53,7 @@ function phase2:destroy()
     -- Clear the entities list after destroying them
     self.entities = {}
     
-    --print("phase2:destroy() called")
+    --print("phase3:destroy() called")
 end
 
-return phase2
+return phase3

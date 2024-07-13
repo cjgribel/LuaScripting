@@ -26,7 +26,7 @@ function prefabloaders.projectile(size, projectile_pool)
         return entity
 end
 
-function prefabloaders.bouncing_enemy_block(color)
+function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
 
     local entity = registry:create()
     print("Created entity ID:", entity)
@@ -38,9 +38,9 @@ function prefabloaders.bouncing_enemy_block(color)
     
     --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     
-    local W = 7 -- Number of columns
-    local H = 7 -- Number of rows
-    local D = 0.25 -- Size of each quad (width/height)
+    --local W = 7 -- Number of columns
+    --local H = 7 -- Number of rows
+    --local D = 0.25 -- Size of each quad (width/height)
     --local color = 0xffff00ff -- Color of the quads
     local visible = true -- Visibility flag
     local core_x = math.floor(W / 2)
@@ -61,7 +61,7 @@ function prefabloaders.bouncing_enemy_block(color)
                 datagrid:set_slot1_at(index, 1.0)
             else
                 quadgrid:set_quad_at(index, x, y, D, color, visible)
-                datagrid:set_slot1_at(index, 2.0)
+                datagrid:set_slot1_at(index, armor)
             end
             collidergrid:set_circle_at(index, x, y, D * 0.5, visible)
         end

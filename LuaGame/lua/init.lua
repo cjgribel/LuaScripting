@@ -104,10 +104,9 @@ local projectilepool_table = get_script(registry, projectilepool_entity, "projec
 local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
 
 -- Create bouncing entities
-for i = 1, 1 do
-    --create_bouncy_entity(i)
-    prefabloaders.bouncing_enemy_block(0xffff80ff)
-end
+--for i = 1, 1 do
+--    prefabloaders.bouncing_enemy_block(0xffff80ff)
+--end
 
 create_phasemanager_entity()
 

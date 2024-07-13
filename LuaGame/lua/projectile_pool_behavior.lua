@@ -20,6 +20,7 @@ function ProjectilePool:init()
         self.entityToIndex[entity] = i
     end
 
+    log("Pooled " .. self.poolSize .. " projectiles")
 end
 
 -- Update function for projectiles
