@@ -29,7 +29,7 @@ using namespace linalg;
 //const int WINDOW_WIDTH = 1600;
 //const int WINDOW_HEIGHT = 900;
 v2i gWindowSize{ 1600, 900 };
-float FRAMETIME_MIN_MS = 1000.0f / 60;
+unsigned int FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 60);
 bool WIREFRAME = false;
 bool SOUND_PLAY = false;
 int DRAWCALL_COUNT;
@@ -79,6 +79,26 @@ namespace
         std::vector<float> buffer;
         size_t head;
         bool full;
+    };
+
+    class PeriodicEvent
+    {
+        float t, delay, next_event;
+        std::function<void()> event;
+
+    public:
+        PeriodicEvent(float hertz, const std::function<void()>&& event)
+            : t(0.0f), delay(1.0f / hertz), next_event(0.0f), event(event) {}
+
+        void update(float dt)
+        {
+            t += dt;
+            while (t > next_event)
+            {
+                next_event += delay;
+                event();
+            }
+        }
     };
 }
 
@@ -272,11 +292,11 @@ int main(int argc, char* argv[])
     scene->init(gWindowSize);
 
     // Main loop
-    float time_s = 0.0f, time_ms, deltaTime_s = 0.016f;
-    Uint32 elapsed_ms = 0; // Effective frame time
 
-    unsigned int stable_refresh_time = 0, stable_refresh_dt = 200;
-    bool stable_refresh = false;
+    float time_s = 0.0f, deltaTime_s = 0.016f;
+    Uint32 time_ms = 0;
+    Uint32 elapsed_ms = 0;  // Effective frame time
+    Uint32 idle_ms = 0;     // Idle frame time
 
     bool quit = false;
     SDL_Event event;
@@ -284,19 +304,11 @@ int main(int argc, char* argv[])
 
     while (!quit)
     {
-        const auto now_ms = SDL_GetTicks();
-        const auto now_s = now_ms * 0.001f;
+        const Uint32 now_ms = SDL_GetTicks();
+        const float now_s = now_ms * 0.001f;
         deltaTime_s = now_s - time_s;
         time_ms = now_ms;
         time_s = now_s;
-
-        if (stable_refresh_time < time_ms)
-        {
-            stable_refresh_time = time_ms + stable_refresh_dt;
-            stable_refresh = true;
-        }
-        else
-            stable_refresh = false;
 
         while (SDL_PollEvent(&event))
         {
@@ -344,10 +356,31 @@ int main(int argc, char* argv[])
 
         if (ImGui::CollapsingHeader("Backend", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            float fps = 1000.0f / ImGui::GetIO().Framerate;
-            ImGui::Text("%.3f ms/frame (%.1f FPS)", fps, ImGui::GetIO().Framerate);
+            // Total frame time & fps
+            {
+                static float stable_fps = 1.0f;
+                static PeriodicEvent pevent{
+                    1.0f, [&]() { stable_fps = ImGui::GetIO().Framerate; }
+                };
+                pevent.update(deltaTime_s);
+                ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / stable_fps, stable_fps);
+            }
 
-            // ImGui::Text("Drawcall count %i", DRAWCALL_COUNT);
+            // Frame time plot
+            {
+                static CircularBuffer fpsBuffer(100);
+                static PeriodicEvent pevent{ 10.0f, [&]() {
+                    fpsBuffer.add(elapsed_ms);
+                } };
+                pevent.update(deltaTime_s);
+                const auto& buffer = fpsBuffer.getBuffer();
+                // ImGui::Text("Frame time");
+                if (!buffer.empty())
+                {
+                    float available_width = ImGui::GetContentRegionAvail().x;
+                    ImGui::PlotLines("##FrameTimePlot", buffer.data(), static_cast<int>(buffer.size()), 0, "Frame time (max 30 ms)", 0.0f, 30.0f, ImVec2(available_width, 80));
+                }
+            }
 
             // Combo (drop-down) for fps settings
             static const char* items[] = { "10", "30", "60", "120", "Uncapped" };
@@ -366,31 +399,15 @@ int main(int argc, char* argv[])
                 ImGui::EndCombo();
             }
             if (currentItem == 0)
-                FRAMETIME_MIN_MS = 1000.0f / 10;
+                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 10);
             else if (currentItem == 1)
-                FRAMETIME_MIN_MS = 1000.0f / 30;
+                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 30);
             else if (currentItem == 2)
-                FRAMETIME_MIN_MS = 1000.0f / 60;
+                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 60);
             else if (currentItem == 3)
-                FRAMETIME_MIN_MS = 1000.0f / 120;
+                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 120);
             else if (currentItem == 4)
-                FRAMETIME_MIN_MS = 0.0f;
-
-            // Frame time plot
-            static CircularBuffer fpsBuffer(100);
-            static unsigned int stable_elapsed_ms = 0;
-            if (stable_refresh) {
-                fpsBuffer.add(elapsed_ms);
-                stable_elapsed_ms = elapsed_ms;
-            }
-            auto buffer = fpsBuffer.getBuffer();
-            if (!buffer.empty())
-            {
-                //ImGui::Text("time_ms %i", (int)time_ms);
-                ImGui::Text("Frame time %i", stable_elapsed_ms);
-                //ImGui::Text("FPS Over Time");
-                ImGui::PlotLines("", buffer.data(), static_cast<int>(buffer.size()), 0, nullptr, 0.0f, 33.0f, ImVec2(0, 80)); // Cap to 30 fps
-            }
+                FRAMETIME_MIN_MS = 0;
 
             ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
@@ -524,9 +541,13 @@ int main(int argc, char* argv[])
         SDL_GL_SwapWindow(window);
 
         // Add a delay if frame time was faster than the target frame time
-        /*const Uint32*/ elapsed_ms = SDL_GetTicks() - time_ms;
+        elapsed_ms = SDL_GetTicks() - time_ms;
         if (elapsed_ms < FRAMETIME_MIN_MS)
-            SDL_Delay(FRAMETIME_MIN_MS - elapsed_ms);
+        {
+            idle_ms = FRAMETIME_MIN_MS - elapsed_ms;
+            SDL_Delay(idle_ms);
+        }
+        else idle_ms = 0;
 
         // Example: Play the sound again after 5 seconds
         //        SDL_Delay(5000);
