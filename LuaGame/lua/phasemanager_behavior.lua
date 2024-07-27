@@ -28,9 +28,12 @@ end
 function behavior:update(dt)
 
     if self.current_phase then
+        
         self.current_phase:update(dt)
+
         if self.current_phase:has_finished() then
             self.current_phase_index = self.current_phase_index + 1
+
             if self.phases[self.current_phase_index] then
                 self:load_phase(self.phases[self.current_phase_index])
             else
@@ -52,7 +55,7 @@ function behavior:update(dt)
 end
 
 function behavior:on_collision(x, y, nx, ny, collider_index, entity)
-    -- Delegate collision handling to the current phase if needed
+
 end
 
 function behavior:destroy()

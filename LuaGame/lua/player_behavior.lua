@@ -9,19 +9,19 @@ local node = {
     death_cooldown_time = 1.0,
     last_death_time = 0.0,
     invincible = true,
+
     blink = {
         delay = 0.1,
-        timeElapsed = 0.0,
-        blinkFlag = false
+        next_blink_time = 0.0,
+        flag = false
     }
 }
 
--- Function to update the blink flag
-function node:updateBlinkFlag(dt)
-    self.blink.timeElapsed = self.blink.timeElapsed + dt
-    if self.blink.timeElapsed >= self.blink.delay then
-        self.blink.blinkFlag = not self.blink.blinkFlag
-        self.blink.timeElapsed = self.blink.timeElapsed - self.blink.delay
+function node:update_blink(time)
+
+    if time > self.blink.next_blink_time then
+        self.blink.flag = not self.blink.flag
+        self.blink.next_blink_time = time + self.blink.delay
     end
 end
 
@@ -73,24 +73,14 @@ function node:update(dt)
         emit_trail(transform.x, transform.y, -input.axis_left_x * 5.0, input.axis_left_y * 5.0, 2, quad_color)
     end
 
-    --ImGui_SetNextWindowPos(500, 100)
-    --ImGui_Begin("ProjectileCount")
-    --ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
-    --ImGui_End()
-
-    --print(self.time, self.last_death_time, self.death_cooldown_time)
+    -- Update time and invincibility
     self.time = self.time + dt
     self.invincible = (self.time < self.last_death_time + self.death_cooldown_time)
     
-    --print(self.time, self.invincible)
-
-    --local quadgrid = self.owner:get(self.id(), QuadGridComponent)
-    --local time_frac = self.time - math.floor(self.time)
-    --print(time_frac)
-    self:updateBlinkFlag(dt);
-    if self.invincible and self.blink.blinkFlag then -- and some blinking effect
-        --quafset transform = self.owner:get(self.id(), Transform)
-        quad.is_active = false
+    -- Blink effect
+    if self.invincible then
+        self:update_blink(self.time)
+        quad.is_active = self.blink.flag
     else
         quad.is_active = true
     end
