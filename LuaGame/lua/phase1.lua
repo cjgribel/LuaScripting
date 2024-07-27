@@ -6,7 +6,7 @@ local phase1 = {
     entities = {},
     timer = 0.0,
     dur = 15.0,
-    nbr_enemies = 3,
+    nbr_enemies = 10,
     start_nbr_killed
 }
 

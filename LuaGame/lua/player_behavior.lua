@@ -1,15 +1,36 @@
 local node = {
-    fire_cooldown = 0.075,
+    fire_cooldown = 0.1,
     fire_delay = 0.0,
+
     projectile_pool = nil,
-    projectiles_fired = 0
+    projectiles_fired = 0,
+
+    time = 0.0,
+    death_cooldown_time = 1.0,
+    last_death_time = 0.0,
+    invincible = true,
+    blink = {
+        delay = 0.1,
+        timeElapsed = 0.0,
+        blinkFlag = false
+    }
 }
+
+-- Function to update the blink flag
+function node:updateBlinkFlag(dt)
+    self.blink.timeElapsed = self.blink.timeElapsed + dt
+    if self.blink.timeElapsed >= self.blink.delay then
+        self.blink.blinkFlag = not self.blink.blinkFlag
+        self.blink.timeElapsed = self.blink.timeElapsed - self.blink.delay
+    end
+end
 
 function node:init()
 	print('player_behavior [#' .. self.id() .. '] init ()', self)
 end
 
 function node:update(dt)
+
 	local transform = self.owner:get(self.id(), Transform)
     local quad = self.owner:get(self.id(), QuadGridComponent)
     local quad_color = quad:get_color_at(0) -- self.owner:get(self.id(), QuadGridComponent):get_color_at(0)
@@ -57,6 +78,23 @@ function node:update(dt)
     --ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
     --ImGui_End()
 
+    --print(self.time, self.last_death_time, self.death_cooldown_time)
+    self.time = self.time + dt
+    self.invincible = (self.time < self.last_death_time + self.death_cooldown_time)
+    
+    --print(self.time, self.invincible)
+
+    --local quadgrid = self.owner:get(self.id(), QuadGridComponent)
+    --local time_frac = self.time - math.floor(self.time)
+    --print(time_frac)
+    self:updateBlinkFlag(dt);
+    if self.invincible and self.blink.blinkFlag then -- and some blinking effect
+        --quafset transform = self.owner:get(self.id(), Transform)
+        quad.is_active = false
+    else
+        quad.is_active = true
+    end
+
     --ImGui_SetNextWindowWorldPos(-5, 5)
     ImGui_SetNextWindowWorldPos(-5, 7)
     ImGui_Begin("ProjectileCount2")
@@ -68,16 +106,26 @@ end
 
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, collider_index, entity)
+    
+    if self.invincible then 
+        return 
+    end
+
     -- Death
     local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
     if bounceBehavior then
+
         local transform = self.owner:get(self.id(), Transform)
+        
         -- Particles
         emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
+        
         -- Reset
         transform.x, transform.y = config.bounds.right, config.bounds.bottom
         
+        self.last_death_time = self.time
         config.player_deaths = config.player_deaths + 1
+
     end
 
 end
