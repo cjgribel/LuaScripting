@@ -48,6 +48,9 @@ message(STATUS "OpenGL libraries: ${OPENGL_LIBRARIES}")
 find_package (Git REQUIRED)
 message(STATUS "Found Git: ${GIT_EXECUTABLE}")
 
+#
+# Prepare FetchContent
+#
 include(FetchContent)
 
 #
@@ -58,11 +61,13 @@ if (NOT SDL2_FOUND)
     message(STATUS "SDL2 not found, using FetchContent to fetch it.")
     FetchContent_Declare(
         SDL2
-        URL https://www.libsdl.org/release/SDL2-2.0.12.zip
+        #URL https://www.libsdl.org/release/SDL2-2.0.12.zip
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL
+        GIT_TAG        v2.30.3
     )
     FetchContent_MakeAvailable(SDL2)
     set(SDL2_LIBRARIES SDL2::SDL2)
-    set(SDL2_INCLUDE_DIRS ${sdl2_SOURCE_DIR}/include)
+    set(SDL2_INCLUDE_DIRS ${SDL2_SOURCE_DIR}/include)
 else()
     message(STATUS "Found SDL2.")
     set(SDL2_LIBRARIES SDL2::SDL2)
@@ -82,6 +87,31 @@ include_directories(${SDL2_INCLUDE_DIRS})
 #    message(STATUS "SDL2 populated and added to the build")
 #endif()
 #include_directories(${sdl2_SOURCE_DIR}/include)
+
+# Fetch SDL_mixer
+#
+find_package(SDL2_mixer REQUIRED)
+message(STATUS "Found SDL2_mixer")
+#
+#FetchContent_Declare(
+#  SDL2_mixer
+#  GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+#  GIT_TAG release-2.8.0  # Replace with the desired version
+#)
+#FetchContent_GetProperties(SDL2_mixer)
+#if(NOT SDL2_mixer_POPULATED)
+#  FetchContent_Populate(SDL2_mixer)
+#
+#  # Add SDL2_mixer with internal dependencies
+#  add_subdirectory(${SDL2_mixer_SOURCE_DIR} ${SDL2_mixer_BINARY_DIR} EXCLUDE_FROM_ALL)
+#  set(SDL2MIXER_LIBRARIES SDL2_mixer::SDL2_mixer)
+#
+#  # Force SDL2_mixer to use internal dependencies
+#  set(OPTION_USE_SYSTEM_OPUS OFF CACHE BOOL "" FORCE)
+#  set(OPTION_USE_SYSTEM_LIBXMP OFF CACHE BOOL "" FORCE)
+#  set(OPTION_USE_SYSTEM_FLUIDSYNTH OFF CACHE BOOL "" FORCE)
+#  set(OPTION_USE_SYSTEM_WAVPACK OFF CACHE BOOL "" FORCE)
+#endif()
 
 #
 # Fetch glew
@@ -198,8 +228,9 @@ set_target_properties(LuaGame PROPERTIES
 target_link_libraries(
     LuaGame PRIVATE 
     ${SDL2_LIBRARIES} 
+    SDL2_mixer::SDL2_mixer 
     libglew_static 
-    ${OPENGL_LIBRARIES}
+    ${OPENGL_LIBRARIES} 
     ${LUA_LIBRARIES} 
     sol2::sol2
     EnTT::EnTT)

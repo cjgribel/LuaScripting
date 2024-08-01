@@ -10,6 +10,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <SDL_mixer.h>
 
 #include <entt/entt.hpp> // -> Scene source
 
@@ -115,6 +116,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+        // Initialize SDL_mixer with a specific audio format
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        std::cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << std::endl;
+        return 1;
+    }
+
     // Controllers
     controller1 = findController();
 
@@ -147,6 +154,8 @@ int main(int argc, char* argv[])
     if (!gl_context)
     {
         std::cerr << "Failed to create OpenGL context: " << SDL_GetError() << std::endl;
+
+        Mix_CloseAudio();
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
