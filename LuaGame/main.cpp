@@ -10,7 +10,8 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
-#include <SDL_mixer.h>
+#include <SDL_mixer.h> // included by audiomanager?
+#include "AudioManager.hpp"
 
 #include <entt/entt.hpp> // -> Scene source
 
@@ -104,25 +105,25 @@ namespace
 }
 
 // TODO: To some global state?
-namespace {
-    // Load a sound effect
-    Mix_Chunk* loadSoundEffect(const char* path) {
-        Mix_Chunk* effect = Mix_LoadWAV(path);
-        if (!effect) {
-            std::cerr << "Failed to load sound effect! Mix_Error: " << Mix_GetError() << std::endl;
-        }
-        return effect;
-    }
+// namespace {
+//     // Load a sound effect
+//     Mix_Chunk* loadSoundEffect(const char* path) {
+//         Mix_Chunk* effect = Mix_LoadWAV(path);
+//         if (!effect) {
+//             std::cerr << "Failed to load sound effect! Mix_Error: " << Mix_GetError() << std::endl;
+//         }
+//         return effect;
+//     }
 
-    // Load music
-    Mix_Music* loadMusic(const char* path) {
-        Mix_Music* music = Mix_LoadMUS(path);
-        if (!music) {
-            std::cerr << "Failed to load music! Mix_Error: " << Mix_GetError() << std::endl;
-        }
-        return music;
-    }
-}
+//     // Load music
+//     Mix_Music* loadMusic(const char* path) {
+//         Mix_Music* music = Mix_LoadMUS(path);
+//         if (!music) {
+//             std::cerr << "Failed to load music! Mix_Error: " << Mix_GetError() << std::endl;
+//         }
+//         return music;
+//     }
+// }
 
 int main(int argc, char* argv[])
 {
@@ -137,11 +138,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Initialize SDL_mixer with a specific audio format
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        std::cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << std::endl;
-        return 1;
-    }
+    AudioManager::getInstance().init();
+    // // Initialize SDL_mixer with a specific audio format
+    // if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+    //     std::cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << std::endl;
+    //     return 1;
+    // }
 
     // Controllers
     controller1 = findController();
@@ -259,7 +261,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-#if 1
+#if 0
     // Load sound effects and music
     Mix_Chunk* effect1 = loadSoundEffect("../../assets/sounds/Misc Lasers/Fire 1.mp3");
     Mix_Chunk* effect2 = loadSoundEffect("../../assets/sounds/Misc Lasers/Fire 2.mp3");
@@ -274,6 +276,24 @@ int main(int argc, char* argv[])
     }
     else
         std::cout << "Sound and music loaded..." << std::endl;
+
+#if 1
+    // SDL2_mixer
+
+    // Play music (loop indefinitely)
+    if (Mix_PlayMusic(music, -1) == -1) {
+        std::cerr << "Failed to play music! Mix_Error: " << Mix_GetError() << std::endl;
+    }
+
+    // Play sound effects (loop indefinitely)
+    if (Mix_PlayChannel(-1, effect1, -1) == -1) {
+        std::cerr << "Failed to play sound effect 1! Mix_Error: " << Mix_GetError() << std::endl;
+    }
+
+    if (Mix_PlayChannel(-1, effect2, -1) == -1) {
+        std::cerr << "Failed to play sound effect 2! Mix_Error: " << Mix_GetError() << std::endl;
+    }
+#endif
 #endif
 #if 0
     // Load and play an audio clip
@@ -347,6 +367,12 @@ int main(int argc, char* argv[])
     bool quit = false;
     SDL_Event event;
     eeng::Log::log("Entering main loop...");
+
+    // Sound test
+    AudioManager::getInstance().registerEffect("fire1", "../../assets/sounds/Misc Lasers/Fire 1.mp3");
+    AudioManager::getInstance().registerEffect("fire2", "../../assets/sounds/Misc Lasers/Fire 2.mp3");
+    AudioManager::getInstance().registerMusic("music1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav");
+    //
 
     while (!quit)
     {
@@ -458,21 +484,24 @@ int main(int argc, char* argv[])
             ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
 #if 1
-            // SDL2_mixer
+            // AudioManager::getInstance().playEffect("fire1");
+            // AudioManager::getInstance().playEffect("fire2");
+            // AudioManager::getInstance().playMusic("music1");
 
-            // Play music (loop indefinitely)
-            if (Mix_PlayMusic(music, -1) == -1) {
-                std::cerr << "Failed to play music! Mix_Error: " << Mix_GetError() << std::endl;
-            }
-
-            // Play sound effects (loop indefinitely)
-            if (Mix_PlayChannel(-1, effect1, -1) == -1) {
-                std::cerr << "Failed to play sound effect 1! Mix_Error: " << Mix_GetError() << std::endl;
-            }
-
-            if (Mix_PlayChannel(-1, effect2, -1) == -1) {
-                std::cerr << "Failed to play sound effect 2! Mix_Error: " << Mix_GetError() << std::endl;
-            }
+            if (ImGui::Button("Play music"))
+                AudioManager::getInstance().playMusic("music1");
+            
+            ImGui::SameLine();
+            if (ImGui::Button("Pause music"))
+                AudioManager::getInstance().pauseMusic();
+            
+            ImGui::SameLine();
+            if (ImGui::Button("Play effect 1"))
+                AudioManager::getInstance().playEffect("fire1");
+            
+            ImGui::SameLine();
+            if (ImGui::Button("Play effect 2"))
+                AudioManager::getInstance().playEffect("fire2");
 #endif
 #if 0
             // SDL standard sounsd system
