@@ -86,6 +86,7 @@ print('Lua init script...')
 
 math.randomseed(os.time())
 
+log("Creating config...")
 config = {
     player_speed = 10.0,
     bounds = { left = -5, right = 10, bottom = -5, top = 5 },
@@ -96,11 +97,20 @@ config = {
     player_deaths = 0
 }
 
+log("Loading music...")
+audio_manager:registerMusic("music1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
+
+log("Loading effects...")
+audio_manager:registerEffect("fire1", "../../assets/sounds/Misc Lasers/Fire 1.mp3")
+audio_manager:registerEffect("fire2", "../../assets/sounds/Misc Lasers/Fire 2.mp3")
+
 -- Projectile pool
+log("Creating projectile pool...")
 local projectilepool_entity = create_projectile_pool_entity()
 local projectilepool_table = get_script(registry, projectilepool_entity, "projectile_pool_behavior")
 
 -- Create player(s)
+log("Creating player...")
 local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
 
 -- Create bouncing entities
@@ -108,6 +118,10 @@ local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table
 --    prefabloaders.bouncing_enemy_block(0xffff80ff)
 --end
 
+--audio_manager:playMusic("music1")
+
+log("Creating phases...")
 create_phasemanager_entity()
 
+log("Lua init done")
 print('Lua init script done')

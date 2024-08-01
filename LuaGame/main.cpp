@@ -369,9 +369,9 @@ int main(int argc, char* argv[])
     eeng::Log::log("Entering main loop...");
 
     // Sound test
-    AudioManager::getInstance().registerEffect("fire1", "../../assets/sounds/Misc Lasers/Fire 1.mp3");
-    AudioManager::getInstance().registerEffect("fire2", "../../assets/sounds/Misc Lasers/Fire 2.mp3");
-    AudioManager::getInstance().registerMusic("music1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav");
+    AudioManager::getInstance().registerEffect("testfire1", "../../assets/sounds/Misc Lasers/Fire 1.mp3");
+    AudioManager::getInstance().registerEffect("testfire2", "../../assets/sounds/Misc Lasers/Fire 2.mp3");
+    AudioManager::getInstance().registerMusic("testmusic1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav");
     //
 
     while (!quit)
@@ -484,12 +484,12 @@ int main(int argc, char* argv[])
             ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
 #if 1
-            // AudioManager::getInstance().playEffect("fire1");
-            // AudioManager::getInstance().playEffect("fire2");
-            // AudioManager::getInstance().playMusic("music1");
+            // AudioManager::getInstance().playEffect("testfire1");
+            // AudioManager::getInstance().playEffect("testfire2");
+            // AudioManager::getInstance().playMusic("testmusic1");
 
             if (ImGui::Button("Play music"))
-                AudioManager::getInstance().playMusic("music1");
+                AudioManager::getInstance().playMusic("testmusic1");
             
             ImGui::SameLine();
             if (ImGui::Button("Pause music"))
@@ -497,11 +497,11 @@ int main(int argc, char* argv[])
             
             ImGui::SameLine();
             if (ImGui::Button("Play effect 1"))
-                AudioManager::getInstance().playEffect("fire1");
+                AudioManager::getInstance().playEffect("testfire1");
             
             ImGui::SameLine();
             if (ImGui::Button("Play effect 2"))
-                AudioManager::getInstance().playEffect("fire2");
+                AudioManager::getInstance().playEffect("testfire2");
 #endif
 #if 0
             // SDL standard sounsd system

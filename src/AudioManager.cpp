@@ -1,6 +1,7 @@
 #include "AudioManager.hpp"
 #include <SDL.h>
 #include <iostream>
+#include "Log.hpp"
 
 // Get the singleton instance
 AudioManager& AudioManager::getInstance() {
@@ -33,6 +34,8 @@ bool AudioManager::registerEffect(const std::string& name, const std::string& pa
         return false;
     }
     effects[name] = effect;
+
+    eeng::Log::log((std::string("Registered effect ") + name).c_str());
     return true;
 }
 
@@ -44,6 +47,8 @@ bool AudioManager::registerMusic(const std::string& name, const std::string& pat
         return false;
     }
     musics[name] = music;
+    
+    eeng::Log::log((std::string("Registered music ") + name).c_str());
     return true;
 }
 

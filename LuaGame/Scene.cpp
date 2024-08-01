@@ -9,6 +9,7 @@
 #include "bond.hpp"
 #include "transform.hpp"
 #include "kbhit.hpp"
+#include "AudioManager.hpp"
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
@@ -22,6 +23,40 @@ namespace {
     //         << sol::type_name(value.lua_state(), value.get_type())
     //         << std::endl; });
     // }
+
+    void bindAudioManager(sol::state& lua)
+    {
+auto& audioManager = AudioManager::getInstance();
+
+    lua.new_usertype<AudioManager>("AudioManager",
+        "init", [&audioManager]() {
+            return audioManager.init();
+        },
+        "registerEffect", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
+            return audioManager.registerEffect(name, path);
+        },
+        "registerMusic", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
+            return audioManager.registerMusic(name, path);
+        },
+        "playEffect", [&audioManager](AudioManager&, const std::string& name) {
+            audioManager.playEffect(name);
+        },
+        "playMusic", [&audioManager](AudioManager&, const std::string& name) {
+            audioManager.playMusic(name);
+        },
+        "pauseMusic", [&audioManager](AudioManager&) {
+            audioManager.pauseMusic();
+        },
+        "resumeMusic", [&audioManager](AudioManager&) {
+            audioManager.resumeMusic();
+        },
+        "cleanup", [&audioManager](AudioManager&) {
+            audioManager.cleanup();
+        }
+    );
+
+    lua["audio_manager"] = &audioManager;
+    }
 
     void registerCircleColliderGridComponent(sol::state& lua)
     {
@@ -808,10 +843,12 @@ bool Scene::init(const v2i& windowSize)
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
         lua["registry"] = std::ref(registry);
 
-        // Register to Lua: component types
+        // Register AudioManager to Lua
+        bindAudioManager(lua);
+        // Register core components to Lua
         register_transform(lua);
-        registerQuadComponent(lua);
-        registerCircleColliderComponent(lua);
+        registerQuadComponent(lua); // remove
+        registerCircleColliderComponent(lua); // remove
         registerScriptedBehaviorComponent(lua);
         //
         registerCircleColliderGridComponent(lua);
