@@ -103,6 +103,27 @@ namespace
     };
 }
 
+// TODO: To some global state?
+namespace {
+    // Load a sound effect
+    Mix_Chunk* loadSoundEffect(const char* path) {
+        Mix_Chunk* effect = Mix_LoadWAV(path);
+        if (!effect) {
+            std::cerr << "Failed to load sound effect! Mix_Error: " << Mix_GetError() << std::endl;
+        }
+        return effect;
+    }
+
+    // Load music
+    Mix_Music* loadMusic(const char* path) {
+        Mix_Music* music = Mix_LoadMUS(path);
+        if (!music) {
+            std::cerr << "Failed to load music! Mix_Error: " << Mix_GetError() << std::endl;
+        }
+        return music;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     // Hello standard output
@@ -116,7 +137,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-        // Initialize SDL_mixer with a specific audio format
+    // Initialize SDL_mixer with a specific audio format
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << std::endl;
         return 1;
@@ -239,6 +260,22 @@ int main(int argc, char* argv[])
     }
 
 #if 1
+    // Load sound effects and music
+    Mix_Chunk* effect1 = loadSoundEffect("../../assets/sounds/Misc Lasers/Fire 1.mp3");
+    Mix_Chunk* effect2 = loadSoundEffect("../../assets/sounds/Misc Lasers/Fire 2.mp3");
+    Mix_Music* music = loadMusic("../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav");
+
+    if (!effect1 || !effect2 || !music) {
+        // close(music, effect1, effect2);
+        Mix_FreeMusic(music);
+        Mix_FreeChunk(effect1);
+        Mix_FreeChunk(effect2);
+        return 1;
+    }
+    else
+        std::cout << "Sound and music loaded..." << std::endl;
+#endif
+#if 0
     // Load and play an audio clip
     SDL_AudioSpec wavSpec;
     Uint32 wavLength;
@@ -420,6 +457,25 @@ int main(int argc, char* argv[])
 
             ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
+#if 1
+            // SDL2_mixer
+
+            // Play music (loop indefinitely)
+            if (Mix_PlayMusic(music, -1) == -1) {
+                std::cerr << "Failed to play music! Mix_Error: " << Mix_GetError() << std::endl;
+            }
+
+            // Play sound effects (loop indefinitely)
+            if (Mix_PlayChannel(-1, effect1, -1) == -1) {
+                std::cerr << "Failed to play sound effect 1! Mix_Error: " << Mix_GetError() << std::endl;
+            }
+
+            if (Mix_PlayChannel(-1, effect2, -1) == -1) {
+                std::cerr << "Failed to play sound effect 2! Mix_Error: " << Mix_GetError() << std::endl;
+            }
+#endif
+#if 0
+            // SDL standard sounsd system
             if (SOUND_PLAY)
             {
                 if (ImGui::Button("Pause sound"))
@@ -434,8 +490,9 @@ int main(int argc, char* argv[])
                 {
                     SDL_PauseAudioDevice(deviceId, 0);
                     SOUND_PLAY = true;
-                }
-            }
+        }
+    }
+#endif
 
             ImGui::Text("Controller State");
 
@@ -462,7 +519,7 @@ int main(int argc, char* argv[])
                 ImGui::SameLine();
                 ImGui::Text("(No controller connected)");
             }
-        }
+}
 
         if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
         {
