@@ -143,6 +143,9 @@ function ProjectilePool:fire(x, y, dx, dy)
             -- Interact with the scoreBehavior script
             --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
         end
+
+        -- Sound
+        audio_manager:playEffect(config.sounds.projectile_fire1)
     end
 end
 

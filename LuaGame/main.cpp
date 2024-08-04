@@ -128,7 +128,7 @@ namespace
 int main(int argc, char* argv[])
 {
     // Hello standard output
-    std::cout << "Hello SDL2 + sol2 + enTT + Dear ImGui" << std::endl;
+    std::cout << "Hello SDL + Dear ImGui + enTT + Lua + sol" << std::endl;
 
     // Initialize SDL
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
@@ -661,6 +661,7 @@ int main(int argc, char* argv[])
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
+    AudioManager::getInstance().cleanup();
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();

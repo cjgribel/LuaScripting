@@ -26,36 +26,36 @@ namespace {
 
     void bindAudioManager(sol::state& lua)
     {
-auto& audioManager = AudioManager::getInstance();
+        auto& audioManager = AudioManager::getInstance();
 
-    lua.new_usertype<AudioManager>("AudioManager",
-        "init", [&audioManager]() {
-            return audioManager.init();
-        },
-        "registerEffect", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
-            return audioManager.registerEffect(name, path);
-        },
-        "registerMusic", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
-            return audioManager.registerMusic(name, path);
-        },
-        "playEffect", [&audioManager](AudioManager&, const std::string& name) {
-            audioManager.playEffect(name);
-        },
-        "playMusic", [&audioManager](AudioManager&, const std::string& name) {
-            audioManager.playMusic(name);
-        },
-        "pauseMusic", [&audioManager](AudioManager&) {
-            audioManager.pauseMusic();
-        },
-        "resumeMusic", [&audioManager](AudioManager&) {
-            audioManager.resumeMusic();
-        },
-        "cleanup", [&audioManager](AudioManager&) {
-            audioManager.cleanup();
-        }
-    );
+        lua.new_usertype<AudioManager>("AudioManager",
+            // "init", [&audioManager]() {
+            //     return audioManager.init();
+            // },
+            "registerEffect", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
+                return audioManager.registerEffect(name, path);
+            },
+            "registerMusic", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
+                return audioManager.registerMusic(name, path);
+            },
+            "playEffect", [&audioManager](AudioManager&, const std::string& name) {
+                audioManager.playEffect(name);
+            },
+            "playMusic", [&audioManager](AudioManager&, const std::string& name) {
+                audioManager.playMusic(name);
+            },
+            "pauseMusic", [&audioManager](AudioManager&) {
+                audioManager.pauseMusic();
+            },
+            "resumeMusic", [&audioManager](AudioManager&) {
+                audioManager.resumeMusic();
+            }
+            // "cleanup", [&audioManager](AudioManager&) {
+            //     audioManager.cleanup();
+            // }
+        );
 
-    lua["audio_manager"] = &audioManager;
+        lua["audio_manager"] = &audioManager;
     }
 
     void registerCircleColliderGridComponent(sol::state& lua)
@@ -708,6 +708,57 @@ namespace {
 }
 
 // Bind the ConditionalObserver to Lua
+/*
+Example sending Lua event from core to Lua
+
+int main() {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    // Create the observer instance
+    ConditionalObserver observer;
+
+    // Bind the observer to Lua
+    bind_conditional_observer(lua, observer);
+
+    // Load and run a Lua script to register callbacks
+    lua.script(R"(
+        -- Define a Lua table with functions
+        local event_handler = {
+            on_event1 = function(data)
+                print("Event1 received with data: " .. data.some_key)
+            end,
+
+            on_event2 = function(data)
+                print("Event2 received with data: " .. data.some_other_key)
+            end
+        }
+
+        -- Register Lua callbacks
+        observer:register_callback(event_handler, "on_event1")
+        observer:register_callback(event_handler, "on_event2")
+    )");
+
+    // Create a reusable Lua table
+    sol::table lua_data = lua.create_table();
+
+    // Set fields and enqueue event1
+    lua_data["some_key"] = "value1";
+    observer.enqueue_event(LuaEvent{lua_data, "on_event1"});
+
+    // Dispatch events
+    observer.dispatch_all_events();
+
+    // Reuse the same table for another event
+    lua_data["some_other_key"] = "value2";
+    observer.enqueue_event(LuaEvent{lua_data, "on_event2"});
+
+    // Dispatch events
+    observer.dispatch_all_events();
+
+    return 0;
+}
+*/
 void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
 {
     lua.new_usertype<ConditionalObserver>("ConditionalObserver",

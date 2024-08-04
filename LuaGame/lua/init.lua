@@ -93,6 +93,10 @@ config = {
     is_out_of_bounds = function(self, x, y)
         return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top
     end,
+    sounds = {
+        projectile_fire1 = "fire1",
+        player_death = "player_death"
+    }, 
     enemy_kill_count = 0,
     player_deaths = 0
 }
@@ -101,8 +105,8 @@ log("Loading music...")
 audio_manager:registerMusic("music1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
 
 log("Loading effects...")
-audio_manager:registerEffect("fire1", "../../assets/sounds/Misc Lasers/Fire 1.mp3")
-audio_manager:registerEffect("fire2", "../../assets/sounds/Misc Lasers/Fire 2.mp3")
+audio_manager:registerEffect(config.sounds.projectile_fire1, "../../assets/sounds/Misc Lasers/Fire 1.mp3")
+audio_manager:registerEffect(config.sounds.player_death, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
 
 -- Projectile pool
 log("Creating projectile pool...")

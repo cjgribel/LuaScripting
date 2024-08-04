@@ -92,7 +92,7 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
         --quadgrid:set_color_at(element_index, new_color)
 
         --if element_armor == 0 then
-        self:hit_element(element_index, projectileBehavior.velocity.x, projectileBehavior.velocity.y)
+        self:hit_element(element_index, -projectileBehavior.velocity.x, -projectileBehavior.velocity.y)
         self:check_if_destroyed()
         --end
     end
