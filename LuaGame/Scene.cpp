@@ -130,11 +130,15 @@ namespace {
                 c.pos[index].x = x;
                 c.pos[index].y = y;
                 c.radii[index] = radius;
+                // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
                 c.is_active_flags[index] = is_active;
             },
             "set_active_flag_all", [](CircleColliderGridComponent& c, bool is_active) {
                 for (int i = 0; i < c.count; i++)
+                {
+                    // if (is_active && !c.is_active_flags[i]) c.active_indices[c.nbr_active++] = i;
                     c.is_active_flags[i] = is_active;
+                }
                 c.is_active = is_active;
             },
             // "get_radius", [](CircleColliderGridComponent& ccsc, int index) -> float {
@@ -238,6 +242,7 @@ namespace {
                 c.pos[index].y = y;
                 c.sizes[index] = size;
                 c.colors[index] = color;
+                // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
                 c.is_active_flags[index] = is_active;
             },
             "set_active_flag_all", [](QuadGridComponent& c, bool is_active) {
@@ -539,14 +544,14 @@ namespace {
             std::cout << "Key: " << key.as<std::string>() << ", Value: ";
             if (value.is<std::string>()) {
                 std::cout << value.as<std::string>() << std::endl;
-    }
+            }
             else if (value.is<int>()) {
                 std::cout << value.as<int>() << std::endl;
             }
             else {
                 std::cout << "Unknown type" << std::endl;
             }
-}
+        }
 #endif
         return script.self;
     }
@@ -675,9 +680,9 @@ namespace {
                     else
                         std::cout << "0 ";
                 }
-                }
+            }
             std::cout << '\n';
-    }
+        }
 #endif
         // for (auto& island_index : islands)
         //     std::cout << island_index << std::endl;
@@ -1008,7 +1013,7 @@ bool Scene::init(const v2i& windowSize)
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
         }
 #endif
-            }
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1018,7 +1023,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-    }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1225,15 +1230,15 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
-                        }
-                    }
                 }
-            } // anon
+            }
+        }
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
-        }
+}
 
 void Scene::renderUI()
 {
@@ -1411,7 +1416,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-            }
+}
 
 void Scene::destroy()
 {

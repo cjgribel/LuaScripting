@@ -15,12 +15,61 @@
 #include "Observer.h"
 #include "ParticleBuffer.hpp"
 
-#define EntitySetSize 64
+#define EntitySetSize 64 // Max 256 as long as type of active_indices is unsigned char
+
+template<class T, int N>
+struct SparseSet
+{
+    T dense[N];
+    int sparse[N] = {-1};
+    int count = 0;
+
+    bool contains(int index) const
+    {
+        return sparse[index] != -1;
+    }
+
+    void add(int index, const T& t)
+    {
+        assert(count < N && "EntitySetSize limit reached");
+        assert(index >= 0 && index < N && "Index out of bounds");
+
+        if (contains(index))
+            return; // already in the set
+
+        dense[count] = t;
+        sparse[index] = count;
+        count++;
+    }
+
+    void remove(int index) 
+    {
+        if (!contains(index)) return;
+
+        int index_to_remove = sparse[index];
+        int last_index = count - 1;
+
+        if (index_to_remove != last_index) 
+        {
+            // Back-swap
+            dense[index_to_remove] = dense[last_index];
+            sparse[sparse[last_index]] = index_to_remove;
+        }
+
+        // Invalidate the removed element
+        sparse[index] = -1;
+        count--;
+    }
+};
+
 struct CircleColliderGridComponent
 {
     v2f pos[EntitySetSize];
     float radii[EntitySetSize];
     bool is_active_flags[EntitySetSize] = { false };
+
+    // int sparse[EntitySetSize]; // sparse
+    // int nbr_active = 0;
 
     int count = 0, width = 0;
     bool is_active = true;
@@ -56,9 +105,11 @@ struct QuadGridComponent
     float sizes[EntitySetSize];
     uint32_t colors[EntitySetSize];
     bool is_active_flags[EntitySetSize] = { false };
-    
+    // unsigned char active_indices[EntitySetSize];
+
     int count = 0, width = 0;
     bool is_active = true;
+    // int nbr_active = 0;
 
     // Todo: pos
     [[nodiscard]] std::string to_string() const {
@@ -75,8 +126,8 @@ struct QuadGridComponent
 
 struct DataGridComponent
 {
-    float slot1[EntitySetSize] = {0.0f};
-    float slot2[EntitySetSize] = {0.0f};
+    float slot1[EntitySetSize] = { 0.0f };
+    float slot2[EntitySetSize] = { 0.0f };
     int count = 0, width = 0;
 };
 
@@ -179,7 +230,7 @@ class Scene : public eeng::SceneBase
 {
 protected:
     sol::state lua{};
-    
+
     entt::registry registry{};
     std::vector<entt::entity> entities_pending_destruction;
 

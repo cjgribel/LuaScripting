@@ -51,7 +51,7 @@ function phase4:destroy()
     -- Clear the entities list after destroying them
     self.entities = {}
     
-    audio_manager:fadeOutMusic(4000)
+    audio_manager:fadeOutMusic(0)
 end
 
 return phase4
