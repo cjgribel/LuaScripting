@@ -5,7 +5,7 @@ local phase2 = {
     name = 'Phase 2',
     entities = {},
     timer = 0.0,
-    nbr_enemies = 3,
+    nbr_enemies = 1,
     start_nbr_killed
 }
 
@@ -17,7 +17,11 @@ function phase2:init()
 
     self.start_nbr_killed = config.enemy_kill_count
 
-    log("phase2 begins, " .. #self.entities .. " entities created")
+    -- Music
+    audio_manager:fadeInMusic(config.sounds.music_lvl2, 1, 4000)
+
+    -- Log
+    log("phase2: loaded " .. #self.entities .. " entities")
 end
 
 function phase2:update(dt)
@@ -36,11 +40,6 @@ function phase2:has_finished()
 
     return (config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
 
-    --if self.timer > 10.0 then
-    --    return true
-    --else
-    --    return false
-    --end
 end
 
 function phase2:destroy()
@@ -51,8 +50,11 @@ function phase2:destroy()
         --registry:destroy(entity, registry:valid(entity))
         flag_entity_for_destruction(entity)
     end
+
     -- Clear the entities list after destroying them
     self.entities = {}
+
+    audio_manager:fadeOutMusic(0)
     
     --print("phase2:destroy() called")
 end

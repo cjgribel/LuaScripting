@@ -3,10 +3,11 @@
 local phase1 = require("phase1")
 local phase2 = require("phase2")
 local phase3 = require("phase3")
+local phase4 = require("phase4")
 
 local behavior = {
     current_phase = nil,
-    phases = {phase1, phase2, phase3}, -- Add your phases here
+    phases = {phase1, phase2, phase3, phase4}, -- Add your phases here
     current_phase_index = 1,
 }
 
@@ -60,7 +61,7 @@ end
 
 function behavior:destroy()
     if self.current_phase then
-        --self.current_phase:destroy()
+        self.current_phase:destroy()
     end
 end
 

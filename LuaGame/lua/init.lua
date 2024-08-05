@@ -94,6 +94,12 @@ config = {
         return x < self.bounds.left or x > self.bounds.right or y < self.bounds.bottom or y > self.bounds.top
     end,
     sounds = {
+        music_title = "music_title",
+        music_end = "music_end",
+        music_lvl1 = "music_lvl1",
+        music_lvl2 = "music_lvl2",
+        music_lvl3 = "music_lvl3",
+
         projectile_fire1 = "fire1",
         player_death = "player_death",
         element_explode = "player_death"
@@ -102,9 +108,15 @@ config = {
     player_deaths = 0
 }
 
+-- Music and effects
+-- TODO: Do load & unload per phase.
 log("Loading music & effects...")
--- Load effects & 
-audio_manager:registerMusic("music1", "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
+audio_manager:registerMusic(config.sounds.music_title, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
+audio_manager:registerMusic(config.sounds.music_end, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Ending.wav")
+audio_manager:registerMusic(config.sounds.music_lvl1, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 1.wav")
+audio_manager:registerMusic(config.sounds.music_lvl2, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 2.wav")
+audio_manager:registerMusic(config.sounds.music_lvl3, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 3.wav")
+
 audio_manager:registerEffect(config.sounds.projectile_fire1, "../../assets/sounds/Misc Lasers/Fire 1.mp3")
 audio_manager:registerEffect(config.sounds.player_death, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
 audio_manager:registerEffect(config.sounds.element_explode, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
@@ -124,14 +136,6 @@ local projectilepool_table = get_script(registry, projectilepool_entity, "projec
 -- Create player(s)
 log("Creating player...")
 local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
-
--- Create bouncing entities
---for i = 1, 1 do
---    prefabloaders.bouncing_enemy_block(0xffff80ff)
---end
-
---audio_manager:playMusic("music1", 1)
-audio_manager:fadeInMusic("music1", 1, 2000)
 
 log("Creating phases...")
 create_phasemanager_entity()
