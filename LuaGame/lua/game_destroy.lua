@@ -111,6 +111,8 @@ audio_manager:registerEffect(config.sounds.element_explode, "../../assets/sounds
 -- Volume
 audio_manager:setMasterVolume(128)  -- Set master volume to 50%
 audio_manager:setMusicVolume("music1", 64)  -- Set music volume to 25%
+--audio_manager:playMusic("music1")
+
 audio_manager:setEffectVolume(config.sounds.projectile_fire1, 32)
 audio_manager:setEffectVolume(config.sounds.element_explode, 32)
 
@@ -130,8 +132,7 @@ local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table
 --    prefabloaders.bouncing_enemy_block(0xffff80ff)
 --end
 
---audio_manager:playMusic("music1", 1)
-audio_manager:fadeInMusic("music1", 1, 2000)
+--audio_manager:playMusic("music1")
 
 log("Creating phases...")
 create_phasemanager_entity()

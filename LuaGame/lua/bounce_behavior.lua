@@ -131,6 +131,9 @@ function node:hit_element(element_index, vel_x, vel_y)
         collider:set_active_flag_at(element_index, false)
         quadgrid:set_active_flag_at(element_index, false)
     end
+
+    -- Sound
+    audio_manager:playEffect(config.sounds.element_explode, 1)
 end
 
 function node:check_if_destroyed()

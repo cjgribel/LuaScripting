@@ -145,7 +145,7 @@ function ProjectilePool:fire(x, y, dx, dy)
         end
 
         -- Sound
-        audio_manager:playEffect(config.sounds.projectile_fire1)
+        audio_manager:playEffect(config.sounds.projectile_fire1, 1)
     end
 end
 

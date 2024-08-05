@@ -661,7 +661,7 @@ int main(int argc, char* argv[])
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
-    AudioManager::getInstance().cleanup();
+    AudioManager::getInstance().destroy();
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();

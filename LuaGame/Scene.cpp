@@ -38,20 +38,47 @@ namespace {
             "registerMusic", [&audioManager](AudioManager&, const std::string& name, const std::string& path) {
                 return audioManager.registerMusic(name, path);
             },
-            "playEffect", [&audioManager](AudioManager&, const std::string& name) {
-                audioManager.playEffect(name);
+            "playEffect", [&audioManager](AudioManager&, const std::string& name, int loops) {
+                audioManager.playEffect(name, loops);
             },
-            "playMusic", [&audioManager](AudioManager&, const std::string& name) {
-                audioManager.playMusic(name);
+            "playMusic", [&audioManager](AudioManager&, const std::string& name, int loops) {
+                audioManager.playMusic(name, loops);
             },
             "pauseMusic", [&audioManager](AudioManager&) {
                 audioManager.pauseMusic();
             },
             "resumeMusic", [&audioManager](AudioManager&) {
                 audioManager.resumeMusic();
+            },
+            "fadeInMusic", [&audioManager](AudioManager&, const std::string& name, int loops, int ms) {
+                audioManager.fadeInMusic(name, loops, ms);
+            },
+            "fadeOutMusic", [&audioManager](AudioManager&, int ms) {
+                audioManager.fadeOutMusic(ms);
+            },
+            "isMusicPlaying", [&audioManager](AudioManager&) {
+                return audioManager.isMusicPlaying();
+            },
+            "setEffectVolume", [&audioManager](AudioManager&, const std::string& name, int volume) {
+                audioManager.setEffectVolume(name, volume);
+            },
+            "setMusicVolume", [&audioManager](AudioManager&, const std::string& name, int volume) {
+                audioManager.setMusicVolume(name, volume);
+            },
+            "setMasterVolume", [&audioManager](AudioManager&, int volume) {
+                audioManager.setMasterVolume(volume);
+            },
+            "removeEffect", [&audioManager](AudioManager&, const std::string& name) {
+                audioManager.removeEffect(name);
+            },
+            "removeMusic", [&audioManager](AudioManager&, const std::string& name) {
+                audioManager.removeMusic(name);
+            },
+            "clear", [&audioManager](AudioManager&) {
+                audioManager.clear();
             }
-            // "cleanup", [&audioManager](AudioManager&) {
-            //     audioManager.cleanup();
+            // "destroy", [&audioManager](AudioManager&) {
+            //     audioManager.destroy();
             // }
         );
 
@@ -512,14 +539,14 @@ namespace {
             std::cout << "Key: " << key.as<std::string>() << ", Value: ";
             if (value.is<std::string>()) {
                 std::cout << value.as<std::string>() << std::endl;
-            }
+    }
             else if (value.is<int>()) {
                 std::cout << value.as<int>() << std::endl;
             }
             else {
                 std::cout << "Unknown type" << std::endl;
             }
-        }
+}
 #endif
         return script.self;
     }
@@ -648,9 +675,9 @@ namespace {
                     else
                         std::cout << "0 ";
                 }
-            }
+                }
             std::cout << '\n';
-        }
+    }
 #endif
         // for (auto& island_index : islands)
         //     std::cout << island_index << std::endl;
@@ -981,7 +1008,7 @@ bool Scene::init(const v2i& windowSize)
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
         }
 #endif
-    }
+            }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -991,7 +1018,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-}
+    }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1198,15 +1225,15 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
+                        }
+                    }
                 }
-            }
-        }
-    } // anon
+            } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
-}
+        }
 
 void Scene::renderUI()
 {
@@ -1384,7 +1411,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-}
+            }
 
 void Scene::destroy()
 {
