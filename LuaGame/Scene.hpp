@@ -16,8 +16,7 @@
 #include "ParticleBuffer.hpp"
 
 // Sparse set
-#define EntitySetSize 64
-
+#define EntitySetSize 64 // Max 256 as long as type of active_indices is unsigned char
 #include <cassert>
 #include <array>
 
@@ -39,7 +38,7 @@ struct SparseSet
         return sparse[index] != -1;
     }
 
-    void add(int index)
+    void add(int index, const T& t)
     {
         assert(count < N && "EntitySetSize limit reached");
         assert(index >= 0 && index < N && "Index out of bounds");
@@ -47,8 +46,8 @@ struct SparseSet
         if (contains(index))
             return; // already in the set
 
+        dense[count] = t;
         sparse[index] = count;
-        dense[count] = index;
         count++;
     }
 
@@ -65,62 +64,37 @@ struct SparseSet
         {
             // Back-swap
             dense[index_to_remove] = dense[last_index];
-            sparse[dense[last_index]] = index_to_remove;
+            sparse[sparse[last_index]] = index_to_remove;
         }
 
         // Invalidate the removed element
         sparse[index] = -1;
         count--;
     }
-
-    /// @brief Get index value from the dense map at an index
-    /// @param index Dense map index
-    /// @return index value
-    T get_dense(int index) const
-    {
-        assert(index >= 0 && index < count && "Index out of bounds");
-        return dense[index];
-    }
-
-    /// @brief Get number of elements in the dense map
-    /// @return Number of added indices 
-    int get_dense_count() const
-    {
-        return count;
-    }
 };
+
 
 struct CircleColliderGridComponent
 {
-    struct Circle 
-    {
-        v2f pos;
-        float radius;
-    };
-
-    std::array<Circle, EntitySetSize> circles;
-    SparseSet<unsigned char, EntitySetSize> active_indices;
-    
-    // v2f pos[EntitySetSize];
-    // float radii[EntitySetSize];
-    // bool is_active_flags[EntitySetSize] = { false };
+    v2f pos[EntitySetSize];
+    float radii[EntitySetSize];
+    bool is_active_flags[EntitySetSize] = { false };
 
     // int sparse[EntitySetSize]; // sparse
     // int nbr_active = 0;
 
-    int element_count = 0;
-    int width = 0;
+    int count = 0, width = 0;
     bool is_active = true;
     unsigned char layer_bit, layer_mask;
 
-    // [[nodiscard]] std::string to_string() const {
-    //     std::stringstream ss;
-    //     ss << "{ radii = ";
-    //     for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
-    //     ss << "{ is_active_flags = ";
-    //     for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
-    //     return ss.str();
-    // }
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << "{ radii = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
+        ss << "{ is_active_flags = ";
+        for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+        return ss.str();
+    }
 };
 
 struct IslandFinderComponent
