@@ -111,10 +111,11 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
         
         -- Reset
-        transform.x, transform.y = config.bounds.right, config.bounds.bottom
+        --transform.x, transform.y = config.bounds.right, config.bounds.bottom
         
         -- Sound
-        audio_manager:playEffect(config.sounds.player_death, 1)
+        print("Died")
+        audio_manager:playEffect(config.sounds.player_death, 0)
 
         self.last_death_time = self.time
         config.player_deaths = config.player_deaths + 1
