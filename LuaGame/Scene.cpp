@@ -100,12 +100,15 @@ namespace {
                 unsigned char layer_mask)
                 {
                     assert(width * height <= EntitySetSize);
-                    return CircleColliderGridComponent{
-                        .count = width * height,
+                    auto c = CircleColliderGridComponent{
+                        .element_count = width * height,
                         .width = width,
                         .is_active = is_active,
                         .layer_bit = layer_bit,
                         .layer_mask = layer_mask };
+                    //for (int i = 0; i < width * height; i++)
+                    //    c.active_indices.add(i);
+                    return c;
                 }),
 
             // "add_circle",
@@ -126,18 +129,26 @@ namespace {
                 float radius,
                 bool is_active)
             {
-                assert(index >= 0 && index < c.count);
-                c.pos[index].x = x;
-                c.pos[index].y = y;
-                c.radii[index] = radius;
-                // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
-                c.is_active_flags[index] = is_active;
+                assert(index >= 0 && index < c.element_count);
+                // c.pos[index].x = x;
+                // c.pos[index].y = y;
+                // c.radii[index] = radius;
+                // c.is_active_flags[index] = is_active;
+
+                auto& circle = c.circles[index];
+                circle.pos = v2f{ x, y };
+                circle.radius = radius;
+
+                if (is_active) c.active_indices.add(index);
+                else c.active_indices.remove(index);
             },
-            "set_active_flag_all", [](CircleColliderGridComponent& c, bool is_active) {
-                for (int i = 0; i < c.count; i++)
+            "set_active_flag_all", [](CircleColliderGridComponent& c, bool is_active)
+            {
+                for (int i = 0; i < c.element_count; i++)
                 {
-                    // if (is_active && !c.is_active_flags[i]) c.active_indices[c.nbr_active++] = i;
-                    c.is_active_flags[i] = is_active;
+                    // c.is_active_flags[i] = is_active;
+                    if (is_active) c.active_indices.add(i);
+                    else c.active_indices.remove(i);
                 }
                 c.is_active = is_active;
             },
@@ -153,26 +164,33 @@ namespace {
             //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
             //     return ccsc.is_active_flags[index];
             // },
-            "set_active_flag_at", [](CircleColliderGridComponent& ccsc, int index, bool is_active) {
-                if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            "set_active_flag_at", [](CircleColliderGridComponent& c, int index, bool is_active)
+            {
+                assert(index >= 0 && index < c.element_count);
+                //if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
                 //std::cout << index << std::endl;
-                ccsc.is_active_flags[index] = is_active;
+                // c.is_active_flags[index] = is_active;
+                if (is_active) c.active_indices.add(index);
+                else c.active_indices.remove(index);
             },
             // TODO
-            "is_any_active", [](CircleColliderGridComponent& c) -> bool {
-                for (int i = 0; i < c.count; i++)
-                {
-                    if (c.is_active_flags[i]) return true;
-                }
-                return false;
+            "is_any_active", [](CircleColliderGridComponent& c) -> bool
+            {
+                return c.active_indices.get_dense_count() > 0;
+                // for (int i = 0; i < c.count; i++)
+                // {
+                //     if (c.is_active_flags[i]) return true;
+                // }
+                // return false;
             },
-            "get_element_count", [](CircleColliderGridComponent& c) {
-                return c.count;
+            "get_element_count", [](CircleColliderGridComponent& c)
+            {
+                return c.element_count;
             },
             "is_active",
-            &CircleColliderGridComponent::is_active,
-            sol::meta_function::to_string,
-            &CircleColliderGridComponent::to_string
+            &CircleColliderGridComponent::is_active
+            // sol::meta_function::to_string,
+            // &CircleColliderGridComponent::to_string
         );
     }
 
@@ -589,27 +607,37 @@ namespace {
 
     void update_IslandFinderComponent(
         IslandFinderComponent& grid_comp,
-        const CircleColliderGridComponent& colliderset_comp)
+        const CircleColliderGridComponent& c)
     {
         const int core_x = grid_comp.core_x;
         const int core_y = grid_comp.core_y;
-        const int w = colliderset_comp.width;
-        const int h = colliderset_comp.count / w;
+        const int w = c.width;
+        const int h = c.element_count / w;
         auto& q = grid_comp.visit_queue;
         auto& v = grid_comp.visited;
         auto& islands = grid_comp.islands;
-        const auto& is_active = colliderset_comp.is_active_flags;
+        //const auto& is_active = colliderset_comp.is_active_flags;
 
         v.assign(w * h, false);
         islands.clear();
 
         // Core is inactive => mark aall nodes as islands
-        if (!colliderset_comp.is_active_flags[core_y * w + core_x])
+        // if (!colliderset_comp.is_active_flags[core_y * w + core_x])
+        // {
+        //     for (int i = 0; i < w * h; i++)
+        //     {
+        //         if (is_active[i])
+        //             islands.push_back(i);
+        //     }
+        //     return;
+        // }
+        if (!c.active_indices.contains(core_y * w + core_x))
         {
-            for (int i = 0; i < w * h; i++)
+            for (int di = 0; di < c.active_indices.get_dense_count(); di++)
             {
-                if (is_active[i])
-                    islands.push_back(i);
+                // if (c. is_active[i])
+                int i = c.active_indices.get_dense(di);
+                islands.push_back(i);
             }
             return;
         }
@@ -633,7 +661,9 @@ namespace {
                     nx < w &&
                     ny < h &&
                     !v[ny * w + nx] &&
-                    is_active[ny * w + nx])
+                    c.active_indices.contains(ny * w + nx)
+                    //is_active[ny * w + nx]
+                    )
                 {
                     v[ny * w + nx] = true;
                     q.push({ nx, ny });
@@ -642,9 +672,15 @@ namespace {
         }
 
         // Mark all unvisited active nodes as islands
-        for (int i = 0; i < w * h; i++)
+        // for (int i = 0; i < w * h; i++)
+        // {
+        //     if (is_active[i] && !v[i])
+        //         islands.push_back(i);
+        // }
+        for (int di = 0; di < c.active_indices.get_dense_count(); di++)
         {
-            if (is_active[i] && !v[i])
+            int i = c.active_indices.get_dense(di);
+            if (!v[i])
                 islands.push_back(i);
         }
 
@@ -1110,23 +1146,27 @@ void Scene::update(float time_s, float deltaTime_s)
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
 
                 const auto R2 = m2f::rotation(transform2.rot);
-                for (auto i = 0; i < collider1.count; i++)
+                // for (auto i = 0; i < collider1.count; i++)
+                for (int di = 0; di < collider1.active_indices.get_dense_count(); di++)
                 {
-                    if (!collider1.is_active_flags[i]) continue;
-                    const auto pos1 = R1 * collider1.pos[i];
+                    const int i = collider1.active_indices.get_dense(di);
+                    //if (!collider1.is_active_flags[i]) continue;
+                    const auto pos1 = R1 * collider1.circles[i].pos;
 
-                    for (auto j = 0; j < collider2.count; j++)
+                    //for (auto j = 0; j < collider2.count; j++)
+                    for (int dj = 0; dj < collider2.active_indices.get_dense_count(); dj++)
                     {
-                        if (!collider2.is_active_flags[j]) continue;
-                        const auto pos2 = R2 * collider2.pos[j];
+                        const int j = collider2.active_indices.get_dense(dj);
+                        //if (!collider2.is_active_flags[j]) continue;
+                        const auto pos2 = R2 * collider2.circles[j].pos;
 
                         const float x1 = transform1.x + pos1.x;
                         const float y1 = transform1.y + pos1.y;
                         const float x2 = transform2.x + pos2.x;
                         const float y2 = transform2.y + pos2.y;
 
-                        const float r1 = collider1.radii[i];
-                        const float r2 = collider2.radii[j];
+                        const float r1 = collider1.circles[i].radius;
+                        const float r2 = collider2.circles[j].radius;
 
                         // Distance between colliders
                         const float dx = x1 - x2;
@@ -1368,6 +1408,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     }
 #endif
 
+#if 0
     // Render all CircleColliderGridComponent
     if (debug_render)
     {
@@ -1397,6 +1438,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             }
         }
     }
+    #endif
 
     // Add some test particles
 #if 0
