@@ -15,17 +15,26 @@
 #include "Observer.h"
 #include "ParticleBuffer.hpp"
 
+// Sparse set
 #define EntitySetSize 64 // Max 256 as long as type of active_indices is unsigned char
+#include <cassert>
+#include <array>
 
 template<class T, int N>
 struct SparseSet
 {
-    T dense[N];
-    int sparse[N] = {-1};
+    std::array<T, N> dense;
+    std::array<int, N> sparse;
     int count = 0;
+
+    SparseSet()
+    {
+        sparse.fill(-1); // Initialize all elements to -1
+    }
 
     bool contains(int index) const
     {
+        assert(index >= 0 && index < N && "Index out of bounds");
         return sparse[index] != -1;
     }
 
@@ -44,6 +53,8 @@ struct SparseSet
 
     void remove(int index) 
     {
+        assert(index >= 0 && index < N && "Index out of bounds");
+
         if (!contains(index)) return;
 
         int index_to_remove = sparse[index];
@@ -61,6 +72,7 @@ struct SparseSet
         count--;
     }
 };
+
 
 struct CircleColliderGridComponent
 {
