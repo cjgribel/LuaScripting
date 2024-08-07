@@ -114,7 +114,6 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         --transform.x, transform.y = config.bounds.right, config.bounds.bottom
         
         -- Sound
-        print("Died")
         audio_manager:playEffect(config.sounds.player_death, 0)
 
         self.last_death_time = self.time

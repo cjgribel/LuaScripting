@@ -42,6 +42,7 @@
 // modified for C++ by Plasmoxy [7. 5. 2020], I'm using: GLEW and GLFW3, OpenGL 4.6
 // original gist: https://gist.github.com/liam-middlebrook/c52b069e4be2d87a6d2f
 
+#include <string.h>
 #include "GLDebugMessageCallback.h"
 
 // Callback function for printing debug statements
@@ -150,7 +151,7 @@ void APIENTRY GLDebugMessageCallback(GLenum source,
     // + Adds __debugbreak if _DEBUG is defined (automatic in visual studio)
     // note: __debugbreak is specific for MSVC, won't work with gcc/clang
     // -> in that case remove it and manually set breakpoints
-    if (std::strcmp(_severity, "NOTIFICATION"))
+    if (strcmp(_severity, "NOTIFICATION"))
     {
         printf("OpenGL error [%d]: %s of %s severity, raised from %s: %s\n",
                id, _type, _severity, _source, msg);

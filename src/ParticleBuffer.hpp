@@ -5,6 +5,7 @@
 #ifndef ParticleRenderer_h
 #define ParticleRenderer_h
 
+#include <memory>
 #include "ShapeRenderer.hpp"
 #include "vec.h"
 
@@ -13,6 +14,8 @@ using ShapeRendererPtr = std::shared_ptr<Renderer::ImPrimitiveRenderer>;
 
 class ParticleBuffer
 {
+    using uchar = unsigned char;
+    using uint = unsigned int;
     using PointType = Renderer::PointVertex;
 
     PointType   points[ParticlesCapacity];

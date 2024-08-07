@@ -6,8 +6,6 @@
 #include "ParticleBuffer.hpp"
 #include "interp.h"
 
-using uchar = unsigned char;
-
 namespace {
     inline vec3f color_spark(float x)
     {

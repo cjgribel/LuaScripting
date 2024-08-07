@@ -2,17 +2,26 @@
 #include <thread>
 #include <chrono>
 
+#include <algorithm>
+#include <execution>
+
 #include "imgui.h"
 #include "mat.h"
 #include "Scene.hpp"
 
 #include "bond.hpp"
 #include "transform.hpp"
-#include "kbhit.hpp"
+//#include "kbhit.hpp"
 #include "AudioManager.hpp"
+#include "CoreComponents.hpp"
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
+
+namespace LuaBindings
+{
+    // ...
+}
 
 namespace {
 
@@ -621,7 +630,7 @@ namespace {
         v.assign(w * h, false);
         islands.clear();
 
-        // Core is inactive => mark aall nodes as islands
+        // Core is inactive => mark all nodes as islands
         // if (!colliderset_comp.is_active_flags[core_y * w + core_x])
         // {
         //     for (int i = 0; i < w * h; i++)
@@ -683,56 +692,28 @@ namespace {
             if (!v[i])
                 islands.push_back(i);
         }
-
-#if 0
-        for (int y = 0; y < h; ++y)
-        {
-            for (int x = 0; x < w; ++x)
-            {
-                if (x == core_x && (h - y - 1) == core_y)
-                    std::cout << "C ";
-                else
-                {
-                    if (is_active[(h - y - 1) * w + x])
-                        std::cout << "1 ";
-                    else
-                        std::cout << "0 ";
-                }
-            }
-            std::cout << '\n';
-        }
-#endif
-#if 0
-        for (int y = 0; y < h; ++y)
-        {
-            for (int x = 0; x < w; ++x)
-            {
-                if (x == core_x && (h - y - 1) == core_y)
-                    std::cout << "C ";
-                else
-                {
-                    if (v[(h - y - 1) * w + x])
-                        std::cout << "1 ";
-                    else
-                        std::cout << "0 ";
-                }
-            }
-            std::cout << '\n';
-        }
-#endif
-        // for (auto& island_index : islands)
-        //     std::cout << island_index << std::endl;
     }
 
     void IslandFinderSystem(entt::registry& registry, float delta_time)
     {
         auto view = registry.view<IslandFinderComponent>();
+#ifdef EENG_COMPILER_CLANG
         for (auto entity : view)
         {
             auto& grid_comp = view.get<IslandFinderComponent>(entity);
             auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
             update_IslandFinderComponent(grid_comp, colliderset_comp);
         }
+#else
+        std::for_each(std::execution::par,
+            view.begin(),
+            view.end(),
+            [&](auto entity) {
+                auto& grid_comp = view.get<IslandFinderComponent>(entity);
+                auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
+                update_IslandFinderComponent(grid_comp, colliderset_comp);
+            });
+#endif
     }
 }
 
@@ -862,6 +843,16 @@ void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
     lua["observer"] = &observer;
 }
 
+inline void lua_panic_func(sol::optional<std::string> maybe_msg)
+{
+    std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
+    if (maybe_msg) {
+        const std::string& msg = maybe_msg.value();
+        std::cerr << "\terror message: " << msg << std::endl;
+    }
+    // When this function exits, Lua will exhibit default behavior and abort()
+}
+
 bool Scene::init(const v2i& windowSize)
 {
     assert(!is_initialized);
@@ -894,7 +885,7 @@ bool Scene::init(const v2i& windowSize)
         registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         // Create Lua state
-        lua = sol::state{ (sol::c_call<decltype(&my_panic), &my_panic>) };
+        lua = sol::state{ (sol::c_call<decltype(&lua_panic_func), &lua_panic_func>) };
         lua.open_libraries(
             sol::lib::base,
             sol::lib::package,
@@ -913,9 +904,11 @@ bool Scene::init(const v2i& windowSize)
                 entities_pending_destruction.push_back(entity);
             };
 
+        // Logging from Lua
         lua["log"] = [&](const std::string& text)
             {
-                eeng::Log::log((std::string("[Lua] ") + text).c_str());
+                eeng::Log::log("[Lua] %s", text.c_str());
+                //eeng::Log::log((std::string("[Lua] ") + text).c_str());
             };
 
         // Particle emitter functions
@@ -1438,7 +1431,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             }
         }
     }
-    #endif
+#endif
 
     // Add some test particles
 #if 0
