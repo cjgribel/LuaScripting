@@ -33,6 +33,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vec)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/meta)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/editor)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/entt-meets-sol2)
 
 #

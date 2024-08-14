@@ -11,15 +11,18 @@
 #include <cassert>
 #include "imgui.h"
 #include "MetaInspect.hpp"
+#include "InspectorState.hpp"
 #include "meta_literals.h"
 #include "meta_aux.h"
+
+namespace Editor {
 
 // WHERE?
 //
 namespace Inspector {
 
     template<class T>
-    bool inspect_type(T& t)
+    bool inspect_type(T& t, InspectorState& inspector)
     {
         ImGui::Text("Widget not implemented");
         return false;
@@ -28,73 +31,21 @@ namespace Inspector {
     /// inspect float
     template<class T>
         requires std::is_same_v<T, float>
-//        requires std::is_floating_point_v<T> // also matches double
-    bool inspect_type(T& t)
+    //        requires std::is_floating_point_v<T> // also matches double
+    bool inspect_type(T& t, InspectorState& inspector)
     {
         return ImGui::InputFloat("", &t, 1.0f);
     }
 
     /// inspect int
     template<class T>
-    requires std::is_same_v<T, int>
-        // requires (std::is_integral_v<T> && !std::is_unsigned_v<T>) // also matches e.g. char
-    bool inspect_type(T& t)
+        requires std::is_same_v<T, int>
+    // requires (std::is_integral_v<T> && !std::is_unsigned_v<T>) // also matches e.g. char
+    bool inspect_type(T& t, InspectorState& inspector)
     {
         return ImGui::InputInt("", &t, 1);
     }
 }
-
-struct
-{
-    entt::entity primary_entity;
-    // int id = 0;
-    // void push_id()
-    // {
-    //     ImGui::PushID(id++);
-    // }
-    // void pop_id()
-    // {
-    //     ImGui::PopID();
-    // }
-    void begin_leaf(const char* label)
-    {
-        row();
-        //ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
-        ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth);
-        next_column();
-        // push_id();
-        ImGui::SetNextItemWidth(-FLT_MIN);
-    }
-    void end_leaf()
-    {
-        // pop_id();
-    }
-    bool begin_node(const char* label)
-    {
-        row();
-        bool open = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_SpanFullWidth);
-        if (open) {
-            next_column();
-            // push_id();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-        }
-        return open;
-    }
-    void end_node()
-    {
-        ImGui::TreePop();
-        // pop_id();
-    }
-    void row()
-    {
-        ImGui::TableNextRow();
-        next_column();
-    }
-    void next_column()
-    {
-        ImGui::TableNextColumn();
-    }
-} w{ entt::entity {} };
 
 #if 0
 nlohmann::json serialize_any(const entt::meta_any& any)
@@ -236,7 +187,7 @@ nlohmann::json serialize_registry(entt::registry& registry)
 }
 #endif
 
-void inspect_any(entt::meta_any& any)
+void inspect_any(entt::meta_any& any, InspectorState& inspector)
 {
     assert(any);
 
@@ -249,8 +200,8 @@ void inspect_any(entt::meta_any& any)
             //      which and will hold a copy of it.
 
             // Call from_json using alias of json node
-            auto res = meta_func.invoke({}, any.data());
-            assert(res && "Failed to invoke from_json");
+            auto res = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
+            assert(res && "Failed to invoke inspect");
 
             std::cout << "inspect invoked: " << "..." << std::endl;
         }
@@ -266,13 +217,14 @@ void inspect_any(entt::meta_any& any)
                 else
                     key_name = std::to_string(id);
 
-                if (w.begin_node(key_name.c_str()))
+                ImGui::SetNextItemOpen(true);
+                if (inspector.begin_node(key_name.c_str()))
                 {
                     entt::meta_any field_any = meta_data.get(any);
                     //deserialize_any(json[key_name], field_any);
-                    inspect_any(field_any);
+                    inspect_any(field_any, inspector);
                     meta_data.set(any, field_any);
-                    w.end_node();
+                    inspector.end_node();
                 }
             }
         }
@@ -344,17 +296,17 @@ void inspect_any(entt::meta_any& any)
     }
 
     else
-    #endif
+#endif
     {
         // Try casting the meta_any to a primitive type.
         //
-        bool res = try_apply(any, [](auto& value) {
+        bool res = try_apply(any, [&inspector](auto& value) {
             //using Type = std::decay_t<decltype(value)>;
             // Assign a new value to the stored object
             // Note: any = json.get<Type>() *replaces* the stored object
             //any.assign(json.get<Type>());
             //w.begin_leaf("");
-            Inspector::inspect_type(value);
+            Inspector::inspect_type(value, inspector);
             //w.end_leaf();
             });
         if (!res)
@@ -362,7 +314,7 @@ void inspect_any(entt::meta_any& any)
     }
 }
 
-void inspect_registry_(entt::registry& registry)
+void inspect_registry(entt::registry& registry, InspectorState& inspector)
 {
     // nlohmann::json json;
 
@@ -377,7 +329,7 @@ void inspect_registry_(entt::registry& registry)
 
         auto entity_name = std::to_string(entt::to_integral(entity)).c_str();
         //std::cout << entity_name << " ";
-        if (!w.begin_node(entity_name))
+        if (!inspector.begin_node(entity_name))
             continue;
         // ImGui::PushID(entt::to_integral(entity));
 
@@ -392,13 +344,13 @@ void inspect_registry_(entt::registry& registry)
                 auto key_name = std::string{ meta_type.info().name() };// + std::string("###";
                 // std::cout << key_name.c_str() << std::endl;
 
-                if (w.begin_node(key_name.c_str()))
+                if (inspector.begin_node(key_name.c_str()))
                 {
                     //entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
                     // inspect_any(meta_type.from_void(type.value(entity)));
                     auto comp_any = meta_type.from_void(type.value(entity));
-                    inspect_any(comp_any);
-                    w.end_node();
+                    inspect_any(comp_any, inspector);
+                    inspector.end_node();
                 }
             }
             else
@@ -409,7 +361,7 @@ void inspect_registry_(entt::registry& registry)
         }
 
         // ImGui::PopID();
-        w.end_node();
+        inspector.end_node();
         // }
         // json.push_back(entity_json);
     }
@@ -417,3 +369,4 @@ void inspect_registry_(entt::registry& registry)
     // return json;
 }
 
+} // namespace Editor

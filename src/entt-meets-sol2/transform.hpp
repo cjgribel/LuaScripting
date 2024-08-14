@@ -8,6 +8,8 @@
 
 #include "meta_literals.h" // for entt literals
 
+#include "InspectorState.hpp" // for inspect()
+
 struct Transform
 {
     // https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#pointer-stability
@@ -23,18 +25,31 @@ struct Transform
 };
 
 /// inspect v3f
-bool inspect_Transform(Transform& t)
+// bool inspect_Transform(Transform& t)
+bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 {
+    Transform* t = static_cast<Transform*>(ptr);
     bool mod = false;
-    mod |= ImGui::InputFloat("x", &t.x, 1.0f);
-    mod |= ImGui::InputFloat("y", &t.y, 1.0f);
-    mod |= ImGui::InputFloat("angle", &t.rot, 1.0f);
+
+    // TODO: use specializations for float
+
+    inspector.begin_leaf("x");
+    mod |= ImGui::InputFloat("", &t->x, 1.0f);
+    inspector.end_leaf();
+
+    inspector.begin_leaf("y");
+    mod |= ImGui::InputFloat("", &t->y, 1.0f);
+    inspector.end_leaf();
+
+    inspector.begin_leaf("angle");
+    mod |= ImGui::InputFloat("", &t->rot, 1.0f);
+    inspector.end_leaf();
+
     return mod;
 }
 
 void register_transform(sol::state& lua)
 {
-    // clang-format off
     lua.new_usertype<Transform>("Transform",
         "type_id", &entt::type_hash<Transform>::value,
 
@@ -58,7 +73,7 @@ void register_transform(sol::state& lua)
         .data<&Transform::x>("x"_hs).prop(display_name_hs, "x")
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
-        //.func<&inspect_Transform>(inspect_hs) USE THIS
+        .func<&inspect_Transform>(inspect_hs) // USE ME
         //.func<&vec3_to_json>(to_json_hs)
         //.func < [](nlohmann::json& j, const void* ptr) { to_json(j, *static_cast<const vec3*>(ptr)); }, entt::as_void_t > (to_json_hs)
         //.func < [](const nlohmann::json& j, void* ptr) { from_json(j, *static_cast<vec3*>(ptr)); }, entt::as_void_t > (from_json_hs)

@@ -18,6 +18,8 @@
 #include "AudioManager.hpp"
 #include "CoreComponents.hpp"
 
+#include "InspectorState.hpp" // for MetaInspect
+
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
 
@@ -861,6 +863,7 @@ namespace Inspector
 
     void inspect_registry(entt::registry& registry)
     {
+        static Editor::InspectorState inspector {};
         static bool open = true;
         bool* p_open = &open;
 
@@ -889,7 +892,7 @@ namespace Inspector
             if (ImGui::BeginTable("InspectorTable", 2, flags))
             {
 
-                inspect_registry_(registry);
+                Editor::inspect_registry(registry, inspector);
                 // if (inspector_widget.begin_node("comp name"))
                 // {
                 //     // type_widget(*t, w, scene);
