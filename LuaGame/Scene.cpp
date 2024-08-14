@@ -7,6 +7,9 @@
 
 #include "imgui.h"
 #include "mat.h"
+
+#include "MetaInspect.hpp"
+
 #include "Scene.hpp"
 
 #include "bond.hpp"
@@ -843,6 +846,68 @@ void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
     lua["observer"] = &observer;
 }
 
+namespace Inspector
+{
+    /// inspect Transform
+    // template<>
+    // bool inspect_type<Transform>(Transform& t)
+    // {
+    //     bool mod = false;
+    //     mod |= ImGui::InputFloat("x", &t.x, 1.0f);
+    //     mod |= ImGui::InputFloat("y", &t.y, 1.0f);
+    //     mod |= ImGui::InputFloat("angle", &t.rot, 1.0f);
+    //     return mod;
+    // }
+
+    void inspect_registry(entt::registry& registry)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Inspector", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Copy entity"))
+        {
+            // Deep-copy entire entity
+            //Copier copier{ *scene };
+            //active_entity = copier.CopyPrimaryEntity(active_entity, components);
+            //scene->issue_reload_render_entities();
+        }
+
+        ImGui::SetNextItemOpen(true);
+        if (ImGui::TreeNode("Entities"))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+            const ImGuiTableFlags flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
+            //        const ImGuiTableFlags flags = ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable;
+            if (ImGui::BeginTable("InspectorTable", 2, flags))
+            {
+
+                inspect_registry_(registry);
+                // if (inspector_widget.begin_node("comp name"))
+                // {
+                //     // type_widget(*t, w, scene);
+                //     ImGui::Text("Hello!");
+                //     inspector_widget.end_node();
+                // }
+
+
+                ImGui::EndTable();
+            }
+            ImGui::TreePop(); // Entities node
+            ImGui::PopStyleVar();
+        }
+
+        ImGui::End(); // Window
+    }
+}
+
 inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 {
     std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
@@ -1289,6 +1354,8 @@ void Scene::renderUI()
     ImGui::Checkbox("Debug render", &debug_render);
 
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
+
+    Inspector::inspect_registry(registry);
 
     // float available_width = ImGui::GetContentRegionAvail().x;
     // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))

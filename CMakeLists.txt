@@ -32,6 +32,7 @@ endif()
 # 'target_include_directories' if target specific
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vec)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/meta)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/entt-meets-sol2)
 
 #
@@ -212,6 +213,7 @@ add_executable(LuaGame
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaInspect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLDebugMessageCallback.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ShapeRenderer.cpp
