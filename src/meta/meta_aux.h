@@ -16,9 +16,19 @@
 namespace internal {
 
 template<typename T, typename Callable>
-bool try_apply(entt::meta_any &value, Callable callable) 
+bool try_apply(const entt::meta_any &value, Callable callable)
 {
-    if (auto *ptr = value.try_cast<T>(); ptr) {
+    if (const T* ptr = value.try_cast<T>(); ptr) {
+        callable(*ptr);
+        return true;
+    }
+    return false;
+}
+
+template<typename T, typename Callable>
+bool try_apply(entt::meta_any &value, Callable callable)
+{
+    if (T* ptr = value.try_cast<T>(); ptr) {
         callable(*ptr);
         return true;
     }
@@ -26,30 +36,44 @@ bool try_apply(entt::meta_any &value, Callable callable)
 }
 
 template<typename Callable, typename... Types>
-bool any_apply_impl(entt::meta_any &value, Callable callable, std::tuple<Types...>) 
+bool any_apply_impl(const entt::meta_any &value, Callable callable, std::tuple<Types...>)
 {
     bool result = false;
     (... || (result = try_apply<Types>(value, callable)));
     return result;
 }
 
-} // namespace internal
-
-/// Tries to convert argument to a primitive type and, if successful, applies a function for it
-template<typename Callable>
-bool try_apply(entt::meta_any &value, Callable callable) 
+template<typename Callable, typename... Types>
+bool any_apply_impl(entt::meta_any &value, Callable callable, std::tuple<Types...>)
 {
-    using Types = std::tuple<
-        bool,
-        char, unsigned char,
-        short, unsigned short,
-        int, unsigned int,
-        long, unsigned long,
-        long long, unsigned long long,
-        float, double, long double
-    >;
+    bool result = false;
+    (... || (result = try_apply<Types>(value, callable)));
+    return result;
+}
 
-    return internal::any_apply_impl(value, callable, Types{});
+using TryCastTypes = std::tuple<
+    bool,
+    char, unsigned char,
+    short, unsigned short,
+    int, unsigned int,
+    long, unsigned long,
+    long long, unsigned long long,
+    float, double, long double
+>;
+
+} // internal
+
+/// Tries to convert argument to a primitive type and, if successfull, applies a function for it
+template<typename Callable>
+bool try_apply(const entt::meta_any &value, Callable callable)
+{
+    return internal::any_apply_impl(value, callable, internal::TryCastTypes{});
+}
+
+template<typename Callable>
+bool try_apply(entt::meta_any &value, Callable callable)
+{
+    return internal::any_apply_impl(value, callable, internal::TryCastTypes{});
 }
 
 /// Returns either 1) the display name or 2) the default-assigned name of the argument
