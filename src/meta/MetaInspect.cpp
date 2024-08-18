@@ -115,39 +115,13 @@ namespace Editor {
             int count = 0;
             for (auto&& v : view)
             {
-                inspector.begin_leaf(std::to_string(count++).c_str());
+                //inspector.begin_leaf(std::to_string(count++).c_str());
+                ImGui::PushID(count++);
+                ImGui::SetNextItemWidth(-FLT_MIN);
                 inspect_any(v, inspector);
-                inspector.end_leaf();
-                //  json_array.push_back(serialize_any(v));
+                ImGui::PopID();
+                //inspector.end_leaf();
             }
-
-#if 0
-            auto view = any.as_sequence_container();
-            assert(view && "as_sequence_container() failed");
-
-            //#define SEQDESER_ALT /* Resize and then deserialize in-place, seems to work also */
-
-#ifndef SEQDESER_ALT
-        // Clear before deserializing
-            view.clear();
-#else
-        // Resize meta container to fit json array
-            view.resize(json.size());
-#endif
-            assert(json.is_array());
-
-            for (int i = 0; i < json.size(); i++)
-            {
-#ifndef SEQDESER_ALT
-                entt::meta_any elem_any = view.value_type().construct();
-                deserialize_any(json[i], elem_any);
-                view.insert(view.end(), elem_any);
-#else
-                entt::meta_any elem_any = view[i]; // view[i].as_ref() works too
-                deserialize_any(json[i], elem_any); // TODO: view[i] here if &&
-#endif
-            }
-#endif
         }
 
         else if (any.type().is_associative_container())
@@ -162,11 +136,14 @@ namespace Editor {
             // set type:            [key1, key2, ...]
             // auto json_array = nlohmann::json::array();
 
+            int count = 0;
             for (auto&& [key_any, mapped_any] : view)
             {
                 //inspector.begin_leaf(meta_any_name(key_any).c_str());
                 //if (view.mapped_type())
 
+                ImGui::PushID(count++);
+                inspect_any(key_any, inspector);
                 if (view.mapped_type())
                 {
                     // Store key & value as a sub-array in the container array
@@ -174,45 +151,16 @@ namespace Editor {
                     //     serialize_any(key_any), serialize_any(mapped_any)
                     // };
                     // json_array.push_back(json_elem);
-                    inspect_any(key_any, inspector);
+
+                    ImGui::SetNextItemWidth(-FLT_MIN);
                     inspect_any(mapped_any, inspector);
                 }
-                else
+                // else
                     // Store key in the container array
                     // json_array.push_back(serialize_any(key_any));
-                    inspect_any(key_any, inspector);
+                    // inspect_any(key_any, inspector);
+                ImGui::PopID();
             }
-#if 0
-            auto view = any.as_associative_container();
-            assert(view && "as_associative_container() failed");
-
-            // Clear meta container before populating it with json array
-            view.clear();
-
-            // JSON structure,
-            // mapped container:    [[key1, val1], [key2, val2], ...]
-            // set type:            [key1, key2, ...]
-            assert(json.is_array());
-
-            for (int i = 0; i < json.size(); i++)
-            {
-                auto json_elem = json[i];
-                if (json_elem.is_array()) // Key & mapped value
-                {
-                    entt::meta_any key_any = view.key_type().construct();
-                    entt::meta_any mapped_any = view.mapped_type().construct();
-                    deserialize_any(json_elem[0], key_any);
-                    deserialize_any(json_elem[1], mapped_any);
-                    view.insert(key_any, mapped_any);
-                }
-                else // Just key
-                {
-                    entt::meta_any key_any = view.key_type().construct();
-                    deserialize_any(json_elem, key_any);
-                    view.insert(key_any);
-                }
-            }
-#endif
         }
 
         else
