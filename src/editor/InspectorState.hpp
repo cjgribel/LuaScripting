@@ -20,14 +20,27 @@ namespace Editor {
     template<>
     inline bool inspect_type<float>(float& t, InspectorState& inspector)
     {
-        return ImGui::InputFloat("", &t, 1.0f);
+        return ImGui::InputFloat("##label", &t, 1.0f);
     }
 
     // Type inspection specialization for int
     template<>
     inline bool inspect_type<int>(int& t, InspectorState& inspector)
     {
-        return ImGui::InputInt("", &t, 1);
+        return ImGui::InputInt("##label", &t, 1);
+    }
+    template<>
+    inline bool inspect_type<const int>(const int& t, InspectorState& inspector)
+    {
+        ImGui::TextDisabled("%i", t);
+        return false;
+    }
+
+    // Type inspection specialization for bool
+    template<>
+    inline bool inspect_type<bool>(bool& t, InspectorState& inspector)
+    {
+        return ImGui::Checkbox("##label", &t);
     }
 
     // Type inspection specialization for std::string

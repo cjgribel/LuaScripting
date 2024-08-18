@@ -95,11 +95,11 @@ struct ElementType
 
 // CORE COMPONENT TYPES ========================================================
 
-enum class AnEnum : int { Hello = 5, Bye = 6 };
+enum class AnEnum : int { Hello = 5, Bye = 6, Hola = 8 };
 
 struct DebugClass
 {
-    int a, b, c;
+    int a = 1, b = 2, c = 3;
     bool flag = true;
     debugvec3 position;
     std::string somestring = "Hello";
@@ -231,6 +231,7 @@ inline void registerDebugClass()
 
         .data<AnEnum::Hello>("Hello"_hs).prop(display_name_hs, "Hello")
         .data<AnEnum::Bye>("Bye"_hs).prop(display_name_hs, "Bye")
+        .data<AnEnum::Hola>("Hola"_hs).prop(display_name_hs, "Hola")
 
         // Not used
         .func < [](const void* value) {

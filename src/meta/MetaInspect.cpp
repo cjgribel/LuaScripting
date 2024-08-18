@@ -22,30 +22,26 @@ namespace Editor {
         entt::meta_type meta_type = entt::resolve(any.type().id());
         assert(meta_type);
         assert(meta_type.is_enum());
-        bool mod = false;
-
-        ImGui::Text("[is_enum]");
 
         // Cast to underlying meta type
         auto any_conv = cast_to_underlying_type(meta_type, any);
 
+        // Gather enum entries and determine which is the current one
         auto enum_entries = gather_meta_enum_entries(any);
-        // // Look for entry with current value
-        auto entry = std::find_if(enum_entries.begin(), enum_entries.end(), [&any_conv](auto& e) {
+        auto cur_entry = std::find_if(enum_entries.begin(), enum_entries.end(), [&any_conv](auto& e) {
             return e.second == any_conv;
             });
-        assert(entry != enum_entries.end());
-        // // Push entry name to json
-        // json = entry->first;
+        assert(cur_entry != enum_entries.end());
 
-        auto current = entry; //int currentItem = 2;
-        if (ImGui::BeginCombo("ENUM##enum", entry->first.c_str()))
+        // Build combo
+        auto selected_entry = cur_entry;
+        if (ImGui::BeginCombo("ENUM##enum", cur_entry->first.c_str()))
         {
             for (auto it = enum_entries.begin(); it != enum_entries.end(); it++)
             {
-                const bool isSelected = (it->second == entry->second); // (currentItem == i);
+                const bool isSelected = (it->second == cur_entry->second);
                 if (ImGui::Selectable(it->first.c_str(), isSelected))
-                    current = it;
+                    selected_entry = it;
 
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -53,29 +49,13 @@ namespace Editor {
             ImGui::EndCombo();
         }
 
-        assert(any.assign(current->second));
-
-
-        //             assert(json.is_string());
-        //             auto entry_name = json.get<std::string>();
-
-        //             auto enum_entries = gather_meta_enum_entries(any);
-        // //            // Look for entry with a matching name
-        //             const auto entry = std::find_if(enum_entries.begin(), enum_entries.end(), [&entry_name](auto& e){
-        //                 return e.first == entry_name;
-        //             });
-        //             assert(entry != enum_entries.end());
-
-        //             // Update any value
-        // #if 1
-        //             auto any_conv = entry->second.allow_cast(meta_type);
-        //             bool r = any.assign(any_conv);
-        // #else
-        //             bool r = any.assign(entry->second);
-        // #endif
-        //             assert(r);
-
-        return mod;
+        // Update current enum if needed
+        if (selected_entry->second != cur_entry->second)
+        {
+            assert(any.assign(selected_entry->second));
+            return true;
+        }
+        return false;
     }
 
     void inspect_any(entt::meta_any& any, InspectorState& inspector)
@@ -109,18 +89,10 @@ namespace Editor {
                     // JSON key name is the display name if present, or the id type
                     std::string key_name = meta_data_name(id, meta_data);
 
-                    // std::string key_name;
-                    // if (auto display_name_prop = meta_data.prop(display_name_hs); display_name_prop)
-                    //     // Assume display name is in C-string format
-                    //     key_name = std::string(display_name_prop.value().cast<char const*>());
-                    // else
-                    //     key_name = std::to_string(id);
-
                     ImGui::SetNextItemOpen(true);
                     if (inspector.begin_node(key_name.c_str()))
                     {
                         entt::meta_any field_any = meta_data.get(any);
-                        //deserialize_any(json[key_name], field_any);
                         inspect_any(field_any, inspector);
                         meta_data.set(any, field_any);
                         inspector.end_node();
@@ -134,7 +106,21 @@ namespace Editor {
 
         if (any.type().is_sequence_container())
         {
-            ImGui::Text("[is_sequence_container]");
+            //ImGui::Text("[is_sequence_container]");
+
+            auto view = any.as_sequence_container();
+            assert(view && "as_sequence_container() failed");
+
+            //auto json_array = nlohmann::json::array();
+            int count = 0;
+            for (auto&& v : view)
+            {
+                inspector.begin_leaf(std::to_string(count++).c_str());
+                inspect_any(v, inspector);
+                inspector.end_leaf();
+                //  json_array.push_back(serialize_any(v));
+            }
+
 #if 0
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
@@ -166,7 +152,36 @@ namespace Editor {
 
         else if (any.type().is_associative_container())
         {
-            ImGui::Text("[is_associative_container]");
+            // ImGui::Text("[is_associative_container]");
+
+            auto view = any.as_associative_container();
+            assert(view && "as_associative_container() failed");
+
+            // JSON structure,
+            // mapped container:    [[key1, val1], [key2, val2], ...]
+            // set type:            [key1, key2, ...]
+            // auto json_array = nlohmann::json::array();
+
+            for (auto&& [key_any, mapped_any] : view)
+            {
+                //inspector.begin_leaf(meta_any_name(key_any).c_str());
+                //if (view.mapped_type())
+
+                if (view.mapped_type())
+                {
+                    // Store key & value as a sub-array in the container array
+                    // nlohmann::json json_elem{
+                    //     serialize_any(key_any), serialize_any(mapped_any)
+                    // };
+                    // json_array.push_back(json_elem);
+                    inspect_any(key_any, inspector);
+                    inspect_any(mapped_any, inspector);
+                }
+                else
+                    // Store key in the container array
+                    // json_array.push_back(serialize_any(key_any));
+                    inspect_any(key_any, inspector);
+            }
 #if 0
             auto view = any.as_associative_container();
             assert(view && "as_associative_container() failed");
