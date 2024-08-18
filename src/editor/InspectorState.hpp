@@ -4,9 +4,11 @@
 //#include <cassert>
 //#include <array>
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
 
 namespace Editor {
 
+    // General type inspection template
     template<class T>
     bool inspect_type(T& t, InspectorState& inspector)
     {
@@ -14,16 +16,25 @@ namespace Editor {
         return false;
     }
 
+    // Type inspection specialization for float
     template<>
     inline bool inspect_type<float>(float& t, InspectorState& inspector)
     {
         return ImGui::InputFloat("", &t, 1.0f);
     }
 
+    // Type inspection specialization for int
     template<>
     inline bool inspect_type<int>(int& t, InspectorState& inspector)
     {
         return ImGui::InputInt("", &t, 1);
+    }
+
+    // Type inspection specialization for std::string
+    template<>
+    inline bool inspect_type<std::string>(std::string& t, InspectorState& inspector)
+    {
+        return ImGui::InputText("##label", &t); // label cannot be empty
     }
 
     // // inspect float

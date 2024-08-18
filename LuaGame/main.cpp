@@ -20,6 +20,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
 
 #include "vec.h"
 #include "mat.h"
@@ -423,156 +424,156 @@ int main(int argc, char* argv[])
         ImGui::ShowDemoWindow();
 
         // Render GUI here
-
-        ImGui::Begin("Info");
-
-        if (ImGui::CollapsingHeader("Backend", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            // Total frame time & fps
-            {
-                static float stable_fps = 1.0f;
-                static PeriodicEvent pevent{
-                    1.0f, [&]() { stable_fps = ImGui::GetIO().Framerate; }
-                };
-                pevent.update(deltaTime_s);
-                ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / stable_fps, stable_fps);
-            }
+            ImGui::Begin("Info");
 
-            // Frame time plot
+            if (ImGui::CollapsingHeader("Backend", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                static CircularBuffer fpsBuffer(100);
-                static PeriodicEvent pevent{ 10.0f, [&]() {
-                    fpsBuffer.add(elapsed_ms);
-                } };
-                pevent.update(deltaTime_s);
-                const auto& buffer = fpsBuffer.getBuffer();
-                // ImGui::Text("Frame time");
-                if (!buffer.empty())
+                // Total frame time & fps
                 {
-                    float available_width = ImGui::GetContentRegionAvail().x;
-                    ImGui::PlotLines("##FrameTimePlot", buffer.data(), static_cast<int>(buffer.size()), 0, "Frame time (max 30 ms)", 0.0f, 30.0f, ImVec2(available_width, 80));
+                    static float stable_fps = 1.0f;
+                    static PeriodicEvent pevent{
+                        1.0f, [&]() { stable_fps = ImGui::GetIO().Framerate; }
+                    };
+                    pevent.update(deltaTime_s);
+                    ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / stable_fps, stable_fps);
                 }
-            }
 
-            // Combo (drop-down) for fps settings
-            static const char* items[] = { "10", "30", "60", "120", "Uncapped" };
-            static int currentItem = 2;
-            if (ImGui::BeginCombo("Target framerate##targetfps", items[currentItem]))
-            {
-                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                // Frame time plot
                 {
-                    const bool isSelected = (currentItem == i);
-                    if (ImGui::Selectable(items[i], isSelected))
-                        currentItem = i;
-
-                    if (isSelected)
-                        ImGui::SetItemDefaultFocus();
+                    static CircularBuffer fpsBuffer(100);
+                    static PeriodicEvent pevent{ 10.0f, [&]() {
+                        fpsBuffer.add(elapsed_ms);
+                    } };
+                    pevent.update(deltaTime_s);
+                    const auto& buffer = fpsBuffer.getBuffer();
+                    // ImGui::Text("Frame time");
+                    if (!buffer.empty())
+                    {
+                        float available_width = ImGui::GetContentRegionAvail().x;
+                        ImGui::PlotLines("##FrameTimePlot", buffer.data(), static_cast<int>(buffer.size()), 0, "Frame time (max 30 ms)", 0.0f, 30.0f, ImVec2(available_width, 80));
+                    }
                 }
-                ImGui::EndCombo();
-            }
-            if (currentItem == 0)
-                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 10);
-            else if (currentItem == 1)
-                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 30);
-            else if (currentItem == 2)
-                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 60);
-            else if (currentItem == 3)
-                FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 120);
-            else if (currentItem == 4)
-                FRAMETIME_MIN_MS = 0;
 
-            ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
+                // Combo (drop-down) for fps settings
+                static const char* items[] = { "10", "30", "60", "120", "Uncapped" };
+                static int currentItem = 2;
+                if (ImGui::BeginCombo("Target framerate##targetfps", items[currentItem]))
+                {
+                    for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                    {
+                        const bool isSelected = (currentItem == i);
+                        if (ImGui::Selectable(items[i], isSelected))
+                            currentItem = i;
+
+                        if (isSelected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                if (currentItem == 0)
+                    FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 10);
+                else if (currentItem == 1)
+                    FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 30);
+                else if (currentItem == 2)
+                    FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 60);
+                else if (currentItem == 3)
+                    FRAMETIME_MIN_MS = (unsigned int)(1000.0f / 120);
+                else if (currentItem == 4)
+                    FRAMETIME_MIN_MS = 0;
+
+                ImGui::Checkbox("Wireframe rendering", &WIREFRAME);
 
 #if 1
-            // AudioManager::getInstance().playEffect("testfire1");
-            // AudioManager::getInstance().playEffect("testfire2");
-            // AudioManager::getInstance().playMusic("testmusic1");
+                // AudioManager::getInstance().playEffect("testfire1");
+                // AudioManager::getInstance().playEffect("testfire2");
+                // AudioManager::getInstance().playMusic("testmusic1");
 
-            if (ImGui::Button("Play music"))
-                AudioManager::getInstance().playMusic("testmusic1");
-            
-            ImGui::SameLine();
-            if (ImGui::Button("Pause music"))
-                AudioManager::getInstance().pauseMusic();
-            
-            ImGui::SameLine();
-            if (ImGui::Button("Play effect 1"))
-                AudioManager::getInstance().playEffect("testfire1");
-            
-            ImGui::SameLine();
-            if (ImGui::Button("Play effect 2"))
-                AudioManager::getInstance().playEffect("testfire2");
+                if (ImGui::Button("Play music"))
+                    AudioManager::getInstance().playMusic("testmusic1");
+
+                ImGui::SameLine();
+                if (ImGui::Button("Pause music"))
+                    AudioManager::getInstance().pauseMusic();
+
+                ImGui::SameLine();
+                if (ImGui::Button("Play effect 1"))
+                    AudioManager::getInstance().playEffect("testfire1");
+
+                ImGui::SameLine();
+                if (ImGui::Button("Play effect 2"))
+                    AudioManager::getInstance().playEffect("testfire2");
 #endif
 #if 0
-            // SDL standard sounsd system
-            if (SOUND_PLAY)
-            {
-                if (ImGui::Button("Pause sound"))
+                // SDL standard sounsd system
+                if (SOUND_PLAY)
                 {
-                    SDL_PauseAudioDevice(deviceId, 1);
-                    SOUND_PLAY = false;
+                    if (ImGui::Button("Pause sound"))
+                    {
+                        SDL_PauseAudioDevice(deviceId, 1);
+                        SOUND_PLAY = false;
+                    }
                 }
-            }
-            else
-            {
-                if (ImGui::Button("Play sound"))
+                else
                 {
-                    SDL_PauseAudioDevice(deviceId, 0);
-                    SOUND_PLAY = true;
-        }
-    }
+                    if (ImGui::Button("Play sound"))
+                    {
+                        SDL_PauseAudioDevice(deviceId, 0);
+                        SOUND_PLAY = true;
+                    }
+                }
 #endif
 
-            ImGui::Text("Controller State");
+                ImGui::Text("Controller State");
 
-            if (controller1 != nullptr)
-            {
-                ImGui::BeginChild("Controller State Frame", ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 4), true);
-                ImGui::Text("Buttons: A:%d B:%d X:%d Y:%d",
-                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
-                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
-                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
-                    SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y));
+                if (controller1 != nullptr)
+                {
+                    ImGui::BeginChild("Controller State Frame", ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 4), true);
+                    ImGui::Text("Buttons: A:%d B:%d X:%d Y:%d",
+                        SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
+                        SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
+                        SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
+                        SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y));
 
-                ImGui::Text("Left Stick: X:%.2f Y:%.2f",
-                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
-                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f);
+                    ImGui::Text("Left Stick: X:%.2f Y:%.2f",
+                        SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTX) / 32767.0f,
+                        SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_LEFTY) / 32767.0f);
 
-                ImGui::Text("Right Stick: X:%.2f Y:%.2f",
-                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
-                    SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f);
-                ImGui::EndChild();
+                    ImGui::Text("Right Stick: X:%.2f Y:%.2f",
+                        SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.0f,
+                        SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f);
+                    ImGui::EndChild();
+                }
+                else
+                {
+                    ImGui::SameLine();
+                    ImGui::Text("(No controller connected)");
+                }
             }
-            else
-            {
-                ImGui::SameLine();
-                ImGui::Text("(No controller connected)");
-            }
-}
 
-        if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            scene->renderUI();
-            // Default dark theme blue values
-            // ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.40f));
-            // ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
-            // ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.53f, 0.98f, 1.00f));
-            // Green-ish version
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.98f, 0.59f, 0.40f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.98f, 0.59f, 1.00f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.78f, 0.35f, 1.00f));
-            float available_width = ImGui::GetContentRegionAvail().x;
-            if (ImGui::Button("Reload Scene", ImVec2(available_width, 0.0f)))
+            if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                scene->destroy();
-                scene = std::make_shared<Scene>();
-                scene->init(gWindowSize);
+                scene->renderUI();
+                // Default dark theme blue values
+                // ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.40f));
+                // ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+                // ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.53f, 0.98f, 1.00f));
+                // Green-ish version
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.98f, 0.59f, 0.40f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.98f, 0.59f, 1.00f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.06f, 0.78f, 0.35f, 1.00f));
+                float available_width = ImGui::GetContentRegionAvail().x;
+                if (ImGui::Button("Reload Scene", ImVec2(available_width, 0.0f)))
+                {
+                    scene->destroy();
+                    scene = std::make_shared<Scene>();
+                    scene->init(gWindowSize);
+                }
+                ImGui::PopStyleColor(3);
             }
-            ImGui::PopStyleColor(3);
+
+            ImGui::End(); // end info window
         }
-
-        ImGui::End(); // end info window
-
         eeng::Log::draw();
 
         // Face culling - takes place before rasterization

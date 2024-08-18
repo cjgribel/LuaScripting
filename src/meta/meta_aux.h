@@ -1,5 +1,5 @@
 //
-//  meta_apply.h
+//  meta_aux.h
 //
 //  Created by Carl Johan Gribel on 2024-08-08.
 //  Copyright © 2024 Carl Johan Gribel. All rights reserved.
@@ -16,7 +16,7 @@
 namespace internal {
 
 template<typename T, typename Callable>
-bool try_apply(const entt::meta_any &value, Callable callable)
+bool try_apply(const entt::meta_any& value, Callable callable)
 {
     if (const T* ptr = value.try_cast<T>(); ptr) {
         callable(*ptr);
@@ -26,7 +26,7 @@ bool try_apply(const entt::meta_any &value, Callable callable)
 }
 
 template<typename T, typename Callable>
-bool try_apply(entt::meta_any &value, Callable callable)
+bool try_apply(entt::meta_any& value, Callable callable)
 {
     if (T* ptr = value.try_cast<T>(); ptr) {
         callable(*ptr);
@@ -36,7 +36,7 @@ bool try_apply(entt::meta_any &value, Callable callable)
 }
 
 template<typename Callable, typename... Types>
-bool any_apply_impl(const entt::meta_any &value, Callable callable, std::tuple<Types...>)
+bool any_apply_impl(const entt::meta_any& value, Callable callable, std::tuple<Types...>)
 {
     bool result = false;
     (... || (result = try_apply<Types>(value, callable)));
@@ -44,7 +44,7 @@ bool any_apply_impl(const entt::meta_any &value, Callable callable, std::tuple<T
 }
 
 template<typename Callable, typename... Types>
-bool any_apply_impl(entt::meta_any &value, Callable callable, std::tuple<Types...>)
+bool any_apply_impl(entt::meta_any& value, Callable callable, std::tuple<Types...>)
 {
     bool result = false;
     (... || (result = try_apply<Types>(value, callable)));
@@ -77,7 +77,8 @@ bool try_apply(entt::meta_any &value, Callable callable)
 }
 
 /// Returns either 1) the display name or 2) the default-assigned name of the argument
-inline auto any_name(const entt::meta_any any)
+// TODO: -> meta_any_name
+inline auto meta_any_name(const entt::meta_any any)
 {
     assert(any);
     
@@ -91,4 +92,51 @@ inline auto any_name(const entt::meta_any any)
     return std::string(any.type().info().name());
 }
 
-#endif /* any_visit_h */
+/// Name of a meta data field: either the given display name (e.g. "x"), if present, or the field id type (e.g. "x"_hs)
+inline auto meta_data_name(const entt::id_type& id, const entt::meta_data& data)
+{
+    if (auto display_name_prop = data.prop(display_name_hs); display_name_prop)
+    {
+        auto name_ptr = display_name_prop.value().try_cast<const char*>();
+        assert(name_ptr);
+        return std::string(*name_ptr);
+    }
+    return std::to_string(id);
+}
+
+// Return a copy of an enum value, converted to the underlying enum type
+// meta_type: enum type
+// any: enum instance
+// Note: if any is not const, allow_cast will convert in-place and
+//      return a bool instead of a new any
+inline auto cast_to_underlying_type(const entt::meta_type& meta_type, const entt::meta_any& enum_any)
+{
+    auto underlying_type = meta_type.prop("underlying_meta_type"_hs).value().cast<entt::meta_type>();
+    return enum_any.allow_cast(underlying_type);
+};
+
+inline auto gather_meta_enum_entries(const entt::meta_any enum_any)
+{
+    entt::meta_type meta_type = entt::resolve(enum_any.type().id());
+    assert(meta_type);
+    assert(meta_type.is_enum());
+    
+    std::vector<std::pair<const std::string, const entt::meta_any>> entries;
+    
+    for (auto &&[id, meta_data] : meta_type.data())
+    {
+        // Name of data member
+        auto display_name = meta_data.prop(display_name_hs).value().cast<const char*>();
+        
+        // Value of data member
+        auto data_any = meta_data.get(enum_any);
+     
+        entries.push_back({
+            std::string(display_name),
+            cast_to_underlying_type(meta_type, data_any)
+        });
+    }
+    return entries;
+}
+
+#endif /* meta_aux */

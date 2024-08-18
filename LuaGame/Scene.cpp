@@ -17,6 +17,7 @@
 //#include "kbhit.hpp"
 #include "AudioManager.hpp"
 #include "CoreComponents.hpp"
+#include "DebugClass.h"
 
 #include "InspectorState.hpp" // for MetaInspect
 
@@ -37,6 +38,40 @@ namespace {
     //         << sol::type_name(value.lua_state(), value.get_type())
     //         << std::endl; });
     // }
+
+// Can be done genercially for basic types since they have no data fields,
+// and must have certain meta function.
+// Component types or other class types will have data feilds,
+// and may or may not have any meta functions
+//
+// These give the same value
+// std::cout << entt::type_id<int>().hash() << std::endl;
+// std::cout << entt::type_hash<int>::value() << std::endl;
+//
+    template<class T>
+    void register_basic_type()
+    {
+        entt::meta<T>()
+            .type(entt::type_hash<T>::value()) //.prop(display_name_hs, "int")
+            //            .template func < [](nlohmann::json& j, const void* ptr) { j = *static_cast<const T*>(ptr); }, entt::as_void_t > (to_json_hs)
+            //            .template func < [](const nlohmann::json& j, void* ptr) { *static_cast<T*>(ptr) = j; }, entt::as_void_t > (from_json_hs)
+
+            .template func < [](void* ptr, Editor::InspectorState& inspector) -> bool {
+            return Editor::inspect_type(*static_cast<T*>(ptr), inspector);
+            } > (inspect_hs)
+                ;
+
+            if constexpr (std::is_same_v<T, std::string>)
+            {
+                entt::meta<T>()
+                    .template func < [](const void* ptr) -> std::string { return *static_cast<const T*>(ptr); } > (to_string_hs);
+            }
+            else
+            {
+                entt::meta<T>()
+                    .template func < [](const void* ptr) -> std::string { return std::to_string(*static_cast<const T*>(ptr)); } > (to_string_hs);
+            }
+    }
 
     void bindAudioManager(sol::state& lua)
     {
@@ -863,7 +898,7 @@ namespace Inspector
 
     void inspect_registry(entt::registry& registry)
     {
-        static Editor::InspectorState inspector {};
+        static Editor::InspectorState inspector{};
         static bool open = true;
         bool* p_open = &open;
 
@@ -943,6 +978,10 @@ bool Scene::init(const v2i& windowSize)
     register_meta_component<QuadGridComponent>();
     register_meta_component<IslandFinderComponent>();
     register_meta_component<DataGridComponent>();
+
+    // WIP
+    register_basic_type<std::string>();
+    registerDebugClass();
 
     try
     {
@@ -1053,6 +1092,10 @@ bool Scene::init(const v2i& windowSize)
 
         // Run init script
         lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
+
+        // 
+        auto debug_entity = registry.create();
+        registry.emplace<DebugClass>(debug_entity);
 
 #if 0
         // Send event C++ <-> C++

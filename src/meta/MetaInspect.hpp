@@ -13,17 +13,13 @@
 
 namespace Editor {
 
-struct InspectorState;
+    struct InspectorState;
 
-//#include <nlohmann/json.hpp> // Prefer <nlohmann/json_fwd.hpp>
+    bool inspect_enum_any(entt::meta_any& any, InspectorState& inspector);
 
-//nlohmann::json serialize_any(const entt::meta_any& meta_any);
+    void inspect_any(entt::meta_any& any, InspectorState& inspector);
 
-//nlohmann::json serialize_registry(entt::registry& registry);
-
-void inspect_any(entt::meta_any& any, InspectorState& inspector);
-
-void inspect_registry(entt::registry& registry, InspectorState& inspector);
+    void inspect_registry(entt::registry& registry, InspectorState& inspector);
 
 }
 
