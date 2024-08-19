@@ -23,7 +23,7 @@ namespace Editor {
         assert(meta_type);
         assert(meta_type.is_enum());
 
-        // Cast to underlying meta type
+        // Cast to underlying enum meta type
         auto any_conv = cast_to_underlying_type(meta_type, any);
 
         // Gather enum entries and determine which is the current one
@@ -35,7 +35,7 @@ namespace Editor {
 
         // Build combo
         auto selected_entry = cur_entry;
-        if (ImGui::BeginCombo("ENUM##enum", cur_entry->first.c_str()))
+        if (ImGui::BeginCombo("##enum", cur_entry->first.c_str()))
         {
             for (auto it = enum_entries.begin(); it != enum_entries.end(); it++)
             {
@@ -50,7 +50,7 @@ namespace Editor {
         }
 
         // Update current enum if needed
-        if (selected_entry->second != cur_entry->second)
+        if (selected_entry != cur_entry)
         {
             assert(any.assign(selected_entry->second));
             return true;
@@ -67,15 +67,15 @@ namespace Editor {
         {
             if (entt::meta_func meta_func = meta_type.func(inspect_hs); meta_func)
             {
-                // Function signature: void(const nlohmann::json&, void*))
-                // In this call, presumably, a meta_any is created for 'json',
-                //      which and will hold a copy of it.
+                // Function signatures 
+                // void* ptr, Editor::InspectorState& inspector
+                // const void* ptr, Editor::InspectorState& inspector (?)
 
                 // Call from_json using alias of json node
                 auto res = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
                 assert(res && "Failed to invoke inspect");
 
-                std::cout << "inspect invoked: " << "..." << std::endl;
+                // std::cout << "inspect invoked: " << "..." << std::endl;
             }
             else if (meta_type.is_enum())
             {
@@ -115,12 +115,12 @@ namespace Editor {
             int count = 0;
             for (auto&& v : view)
             {
-                //inspector.begin_leaf(std::to_string(count++).c_str());
-                ImGui::PushID(count++);
+                inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
+                //ImGui::PushID(count++);
                 ImGui::SetNextItemWidth(-FLT_MIN);
                 inspect_any(v, inspector);
-                ImGui::PopID();
-                //inspector.end_leaf();
+                //ImGui::PopID();
+                inspector.end_leaf();
             }
         }
 
@@ -139,10 +139,10 @@ namespace Editor {
             int count = 0;
             for (auto&& [key_any, mapped_any] : view)
             {
-                //inspector.begin_leaf(meta_any_name(key_any).c_str());
                 //if (view.mapped_type())
 
-                ImGui::PushID(count++);
+                inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
+                // ImGui::PushID(count++);
                 inspect_any(key_any, inspector);
                 if (view.mapped_type())
                 {
@@ -159,7 +159,8 @@ namespace Editor {
                     // Store key in the container array
                     // json_array.push_back(serialize_any(key_any));
                     // inspect_any(key_any, inspector);
-                ImGui::PopID();
+                // ImGui::PopID();
+                inspector.end_leaf();
             }
         }
 

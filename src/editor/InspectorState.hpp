@@ -1,8 +1,6 @@
 #ifndef InspectorState_hpp
 #define InspectorState_hpp
 
-//#include <cassert>
-//#include <array>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
 
@@ -16,19 +14,29 @@ namespace Editor {
         return false;
     }
 
-    // Type inspection specialization for float
+    // Inspect float
     template<>
     inline bool inspect_type<float>(float& t, InspectorState& inspector)
     {
         return ImGui::InputFloat("##label", &t, 1.0f);
     }
 
-    // Type inspection specialization for int
+    // Inspect const float
+    template<>
+    inline bool inspect_type<const float>(const float& t, InspectorState& inspector)
+    {
+        ImGui::TextDisabled("%f", t);
+        return false;
+    }
+
+    // Inspect int
     template<>
     inline bool inspect_type<int>(int& t, InspectorState& inspector)
     {
         return ImGui::InputInt("##label", &t, 1);
     }
+
+    // Inspect const int
     template<>
     inline bool inspect_type<const int>(const int& t, InspectorState& inspector)
     {
@@ -36,35 +44,38 @@ namespace Editor {
         return false;
     }
 
-    // Type inspection specialization for bool
+    // Inspect bool
     template<>
     inline bool inspect_type<bool>(bool& t, InspectorState& inspector)
     {
         return ImGui::Checkbox("##label", &t);
     }
 
-    // Type inspection specialization for std::string
+    // Inspect const bool
+    template<>
+    inline bool inspect_type<const bool>(const bool& t, InspectorState& inspector)
+    {
+        ImGui::BeginDisabled();
+        bool b = t;
+        return ImGui::Checkbox("##label", &b);
+        ImGui::EndDisabled();
+        return false;
+    }
+
+    // Inspect std::string
     template<>
     inline bool inspect_type<std::string>(std::string& t, InspectorState& inspector)
     {
         return ImGui::InputText("##label", &t); // label cannot be empty
     }
 
-    // // inspect float
-    // template<class T> requires std::is_same_v<T, float>
-    // //        requires std::is_floating_point_v<T> // also matches double
-    // bool inspect_type(T& t, InspectorState& inspector)
-    // {
-    //     return ImGui::InputFloat("", &t, 1.0f);
-    // }
-
-    /// inspect int
-    // template<class T> requires std::is_same_v<T, int>
-    // // requires (std::is_integral_v<T> && !std::is_unsigned_v<T>) // also matches e.g. char
-    // bool inspect_type(T& t, InspectorState& inspector)
-    // {
-    //     return ImGui::InputInt("", &t, 1);
-    // }
+    // Inspect const std::string
+    template<>
+    inline bool inspect_type<const std::string>(const std::string& t, InspectorState& inspector)
+    {
+        ImGui::TextDisabled("%s", t);
+        return false;
+    }
 
     struct InspectorState
     {

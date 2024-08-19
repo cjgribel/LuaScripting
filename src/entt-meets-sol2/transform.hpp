@@ -24,6 +24,7 @@ struct Transform
     }
 };
 
+// + const (e.g. when used as key) ?
 bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 {
     Transform* t = static_cast<Transform*>(ptr);
