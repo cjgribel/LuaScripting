@@ -927,7 +927,10 @@ namespace Inspector
             if (ImGui::BeginTable("InspectorTable", 2, flags))
             {
 
-                Editor::inspect_registry(registry, inspector);
+                // entt::id_type of HeaderComponent, to obtain names for entities with those
+                auto header_meta = entt::resolve<HeaderComponent>();
+
+                Editor::inspect_registry(registry, header_meta, inspector);
                 // if (inspector_widget.begin_node("comp name"))
                 // {
                 //     // type_widget(*t, w, scene);
@@ -968,7 +971,7 @@ bool Scene::init(const v2i& windowSize)
 
     SceneBase::windowSize = windowSize;
 
-    // Register registry meta functions to components
+    // Register registry entt::meta functions to components
     register_meta_component<Transform>();
     register_meta_component<QuadComponent>();
     register_meta_component<CircleColliderComponent>();
@@ -978,6 +981,7 @@ bool Scene::init(const v2i& windowSize)
     register_meta_component<QuadGridComponent>();
     register_meta_component<IslandFinderComponent>();
     register_meta_component<DataGridComponent>();
+    register_meta_component<HeaderComponent>();
 
     // WIP
     register_basic_type<std::string>();
@@ -1074,6 +1078,8 @@ bool Scene::init(const v2i& windowSize)
         registerQuadGridComponent(lua);
         registerIslandFinderComponent(lua);
         registeDataGridComponent(lua);
+        //
+        registerHeaderComponent(lua); // entt::meta (registry stuff added separately) + sol meta
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);

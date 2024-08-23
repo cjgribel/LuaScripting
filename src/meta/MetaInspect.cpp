@@ -17,6 +17,46 @@
 
 namespace Editor {
 
+
+    /// @brief Create a name for an entity suitable for imgui widgets
+    /// @param registry 
+    /// @param entity 
+    /// @param comp_with_name_meta_data Meta type of a component with a "name" data field
+    /// @return A string in format [entity id] or [name]##[entity id]
+    std::string get_imgui_friendly_entity_name(entt::registry& registry, entt::entity entity, entt::meta_type comp_with_name_meta_data)
+    {
+        auto entity_str = std::to_string(entt::to_integral(entity));
+
+        // No meta type to use
+        if (!comp_with_name_meta_data) return entity_str;
+
+        // Check if name data field exists
+        entt::meta_data meta_data = comp_with_name_meta_data.data("name"_hs);
+        if (!meta_data) return entity_str;
+
+        // Find storage for component type
+        auto storage = registry.storage(comp_with_name_meta_data.id());
+        if (!storage->contains(entity)) return entity_str;
+
+        // Instantiate component
+        auto v = storage->value(entity);
+        auto comp_any = comp_with_name_meta_data.from_void(v);
+        if (!comp_any) return entity_str;
+
+        // Get data value
+        auto data = meta_data.get(comp_any); 
+
+        // Fetch name from component
+        auto name_ptr = data.try_cast<std::string>();
+        // Cast failed
+        if (!name_ptr) return entity_str;
+
+        // Does NOT return the correct string
+//        return *name_ptr + std::string("###") + entity_str;
+
+        return data.cast<std::string>() + "###" + entity_str;
+    }
+
     bool inspect_enum_any(entt::meta_any& any, InspectorState& inspector)
     {
         entt::meta_type meta_type = entt::resolve(any.type().id());
@@ -126,40 +166,19 @@ namespace Editor {
 
         else if (any.type().is_associative_container())
         {
-            // ImGui::Text("[is_associative_container]");
-
             auto view = any.as_associative_container();
             assert(view && "as_associative_container() failed");
-
-            // JSON structure,
-            // mapped container:    [[key1, val1], [key2, val2], ...]
-            // set type:            [key1, key2, ...]
-            // auto json_array = nlohmann::json::array();
 
             int count = 0;
             for (auto&& [key_any, mapped_any] : view)
             {
-                //if (view.mapped_type())
-
                 inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
-                // ImGui::PushID(count++);
                 inspect_any(key_any, inspector);
                 if (view.mapped_type())
                 {
-                    // Store key & value as a sub-array in the container array
-                    // nlohmann::json json_elem{
-                    //     serialize_any(key_any), serialize_any(mapped_any)
-                    // };
-                    // json_array.push_back(json_elem);
-
                     ImGui::SetNextItemWidth(-FLT_MIN);
                     inspect_any(mapped_any, inspector);
                 }
-                // else
-                    // Store key in the container array
-                    // json_array.push_back(serialize_any(key_any));
-                    // inspect_any(key_any, inspector);
-                // ImGui::PopID();
                 inspector.end_leaf();
             }
         }
@@ -176,24 +195,14 @@ namespace Editor {
         }
     }
 
-    void inspect_registry(entt::registry& registry, InspectorState& inspector)
+    void inspect_registry(entt::registry& registry, entt::meta_type name_comp_type, InspectorState& inspector)
     {
-        // nlohmann::json json;
-
         auto view = registry.view<entt::entity>();
         for (auto entity : view)
         {
-            //std::cout << "Serializing entity "
-            //<< entt::to_integral(entity) << std::endl;
-
-            //nlohmann::json entity_json;
-            //entity_json["entity"] = entt::to_integral(entity);
-
-            auto entity_name = std::to_string(entt::to_integral(entity)).c_str();
-            //std::cout << entity_name << " ";
-            if (!inspector.begin_node(entity_name))
+            auto entity_name = get_imgui_friendly_entity_name(registry, entity, name_comp_type);
+            if (!inspector.begin_node(entity_name.c_str()))
                 continue;
-            // ImGui::PushID(entt::to_integral(entity));
 
             for (auto&& [id, type] : registry.storage())
             {
@@ -201,15 +210,10 @@ namespace Editor {
 
                 if (entt::meta_type meta_type = entt::resolve(id); meta_type)
                 {
-                    // string_view ok ???
-
-                    auto key_name = std::string{ meta_type.info().name() };// + std::string("###";
-                    // std::cout << key_name.c_str() << std::endl;
+                    auto key_name = std::string{ meta_type.info().name() };
 
                     if (inspector.begin_node(key_name.c_str()))
                     {
-                        //entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
-                        // inspect_any(meta_type.from_void(type.value(entity)));
                         auto comp_any = meta_type.from_void(type.value(entity));
                         inspect_any(comp_any, inspector);
                         inspector.end_node();
@@ -221,14 +225,8 @@ namespace Editor {
                     assert(false && "Meta-type required");
                 }
             }
-
-            // ImGui::PopID();
             inspector.end_node();
-            // }
-            // json.push_back(entity_json);
         }
-
-        // return json;
     }
 
 } // namespace Editor

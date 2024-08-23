@@ -4,6 +4,9 @@ function prefabloaders.projectile(size, projectile_pool)
     
         local entity = registry:create()
 
+        -- Header
+        registry:emplace(entity, HeaderComponent("Projectile"))
+
         -- Transform
         registry:emplace(entity, Transform(0.0, 0.0, 0.0))
         
@@ -31,6 +34,10 @@ function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
     local entity = registry:create()
     print("Created entity ID:", entity)
     
+    -- Header
+    registry:emplace(entity, HeaderComponent("BlockEnemy"))
+
+    -- Transform
     registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
 
     --local size = 0.5 + math.random() * 0.0
@@ -86,6 +93,10 @@ function prefabloaders.bouncing_enemy_cross(color)
     local entity = registry:create()
     print("prefabloaders.bouncing_enemy_cross(): created entity ID:", entity)
     
+    -- Header
+    registry:emplace(entity, HeaderComponent("CrossEnemy"))
+
+    -- Transform
     registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
     --local size = 0.5 + math.random() * 0.0

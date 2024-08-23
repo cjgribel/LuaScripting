@@ -29,6 +29,9 @@ end
 local function create_projectile_pool_entity()
     local entity = registry:create()
 
+    -- Header
+    registry:emplace(entity, HeaderComponent("ProjectilePool"))
+
     -- Behavior
     add_script(registry, entity, dofile("../../LuaGame/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
     return entity
@@ -36,6 +39,9 @@ end
 
 local function create_player_entity(size, color, projectile_pool)
     local entity = registry:create()
+
+    -- Header
+    registry:emplace(entity, HeaderComponent("Player"))
 
     -- Transform
     registry:emplace(entity, Transform(0.0, 0.0, 0.0))
@@ -77,6 +83,9 @@ local function create_phasemanager_entity()
 
     local entity = registry:create()
     
+    -- Header
+    registry:emplace(entity, HeaderComponent("PhaseManager"))
+
     add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
     
     return entity
