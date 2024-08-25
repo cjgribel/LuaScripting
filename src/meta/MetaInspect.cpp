@@ -1,5 +1,5 @@
 //
-//  MetaClone.cpp
+//  MetaInspect.cpp
 //  engine_core_2024
 //
 //  Created by Carl Johan Gribel on 2024-08-08.

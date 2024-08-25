@@ -9,6 +9,7 @@
 #include "mat.h"
 
 #include "MetaInspect.hpp"
+#include "MetaClone.hpp"
 
 #include "Scene.hpp"
 
@@ -910,8 +911,12 @@ namespace Inspector
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Copy entity"))
+        if (ImGui::Button("Clone entity"))
         {
+            auto entity_clone = registry.create();
+            auto entity_src = entt::entity {108};
+            Editor::clone_entity(registry, entity_src, entity_clone);
+
             // Deep-copy entire entity
             //Copier copier{ *scene };
             //active_entity = copier.CopyPrimaryEntity(active_entity, components);
@@ -1079,7 +1084,7 @@ bool Scene::init(const v2i& windowSize)
         registerIslandFinderComponent(lua);
         registeDataGridComponent(lua);
         //
-        registerHeaderComponent(lua); // entt::meta (registry stuff added separately) + sol meta
+        HeaderComponent_metaregister(lua); // entt::meta (registry stuff added separately) + sol meta
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);

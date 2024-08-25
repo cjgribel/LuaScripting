@@ -33,7 +33,7 @@ bool HeaderComponent_inspect(void* ptr, Editor::InspectorState& inspector)
     return false;
 }
 
-inline void registerHeaderComponent(sol::state& lua)
+inline void HeaderComponent_metaregister(sol::state& lua)
 {
     // Register to entt::meta
 
