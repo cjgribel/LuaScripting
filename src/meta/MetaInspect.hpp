@@ -13,13 +13,30 @@
 
 namespace Editor {
 
+    /// @brief Create a name for an entity suitable for imgui widgets
+    /// @param registry 
+    /// @param entity 
+    /// @param comp_with_name_meta_data Meta type of a component with a "name" data field
+    /// @return A string in format [entity id] or [name]##[entity id]
+    std::string get_entity_name(
+        entt::registry& registry, 
+        entt::entity entity, 
+        entt::meta_type meta_type_with_name);
+
     struct InspectorState;
 
-    bool inspect_enum_any(entt::meta_any& any, InspectorState& inspector);
+    bool inspect_enum_any(
+        entt::meta_any& any, 
+        InspectorState& inspector);
 
-    void inspect_any(entt::meta_any& any, InspectorState& inspector);
+    void inspect_any(
+        entt::meta_any& any, 
+        InspectorState& inspector);
 
-    void inspect_registry(entt::registry& registry, entt::meta_type comp_with_name, InspectorState& inspector);
+    void inspect_registry(
+        entt::registry& registry, 
+        entt::meta_type comp_with_name, 
+        InspectorState& inspector);
 
 }
 

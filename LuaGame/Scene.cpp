@@ -914,7 +914,7 @@ namespace Inspector
         if (ImGui::Button("Clone entity"))
         {
             auto entity_clone = registry.create();
-            auto entity_src = entt::entity {108};
+            auto entity_src = entt::entity{ 108 };
             Editor::clone_entity(registry, entity_src, entity_clone);
 
             // Deep-copy entire entity
@@ -1013,6 +1013,38 @@ bool Scene::init(const v2i& windowSize)
         // Register to Lua: helper functions for adding & obtaining scripts from entities
         lua["add_script"] = &add_script;
         lua["get_script"] = &get_script;
+
+        // // Try to reserve entity root ...
+        // auto entity = registry.create(root_entity);
+        // assert(root_entity == entity);
+        // registry.emplace<HeaderComponent>(root_entity, HeaderComponent{ "Scene root" });
+        // // Add scene graph root node
+        // scene_graph.create_node(root_entity, entt::null);
+
+        {
+            // Bind scene graph op's
+
+            // lua["attach_entity_to_scenegraph"] = [&](
+            //     entt::entity entity,
+            //     const std::string& node_name,
+            //     const std::string& parent_name)
+            //     {
+            //         scene_graph.create_node(entity, node_name, parent_name);
+            //     };
+            sol::table my_table = lua.create_table();
+            my_table.set_function("add_entity", [&](sol::table self, entt::entity entity, entt::entity parent_entity) {
+                bool ret = scene_graph.create_node(entity, parent_entity);
+                // Debug print SG
+                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                return ret;
+                });
+            my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
+                scene_graph.create_node(entity);
+                // Debug print SG
+                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                });
+            lua["scenegraph"] = my_table;
+        }
 
         // Entities are destroyed outside the regular update loop
         lua["flag_entity_for_destruction"] = [&](entt::entity entity)

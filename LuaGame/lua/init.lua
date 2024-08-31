@@ -27,7 +27,9 @@ function random_color()
 end
 
 local function create_projectile_pool_entity()
+
     local entity = registry:create()
+    --attach_entity_to_scenegraph(entity, "ProjectilePool", "root");
 
     -- Header
     registry:emplace(entity, HeaderComponent("ProjectilePool"))
@@ -38,6 +40,7 @@ local function create_projectile_pool_entity()
 end
 
 local function create_player_entity(size, color, projectile_pool)
+    
     local entity = registry:create()
 
     -- Header
@@ -65,7 +68,9 @@ end
 
 -- NOT USED YET
 local function create_background_entity(size, color)
+
     local entity = registry:create()
+    --attach_entity_to_scenegraph(entity, "Background", "root");
 
     -- Transform
     -- TODO: non-uniform size
@@ -82,6 +87,7 @@ end
 local function create_phasemanager_entity()
 
     local entity = registry:create()
+    --attach_entity_to_scenegraph(entity, "PhaseManager", "root");
     
     -- Header
     registry:emplace(entity, HeaderComponent("PhaseManager"))
@@ -135,7 +141,13 @@ audio_manager:setMusicVolume("music1", 64)  -- Set music volume to 25%
 audio_manager:setEffectVolume(config.sounds.projectile_fire1, 32)
 audio_manager:setEffectVolume(config.sounds.element_explode, 32)
 
-
+-- Game root entity
+-- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
+local game_entity = registry:create()
+-- Header
+registry:emplace(game_entity, HeaderComponent("GameRoot"))
+-- SG
+scenegraph:add_entity_as_root(game_entity)
 
 -- Projectile pool
 log("Creating projectile pool...")
@@ -145,9 +157,14 @@ local projectilepool_table = get_script(registry, projectilepool_entity, "projec
 -- Create player(s)
 log("Creating player...")
 local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
+-- SG
+scenegraph:add_entity(player_entity, game_entity)
+--attach_entity_to_scenegraph(entity, "Player", "root");
 
 log("Creating phases...")
-create_phasemanager_entity()
+local phasemanager_entity = create_phasemanager_entity()
+-- SG
+scenegraph:add_entity(phasemanager_entity, game_entity)
 
 log("Lua init done")
 print('Lua init script done')

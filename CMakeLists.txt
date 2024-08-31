@@ -222,6 +222,7 @@ add_executable(LuaGame
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ShapeRenderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ParticleBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AudioManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/SceneGraph.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/vec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/mat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vec/quat.cpp

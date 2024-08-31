@@ -16,10 +16,11 @@ struct Transform
     static constexpr auto in_place_delete = true;
 
     float x, y, rot;
+    float x_parent, y_parent, rot_parent; // TODO: meta for entt & sol
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
-        ss << "{ x=" << std::to_string(x) << ", y=" << std::to_string(y) << " }";
+        ss << "{ x = " << std::to_string(x) << ", y = " << std::to_string(y) << " }";
         return ss.str();
     }
 };

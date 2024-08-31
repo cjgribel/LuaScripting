@@ -17,30 +17,27 @@
 
 namespace Editor {
 
-
-    /// @brief Create a name for an entity suitable for imgui widgets
-    /// @param registry 
-    /// @param entity 
-    /// @param comp_with_name_meta_data Meta type of a component with a "name" data field
-    /// @return A string in format [entity id] or [name]##[entity id]
-    std::string get_imgui_friendly_entity_name(entt::registry& registry, entt::entity entity, entt::meta_type comp_with_name_meta_data)
+    std::string get_entity_name(
+        entt::registry& registry, 
+        entt::entity entity, 
+        entt::meta_type meta_type_with_name)
     {
         auto entity_str = std::to_string(entt::to_integral(entity));
 
         // No meta type to use
-        if (!comp_with_name_meta_data) return entity_str;
+        if (!meta_type_with_name) return entity_str;
 
         // Check if name data field exists
-        entt::meta_data meta_data = comp_with_name_meta_data.data("name"_hs);
+        entt::meta_data meta_data = meta_type_with_name.data("name"_hs);
         if (!meta_data) return entity_str;
 
         // Find storage for component type
-        auto storage = registry.storage(comp_with_name_meta_data.id());
+        auto storage = registry.storage(meta_type_with_name.id());
         if (!storage->contains(entity)) return entity_str;
 
         // Instantiate component
         auto v = storage->value(entity);
-        auto comp_any = comp_with_name_meta_data.from_void(v);
+        auto comp_any = meta_type_with_name.from_void(v);
         if (!comp_any) return entity_str;
 
         // Get data value
@@ -57,7 +54,9 @@ namespace Editor {
         return data.cast<std::string>() + "###" + entity_str;
     }
 
-    bool inspect_enum_any(entt::meta_any& any, InspectorState& inspector)
+    bool inspect_enum_any(
+        entt::meta_any& any, 
+        InspectorState& inspector)
     {
         entt::meta_type meta_type = entt::resolve(any.type().id());
         assert(meta_type);
@@ -98,7 +97,9 @@ namespace Editor {
         return false;
     }
 
-    void inspect_any(entt::meta_any& any, InspectorState& inspector)
+    void inspect_any(
+        entt::meta_any& any, 
+        InspectorState& inspector)
     {
         assert(any);
         bool mod = false;
@@ -195,12 +196,15 @@ namespace Editor {
         }
     }
 
-    void inspect_registry(entt::registry& registry, entt::meta_type name_comp_type, InspectorState& inspector)
+    void inspect_registry(
+        entt::registry& registry, 
+        entt::meta_type name_comp_type, 
+        InspectorState& inspector)
     {
         auto view = registry.view<entt::entity>();
         for (auto entity : view)
         {
-            auto entity_name = get_imgui_friendly_entity_name(registry, entity, name_comp_type);
+            auto entity_name = get_entity_name(registry, entity, name_comp_type);
             if (!inspector.begin_node(entity_name.c_str()))
                 continue;
 
