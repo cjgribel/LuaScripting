@@ -106,8 +106,8 @@ public:
     }
 
     /// @brief Insert a node
-    /// @param node Node to insert
-    /// @param parent_name Name of parent node. If empty, node is inserted as a root
+    /// @param payload Payload to insert
+    /// @param parent_payload Payload of parent node.
     /// @return True if insertion was successfull, false otherwise
     bool insert(
         const PayloadType& payload,
@@ -170,11 +170,11 @@ public:
     }
 
     /// @brief Erase a node and its branch
-    /// @param node_name Name of node to erase
+    /// @param payload Payload of the node to erase
     /// @return True if erasure was successfull, false otherwise
-    bool erase_branch(const std::string& node_name)
+    bool erase_branch(const PayloadType& payload)
     {
-        auto node_index = find_node_index(node_name);
+        auto node_index = find_node_index(payload);
         if (node_index == VecTree_NullIndex) return false;
 
         auto& node = nodes[node_index];
@@ -277,6 +277,7 @@ public:
         size_t node_index,
         const F& func)
     {
+        if (!nodes.size()) return;
         // auto node_index = find_node_index(payload);
         assert(node_index != VecTree_NullIndex);
         assert(node_index >= 0);

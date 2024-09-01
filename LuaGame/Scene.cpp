@@ -914,7 +914,7 @@ namespace Inspector
         if (ImGui::Button("Clone entity"))
         {
             auto entity_clone = registry.create();
-            auto entity_src = entt::entity{ 108 };
+            auto entity_src = entt::entity{ 109 };
             Editor::clone_entity(registry, entity_src, entity_clone);
 
             // Deep-copy entire entity
@@ -1033,16 +1033,27 @@ bool Scene::init(const v2i& windowSize)
             //     };
             sol::table my_table = lua.create_table();
             my_table.set_function("add_entity", [&](sol::table self, entt::entity entity, entt::entity parent_entity) {
-                bool ret = scene_graph.create_node(entity, parent_entity);
+                bool result = scene_graph.create_node(entity, parent_entity);
+                assert(result);
                 // Debug print SG
                 scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                return ret;
+                return result;
                 });
             my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
-                scene_graph.create_node(entity);
+                bool result = scene_graph.create_node(entity);
+                assert(result);
                 // Debug print SG
                 scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                return result;
                 });
+            my_table.set_function("erase_entity", [&](sol::table self, entt::entity entity) {
+                bool result = scene_graph.erase_node(entity);
+                assert(result);
+                // Debug print SG
+                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                return result;
+                });
+            // + dump_to_cout
             lua["scenegraph"] = my_table;
         }
 

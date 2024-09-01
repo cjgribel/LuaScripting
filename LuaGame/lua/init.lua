@@ -168,3 +168,10 @@ scenegraph:add_entity(phasemanager_entity, game_entity)
 
 log("Lua init done")
 print('Lua init script done')
+
+-- REMOVE FROM SG TEST
+--print('Erasing player entity node from SG')
+--scenegraph:erase_entity(player_entity)
+-- -> will erase root & all remaining nodes
+--print('Erasing game root entity node from SG')
+--scenegraph:erase_entity(game_entity)

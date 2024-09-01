@@ -98,31 +98,10 @@ public:
                 // return hnd;
     }
 
-    // bool create_node(
-    //     entt::registry& registry,
-    //     entt::entity entity,
-    //     // const std::string& name,
-    //     const std::string& parent_name = ""
-    // )
-    // {
-    //     entt::entity parent_entity = entt::null;
-    //     tree.traverse_depthfirst([](const auto& node, size_t index)
-    //         {
-    //             auto entity = node.m_payload;
-
-    //             // Must know HeaderComponent to check its name
-
-    //             for (int i = 0; i < level; i++) std::cout << "\t";
-    //             std::cout << " [node " << index << "]";
-    //             std::cout << " " << node.m_name
-    //                 << " (children " << node.m_nbr_children
-    //                 << ", stride " << node.m_branch_stride
-    //                 << ", parent ofs " << node.m_parent_ofs << ")\n";
-    //         });
-
-    //     assert(parent_entity != entt::null && "Parent entity not found in tree");
-    //     return create_node(entity, parent_entity);
-    // }
+    bool erase_node(entt::entity entity)
+    {
+        return tree.erase_branch(entity);
+    }
 
     size_t size()
     {
@@ -192,6 +171,7 @@ public:
         entt::registry& registry,
         entt::meta_type meta_type_with_name)
     {
+        std::cout << "Scene graph nodes:" << std::endl;
         tree.traverse_depthfirst([&registry, &meta_type_with_name](const auto& node, size_t index, size_t level)
             {
                 auto entity = node.m_payload;
@@ -205,35 +185,6 @@ public:
                     << ", parent ofs " << node.m_parent_ofs << ")\n";
             });
     }
-
-    // DO WITH LAMBDA
-    // Dump tree(s) to stream
-    // void dump_tree_to_string()
-    // {
-    //     std::stringstream strm;
-    //     int i = 0;
-    //     while (i < tree.nodes.size())
-    //     {
-    //         dump_branch(i, "", strm);
-    //         i += tree.nodes[i].m_branch_stride;
-    //     }
-    //     tree_dump = strm.str();
-    // }
-
-    // DO WITH LAMBDA
-    // Dump branch (e.g. from a root) to stream
-    // Recursive, depth-first traversal
-    // void dump_branch(unsigned i, const std::string& indent, std::stringstream& strm)
-    // {
-    //     strm << indent << tree.nodes[i].name << std::endl;
-
-    //     unsigned ci = i + 1;
-    //     for (int j = 0; j < tree.nodes[i].m_nbr_children; j++)
-    //     {
-    //         dump_branch(ci, indent + "-", strm);
-    //         ci += tree.nodes[ci].m_branch_stride;
-    //     }
-    // }
 };
 
 #endif /* SceneGraph_hpp */
