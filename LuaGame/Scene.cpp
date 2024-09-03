@@ -890,9 +890,6 @@ namespace Inspector
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
-        // VecTree: 'archive' with enter_branch, exit_branch? VecTree is already templated.
-        //
-        // CUTS TO TREE
         auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
@@ -901,7 +898,7 @@ namespace Inspector
 
             // Recursively display each child node
             int child_index = index + 1;
-            for (int i = 0; i < nbr_children; ++i) 
+            for (int i = 0; i < nbr_children; ++i)
             {
                 inspect_scene_graph_node(scenegraph, registry, child_index);
 
@@ -918,11 +915,19 @@ namespace Inspector
         static bool open = true;
         bool* p_open = &open;
 
+        // ImGui window
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (!ImGui::Begin("Scene graph", p_open))
         {
             ImGui::End();
             return;
+        }
+
+        // Explicit traverse button
+        ImGui::SameLine();
+        if (ImGui::Button("Traverse"))
+        {
+            scenegraph.traverse(registry);
         }
 
         //
@@ -1240,9 +1245,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1466,7 +1471,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-    } // anon
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1634,7 +1639,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
                 renderer->pop_states<m4f, Renderer::Color4u>();
             }
         }
-    }
+}
 #endif
 
     // Add some test particles

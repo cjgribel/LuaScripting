@@ -100,7 +100,7 @@ public:
 
     size_t size()
     {
-        return nodes.size();    
+        return nodes.size();
     }
 
     bool contains(const PayloadType& payload) const
@@ -233,15 +233,17 @@ public:
     /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
     template<class F>
         requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
-    void traverse_progressive(const PayloadType& payload,
+    void traverse_progressive(
+        size_t start_index,
         const F& func)
     {
-        auto start_node_index = find_node_index(payload);
-        assert(start_node_index != VecTree_NullIndex);
+        //auto start_node_index = find_node_index(payload);
+        // assert(start_node_index != VecTree_NullIndex);
+        assert(start_index >= 0 && start_index < size());
 
-        for (int i = 0; i < nodes[start_node_index].m_branch_stride; i++)
+        for (int i = 0; i < nodes[start_index].m_branch_stride; i++)
         {
-            auto node_index = start_node_index + i;
+            auto node_index = start_index + i;
             auto& node = nodes[node_index];
 
             size_t child_index = node_index + 1;
@@ -251,6 +253,26 @@ public:
                 child_index += nodes[child_index].m_branch_stride;
             }
         }
+    }
+
+    template<class F>
+        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
+    void traverse_progressive(
+        const PayloadType& payload,
+        const F& func)
+    {
+        auto index = find_node_index(payload);
+        assert(index != VecTree_NullIndex);
+        traverse_progressive(index, func);
+    }
+
+    template<class F>
+        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
+    void traverse_progressive(
+        const F& func)
+    {
+        if (size())
+            traverse_progressive(0, func);
     }
 
     /// @brief Traverse tree depth-first without level information

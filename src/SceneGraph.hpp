@@ -114,14 +114,18 @@ public:
         // for (auto& node : tree.nodes) node.transform_hnd->global_tfm = m4f_1;
     }
 
-    void traverse_()
+    void traverse(entt::registry& registry)
     {
         // SHIFT SO FUNC IS CALLED FOR PARENT???
         //
-        //tree.traverse_progressive("root", [](auto& node, auto& parent, size_t node_index, size_t parent_index) {
+        std::cout << "traverse:" << std::endl;
+        tree.traverse_progressive([&](auto& node, auto& parent, size_t node_index, size_t parent_index) {
             // + Transform = parent tfm + tfm (+ maybe their aggregate)
             // Apply parent -> node
-        //    });
+            std::cout << "traverse node " << Editor::get_entity_name(registry, node, entt::meta_type {});
+            std::cout << ", parent " << Editor::get_entity_name(registry, parent, entt::meta_type {});
+            std::cout << std::endl;
+            });
     }
     // CAN WE LAMBDA THIS?
     //
