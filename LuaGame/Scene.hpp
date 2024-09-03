@@ -30,7 +30,7 @@ protected:
     m4f VP, P, V;
 
     // entt::entity root_entity = entt::entity  {0};
-    SceneGraph scene_graph {};
+    SceneGraph scenegraph {};
 
     ConditionalObserver observer;
     ParticleBuffer particleBuffer{};

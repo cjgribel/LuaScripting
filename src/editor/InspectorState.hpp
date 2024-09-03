@@ -73,7 +73,7 @@ namespace Editor {
     template<>
     inline bool inspect_type<const std::string>(const std::string& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%s", t);
+        ImGui::TextDisabled("%s", t.c_str());
         return false;
     }
 

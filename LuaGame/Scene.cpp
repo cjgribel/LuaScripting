@@ -886,16 +886,51 @@ void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
 
 namespace Inspector
 {
-    /// inspect Transform
-    // template<>
-    // bool inspect_type<Transform>(Transform& t)
-    // {
-    //     bool mod = false;
-    //     mod |= ImGui::InputFloat("x", &t.x, 1.0f);
-    //     mod |= ImGui::InputFloat("y", &t.y, 1.0f);
-    //     mod |= ImGui::InputFloat("angle", &t.rot, 1.0f);
-    //     return mod;
-    // }
+    void inspect_scene_graph_node(SceneGraph& scenegraph, entt::registry& registry, size_t index = 0)
+    {
+        assert(index >= 0 && index < scenegraph.tree.size());
+
+        // VecTree: 'archive' with enter_branch, exit_branch? VecTree is already templated.
+        //
+        // CUTS TO TREE
+        auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
+
+        std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
+
+        if (ImGui::TreeNode(label.c_str(), "%s", label.c_str())) {
+
+            // Recursively display each child node
+            int child_index = index + 1;
+            for (int i = 0; i < nbr_children; ++i) 
+            {
+                inspect_scene_graph_node(scenegraph, registry, child_index);
+
+                auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(child_index);
+                child_index += branch_stride; //scenegraph.tree[current_index].;
+            }
+
+            ImGui::TreePop();
+        }
+    }
+
+    void inspect_scenegraph(SceneGraph& scenegraph, entt::registry& registry)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Scene graph", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        //
+        if (scenegraph.size())
+            inspect_scene_graph_node(scenegraph, registry);
+
+        ImGui::End(); // Window
+    }
 
     void inspect_registry(entt::registry& registry)
     {
@@ -1033,24 +1068,24 @@ bool Scene::init(const v2i& windowSize)
             //     };
             sol::table my_table = lua.create_table();
             my_table.set_function("add_entity", [&](sol::table self, entt::entity entity, entt::entity parent_entity) {
-                bool result = scene_graph.create_node(entity, parent_entity);
+                bool result = scenegraph.create_node(entity, parent_entity);
                 assert(result);
                 // Debug print SG
-                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
-                bool result = scene_graph.create_node(entity);
+                bool result = scenegraph.create_node(entity);
                 assert(result);
                 // Debug print SG
-                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             my_table.set_function("erase_entity", [&](sol::table self, entt::entity entity) {
-                bool result = scene_graph.erase_node(entity);
+                bool result = scenegraph.erase_node(entity);
                 assert(result);
                 // Debug print SG
-                scene_graph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             // + dump_to_cout
@@ -1456,6 +1491,8 @@ void Scene::renderUI()
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
 
     Inspector::inspect_registry(registry);
+
+    Inspector::inspect_scenegraph(scenegraph, registry);
 
     // float available_width = ImGui::GetContentRegionAvail().x;
     // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))

@@ -130,7 +130,7 @@ namespace Editor {
                     // JSON key name is the display name if present, or the id type
                     std::string key_name = meta_data_name(id, meta_data);
 
-                    ImGui::SetNextItemOpen(true);
+                    ImGui::SetNextItemOpen(true); // Probably don't have this
                     if (inspector.begin_node(key_name.c_str()))
                     {
                         entt::meta_any field_any = meta_data.get(any);

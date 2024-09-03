@@ -56,6 +56,7 @@ private:
     //     : transform_hnd(transform_hnd), name(name) { }
     // };
 
+public: // TODO: don't expose directly
     VecTree<entt::entity> tree;
     // VecTree<SceneGraphNode> tree;
     // seqtree_t<SceneGraphNode> tree;
@@ -172,17 +173,19 @@ public:
         entt::meta_type meta_type_with_name)
     {
         std::cout << "Scene graph nodes:" << std::endl;
-        tree.traverse_depthfirst([&registry, &meta_type_with_name](const auto& node, size_t index, size_t level)
+        tree.traverse_depthfirst([&](const auto& entity, size_t index, size_t level)
             {
-                auto entity = node.m_payload;
+                //auto entity = node.m_payload;
                 auto entity_name = Editor::get_entity_name(registry, entity, meta_type_with_name);
+
+                auto [nbr_children, branch_stride, parent_ofs] = tree.get_node_info(entity);
 
                 for (int i = 0; i < level; i++) std::cout << "\t";
                 std::cout << " [node " << index << "]";
                 std::cout << " " << entity_name //node.m_name
-                    << " (children " << node.m_nbr_children
-                    << ", stride " << node.m_branch_stride
-                    << ", parent ofs " << node.m_parent_ofs << ")\n";
+                    << " (children " << nbr_children
+                    << ", stride " << branch_stride
+                    << ", parent ofs " << parent_ofs << ")\n";
             });
     }
 };

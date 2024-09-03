@@ -25,7 +25,7 @@ struct TreeNode
     // std::string m_name;             // 
     T m_payload;
 
-    TreeNode(const T& payload) : m_payload(payload) {}
+    // TreeNode(const T& payload) : m_payload(payload) {} // takes away 'aggregate'
 };
 
 // struct SkeletonNode : public TreeNode
@@ -68,7 +68,7 @@ public:
     /// @brief Find index of a node O(N)
     /// @param payload Payload to search for
     /// @return Index Node index
-    size_t find_node_index(const PayloadType& payload)
+    size_t find_node_index(const PayloadType& payload) const
     {
         auto it = std::find_if(nodes.begin(), nodes.end(),
             [&payload](const TreeNodeType& node)
@@ -86,23 +86,48 @@ public:
     /// @brief 
     /// @param node_name 
     /// @return 
-    TreeNodeType* find_node(const PayloadType& payload)
-    {
-        auto it = std::find_if(nodes.begin(), nodes.end(),
-            [&payload](const TreeNodeType& node)
-            {
-                return payload == node.m_payload;
-            });
+    // TreeNodeType* find_node(const PayloadType& payload)
+    // {
+    //     auto it = std::find_if(nodes.begin(), nodes.end(),
+    //         [&payload](const TreeNodeType& node)
+    //         {
+    //             return payload == node.m_payload;
+    //         });
 
-        if (it == nodes.end()) return nullptr;
-        return &(*it);
+    //     if (it == nodes.end()) return nullptr;
+    //     return &(*it);
+    // }
+
+    size_t size()
+    {
+        return nodes.size();    
     }
 
-    void insert_as_root(
-        const PayloadType& payload
-    )
+    bool contains(const PayloadType& payload) const
     {
-        nodes.insert(nodes.begin(), TreeNodeType{ payload });
+        return find_node_index(payload) != VecTree_NullIndex;
+    }
+
+    // Used for debug pritning...
+    auto get_node_info(const PayloadType& payload) const
+    {
+        auto index = find_node_index(payload);
+        assert(index != VecTree_NullIndex);
+        const auto& node = nodes[index];
+        return std::make_tuple(node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
+    }
+
+    // For inspection (and transform traversal?)
+    auto get_node_info_at(size_t index) const
+    {
+        assert(index != VecTree_NullIndex);
+        const auto& node = nodes[index];
+        return std::make_tuple(node.m_payload, node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
+    }
+
+    void insert_as_root(const PayloadType& payload)
+    {
+        nodes.insert(nodes.begin(), TreeNodeType{ .m_payload = payload });
     }
 
     /// @brief Insert a node
@@ -111,12 +136,10 @@ public:
     /// @return True if insertion was successfull, false otherwise
     bool insert(
         const PayloadType& payload,
-        // const std::string& name,
         const PayloadType& parent_payload
-        // const std::string& parent_name
     )
     {
-        auto node = TreeNodeType{ payload };
+        auto node = TreeNodeType{ .m_payload = payload };
 
         // No parent given - insert as root
         // if (!parent_name.size())
@@ -209,7 +232,7 @@ public:
     /// Useful for hierarchical transformations. The tree is optimized for this type of traversal.
     /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
     template<class F>
-        requires std::invocable<F, TreeNodeType&, TreeNodeType&, size_t, size_t>
+        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
     void traverse_progressive(const PayloadType& payload,
         const F& func)
     {
@@ -224,7 +247,7 @@ public:
             size_t child_index = node_index + 1;
             for (int j = 0; j < node.m_nbr_children; j++)
             {
-                func(nodes[child_index], node, child_index, node_index);
+                func(nodes[child_index].m_payload, node.m_payload, child_index, node_index);
                 child_index += nodes[child_index].m_branch_stride;
             }
         }
@@ -235,7 +258,7 @@ public:
     /// The tree is optimized for this type of traversal.
     /// F is a function of type void(NodeType&, size_t), where the second argument is node index
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t>
+        requires std::invocable<F, PayloadType&, size_t>
     void traverse_depthfirst(
         size_t node_index,
         const F& func)
@@ -248,19 +271,19 @@ public:
         auto& node = nodes[node_index];
         for (int i = 0; i < node.m_branch_stride; i++)
         {
-            func(nodes[node_index + i], node_index + i);
+            func(nodes[node_index + i].m_payload, node_index + i);
         }
     }
 
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t>
-    void traverse_depthfirst(const PayloadType& payload, const F& func)
+        requires std::invocable<F, PayloadType&, size_t>
+    void traverse_depthfirst(const PayloadType& start_payload, const F& func)
     {
-        return traverse_depthfirst(find_node_index(payload), func);
+        return traverse_depthfirst(find_node_index(start_payload), func);
     }
 
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t>
+        requires std::invocable<F, PayloadType&, size_t>
     void traverse_depthfirst(const F& func)
     {
         return traverse_depthfirst(0, func);
@@ -272,20 +295,20 @@ public:
     /// F is a function of type void(NodeType&, size_t, size_t),
     /// where the second argument is node index, and the third argument is node level.
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t, size_t>
+        requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
-        size_t node_index,
+        size_t start_index,
         const F& func)
     {
         if (!nodes.size()) return;
         // auto node_index = find_node_index(payload);
-        assert(node_index != VecTree_NullIndex);
-        assert(node_index >= 0);
-        assert(node_index < nodes.size());
+        assert(start_index != VecTree_NullIndex);
+        assert(start_index >= 0);
+        assert(start_index < nodes.size());
 
         std::vector<std::pair<size_t, size_t>> stack;
-        stack.reserve(nodes[node_index].m_branch_stride);
-        stack.push_back({ node_index, 0 });
+        stack.reserve(nodes[start_index].m_branch_stride);
+        stack.push_back({ start_index, 0 });
 
         while (!stack.empty())
         {
@@ -293,7 +316,7 @@ public:
             stack.pop_back();
 
             auto& node = nodes[index];
-            func(node, index, level);
+            func(node.m_payload, index, level);
 
             std::vector<std::pair<size_t, size_t>> child_stack;
             stack.reserve(node.m_nbr_children);
@@ -308,14 +331,14 @@ public:
     }
 
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t, size_t>
-    void traverse_depthfirst(const PayloadType& payload, const F& func)
+        requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(const PayloadType& start_payload, const F& func)
     {
-        return traverse_depthfirst(find_node_index(payload), func);
+        return traverse_depthfirst(find_node_index(start_payload), func);
     }
 
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t, size_t>
+        requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(const F& func)
     {
         return traverse_depthfirst(0, func);
