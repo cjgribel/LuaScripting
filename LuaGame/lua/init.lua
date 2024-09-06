@@ -151,7 +151,7 @@ audio_manager:setEffectVolume(config.sounds.element_explode, 32)
 
 -- Game root entity
 -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-local game_entity = registry:create()
+game_entity = registry:create() -- global for now so it's reachable to phases
 -- Header
 registry:emplace(game_entity, HeaderComponent("GameRoot"))
 -- SG
@@ -172,9 +172,10 @@ local phasemanager_entity = create_phasemanager_entity(game_entity)
 log("Lua init done")
 print('Lua init script done')
 
+-- destroy()
 -- REMOVE FROM SG TEST
---print('Erasing player entity node from SG')
---scenegraph:erase_entity(player_entity)
+--print('Removing player entity node from SG')
+--scenegraph:remove_entity(player_entity)
 -- -> will erase root & all remaining nodes
---print('Erasing game root entity node from SG')
---scenegraph:erase_entity(game_entity)
+--print('Removing game root entity node from SG')
+--scenegraph:remove_entity(game_entity)

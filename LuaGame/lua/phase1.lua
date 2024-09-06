@@ -19,7 +19,7 @@ function phase1:init()
         
         -- SG
         -- Note: this behavior is owned by PhaseManager and has no self.id()
-        --scenegraph:add_entity_as_root(entity)
+        scenegraph:add_entity(entity, game_entity)
 
         table.insert(self.entities, entity)
     end
@@ -55,8 +55,13 @@ function phase1:destroy()
     log("phase1 ends, flagging " .. #self.entities .. " entities for destruction")
 
     for _, entity in ipairs(self.entities) do
-        --registry:destroy(entity)
+
+        -- Remove from SG
+        scenegraph:remove_entity(entity)
+
+        -- Flag for destruction
         flag_entity_for_destruction(entity)
+
     end
 
     -- Clear the entities list after destroying them

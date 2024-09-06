@@ -1086,7 +1086,7 @@ bool Scene::init(const v2i& windowSize)
                 scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
-            my_table.set_function("erase_entity", [&](sol::table self, entt::entity entity) {
+            my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
                 bool result = scenegraph.erase_node(entity);
                 assert(result);
                 // Debug print SG

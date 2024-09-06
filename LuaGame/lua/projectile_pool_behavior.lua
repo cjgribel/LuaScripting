@@ -30,6 +30,7 @@ end
 
 -- Update function for projectiles
 function ProjectilePool:update(dt)
+
     for i = 1, ProjectilePool.activeCount do
         local projectile = ProjectilePool.pool[i]
         -- Update projectile logic here
@@ -45,7 +46,19 @@ function ProjectilePool:on_collision(x, y, nx, ny, collider_index, entity)
 end
 
 function ProjectilePool:destroy()
+
     print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
+
+    --for _, entity in ipairs(self.entities) do
+
+        -- Remove from SG
+        --scenegraph:remove_entity(entity)
+
+        -- Flag for destruction
+        --flag_entity_for_destruction(entity)
+
+    --end
+
 end
 
 -- Get an inactive projectile from the pool
@@ -71,12 +84,15 @@ function ProjectilePool:get()
 end
 
 function ProjectilePool:is_active(entity)
+
     local index = self.entityToIndex[entity]
     --return self.pool[index].active
     return index <= self.activeCount
+
 end
 
 function ProjectilePool:activate_entity(entity, is_active)
+
     self.owner:get(entity, CircleColliderGridComponent).is_active = is_active
     self.owner:get(entity, QuadGridComponent).is_active = is_active
 
