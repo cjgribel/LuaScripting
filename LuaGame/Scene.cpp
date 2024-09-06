@@ -932,7 +932,15 @@ namespace Inspector
 
         //
         if (scenegraph.size())
-            inspect_scene_graph_node(scenegraph, registry);
+        {
+            // For all roots ...
+            size_t i = 0;
+            while (i < scenegraph.tree.size())
+            {
+                inspect_scene_graph_node(scenegraph, registry, i);
+                i += scenegraph.tree.nodes[i].m_branch_stride;
+            }
+        }
 
         ImGui::End(); // Window
     }
@@ -1245,9 +1253,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1471,7 +1479,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-} // anon
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1639,7 +1647,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
                 renderer->pop_states<m4f, Renderer::Color4u>();
             }
         }
-}
+    }
 #endif
 
     // Add some test particles

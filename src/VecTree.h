@@ -98,7 +98,7 @@ public:
     //     return &(*it);
     // }
 
-    size_t size()
+    inline size_t size() const
     {
         return nodes.size();
     }
@@ -301,14 +301,19 @@ public:
         requires std::invocable<F, PayloadType&, size_t>
     void traverse_depthfirst(const PayloadType& start_payload, const F& func)
     {
-        return traverse_depthfirst(find_node_index(start_payload), func);
+        traverse_depthfirst(find_node_index(start_payload), func);
     }
 
     template<class F>
         requires std::invocable<F, PayloadType&, size_t>
     void traverse_depthfirst(const F& func)
     {
-        return traverse_depthfirst(0, func);
+        size_t i = 0;
+        while (i < size())
+        {
+            traverse_depthfirst(i, func);
+            i += nodes[i].m_branch_stride;
+        }
     }
 
     /// @brief Traverse tree depth-first with level information
@@ -356,14 +361,19 @@ public:
         requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(const PayloadType& start_payload, const F& func)
     {
-        return traverse_depthfirst(find_node_index(start_payload), func);
+        traverse_depthfirst(find_node_index(start_payload), func);
     }
 
     template<class F>
         requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(const F& func)
     {
-        return traverse_depthfirst(0, func);
+        size_t i = 0;
+        while (i < size())
+        {
+            traverse_depthfirst(i, func);
+            i += nodes[i].m_branch_stride;
+        }
     }
 
     /// @brief Traverse tree breadth-first (level-order).

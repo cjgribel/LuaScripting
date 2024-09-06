@@ -19,7 +19,7 @@ function phase1:init()
         
         -- SG
         -- Note: this behavior is owned by PhaseManager and has no self.id()
-        scenegraph:add_entity(entity, game_entity)
+        scenegraph:add_entity_as_root(entity)
 
         table.insert(self.entities, entity)
     end

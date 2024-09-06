@@ -151,7 +151,7 @@ audio_manager:setEffectVolume(config.sounds.element_explode, 32)
 
 -- Game root entity
 -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-game_entity = registry:create() -- global for now so it's reachable to phases
+local game_entity = registry:create() -- global for now so it's reachable to phases
 -- Header
 registry:emplace(game_entity, HeaderComponent("GameRoot"))
 -- SG
