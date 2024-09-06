@@ -6,7 +6,7 @@ local phase1 = {
     entities = {},
     timer = 0.0,
     dur = 15.0,
-    nbr_enemies = 1,
+    nbr_enemies = 5,
     start_nbr_killed
 }
 
@@ -14,13 +14,20 @@ function phase1:init()
 
     -- Add entities
     for i = 1, self.nbr_enemies do
-        table.insert(self.entities, prefabloaders.bouncing_enemy_cross(0xffffffff))
+
+        local entity = prefabloaders.bouncing_enemy_cross(0xffffffff)
+        
+        -- SG
+        -- Note: this behavior is owned by PhaseManager and has no self.id()
+        --scenegraph:add_entity_as_root(entity)
+
+        table.insert(self.entities, entity)
     end
 
     self.start_nbr_killed = config.enemy_kill_count
 
     -- Music
-    audio_manager:fadeInMusic(config.sounds.music_lvl1, 1, 4000)
+    --audio_manager:fadeInMusic(config.sounds.music_lvl1, 1, 4000)
 
     -- Log
     log("phase1: loaded " .. #self.entities .. " entities")

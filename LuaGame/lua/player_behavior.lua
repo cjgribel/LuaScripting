@@ -113,7 +113,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         -- Reset
         --transform.x, transform.y = config.bounds.right, config.bounds.bottom
         
-        -- Sound
+        -- Sound (death)
         --audio_manager:playEffect(config.sounds.player_death, 0)
 
         self.last_death_time = self.time

@@ -26,10 +26,13 @@ function random_color()
     return color
 end
 
-local function create_projectile_pool_entity()
+local function create_projectile_pool_entity(parent_entity)
 
     local entity = registry:create()
     --attach_entity_to_scenegraph(entity, "ProjectilePool", "root");
+
+    -- SG
+    scenegraph:add_entity(entity, parent_entity)
 
     -- Header
     registry:emplace(entity, HeaderComponent("ProjectilePool"))
@@ -39,9 +42,12 @@ local function create_projectile_pool_entity()
     return entity
 end
 
-local function create_player_entity(size, color, projectile_pool)
+local function create_player_entity(size, color, projectile_pool, parent_entity)
     
     local entity = registry:create()
+
+    -- SG
+    scenegraph:add_entity(entity, parent_entity)
 
     -- Header
     registry:emplace(entity, HeaderComponent("Player"))
@@ -84,11 +90,13 @@ local function create_background_entity(size, color)
     return entity
 end
 
-local function create_phasemanager_entity()
+local function create_phasemanager_entity(parent_entity)
 
     local entity = registry:create()
-    --attach_entity_to_scenegraph(entity, "PhaseManager", "root");
     
+    -- SG
+    scenegraph:add_entity(entity, parent_entity)
+
     -- Header
     registry:emplace(entity, HeaderComponent("PhaseManager"))
 
@@ -151,20 +159,15 @@ scenegraph:add_entity_as_root(game_entity)
 
 -- Projectile pool
 log("Creating projectile pool...")
-local projectilepool_entity = create_projectile_pool_entity()
+local projectilepool_entity = create_projectile_pool_entity(game_entity)
 local projectilepool_table = get_script(registry, projectilepool_entity, "projectile_pool_behavior")
 
 -- Create player(s)
 log("Creating player...")
-local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table)
--- SG
-scenegraph:add_entity(player_entity, game_entity)
---attach_entity_to_scenegraph(entity, "Player", "root");
+local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table, game_entity)
 
 log("Creating phases...")
-local phasemanager_entity = create_phasemanager_entity()
--- SG
-scenegraph:add_entity(phasemanager_entity, game_entity)
+local phasemanager_entity = create_phasemanager_entity(game_entity)
 
 log("Lua init done")
 print('Lua init script done')

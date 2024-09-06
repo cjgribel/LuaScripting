@@ -7,23 +7,28 @@ local phase4 = require("phase4")
 
 local behavior = {
     current_phase = nil,
-    phases = {phase1, phase2, phase3, phase4}, -- Add your phases here
+    phases = {phase1, phase2, phase3, phase4}, -- Phases
     current_phase_index = 1,
 }
 
 function behavior:init()
+
     print('phase_behavior [#' .. self.id() .. '] init ()', self)
     self:load_phase(self.phases[self.current_phase_index])
+
 end
 
 function behavior:load_phase(phase)
+
     if self.current_phase then
         self.current_phase:destroy()
     end
+    
     self.current_phase = phase
     if self.current_phase then
         self.current_phase:init()
     end
+
 end
 
 function behavior:update(dt)
@@ -60,9 +65,11 @@ function behavior:on_collision(x, y, nx, ny, collider_index, entity)
 end
 
 function behavior:destroy()
+
     if self.current_phase then
         self.current_phase:destroy()
     end
+
 end
 
 return behavior

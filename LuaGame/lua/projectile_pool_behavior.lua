@@ -6,7 +6,7 @@ ProjectilePool = {
     pool = {},
     entityToIndex = {},
     activeCount = 0,
-    poolSize = 100
+    poolSize = 128
 }
 
 -- Initialize the pool
@@ -14,10 +14,15 @@ function ProjectilePool:init()
 
     -- Create projectiles
     for i = 1, self.poolSize do
+
         local entity = prefabloaders.projectile(0.2, self)
+
+        -- SG
+        scenegraph:add_entity(entity, self.id())
 
         table.insert(self.pool, { entity = entity })
         self.entityToIndex[entity] = i
+
     end
 
     log("Pooled " .. self.poolSize .. " projectiles")

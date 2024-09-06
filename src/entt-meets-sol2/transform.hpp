@@ -4,6 +4,10 @@
 
 #include <sstream>
 
+#include <entt/entt.hpp>
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp>
+
 #include "imgui.h" // If GUI code is here
 
 #include "meta_literals.h" // for entt literals
@@ -65,7 +69,7 @@ void register_transform(sol::state& lua)
     );
     // clang-format on
 
-    // Note: append meta sssigned to type by register_meta_component() in bond.hpp
+    // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
     entt::meta<Transform>()
         .type("Transform"_hs).prop(display_name_hs, "Transform")
 

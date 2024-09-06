@@ -5,7 +5,7 @@ local phase2 = {
     name = 'Phase 2',
     entities = {},
     timer = 0.0,
-    nbr_enemies = 1,
+    nbr_enemies = 3,
     start_nbr_killed
 }
 
