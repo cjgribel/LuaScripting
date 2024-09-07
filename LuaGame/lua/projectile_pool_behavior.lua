@@ -20,7 +20,7 @@ function ProjectilePool:init()
         -- SG
         scenegraph:add_entity(entity, self.id())
 
-        table.insert(self.pool, { entity = entity })
+        table.insert(self.pool, entity)
         self.entityToIndex[entity] = i
 
     end
@@ -68,17 +68,17 @@ function ProjectilePool:get()
 
     if self.activeCount < self.poolSize then
         self.activeCount = self.activeCount + 1
-        local projectile = self.pool[self.activeCount]
+        local projectile_entity = self.pool[self.activeCount]
         
         --projectile.active = true
 
-        self:activate_entity(projectile.entity, true)
+        self:activate_entity(projectile_entity, true)
         --local circle_collider = self.owner:get(projectile.entity, CircleColliderComponent)
         --local quad = self.owner:get(projectile.entity, QuadComponent)
         --circle_collider.is_active, quad.is_visible = true, true
 
         --print(self.activeCount)
-        return projectile.entity
+        return projectile_entity
     end
     return nil -- Pool exhausted
 end
@@ -122,7 +122,7 @@ function ProjectilePool:release(entity)
         return
     end
 
-    local projectile = self.pool[index]
+    local projectile_entity = self.pool[index]
     --projectile.active = false
     
     if index ~= self.activeCount then
@@ -133,8 +133,8 @@ function ProjectilePool:release(entity)
         self.pool[index], self.pool[self.activeCount] = self.pool[self.activeCount], self.pool[index]
         
         -- Update the entityToIndex mapping
-        self.entityToIndex[lastActiveProjectile.entity] = index
-        self.entityToIndex[projectile.entity] = self.activeCount
+        self.entityToIndex[lastActiveProjectile] = index
+        self.entityToIndex[projectile_entity] = self.activeCount
     end
     
     self.activeCount = self.activeCount - 1
