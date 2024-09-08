@@ -565,7 +565,10 @@ int main(int argc, char* argv[])
                 float available_width = ImGui::GetContentRegionAvail().x;
                 if (ImGui::Button("Reload Scene", ImVec2(available_width, 0.0f)))
                 {
+                    std::cout << "Destroying Scene from main ..." << std::endl;
                     scene->destroy();
+
+                    std::cout << "Creating new Scene from main ..." << std::endl;
                     scene = std::make_shared<Scene>();
                     scene->init(gWindowSize);
                 }

@@ -6,7 +6,7 @@ ProjectilePool = {
     pool = {},
     entityToIndex = {},
     activeCount = 0,
-    poolSize = 128
+    poolSize = 8
 }
 
 -- Initialize the pool
@@ -47,17 +47,18 @@ end
 
 function ProjectilePool:destroy()
 
-    print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
+    print("ProjectilePool:destroy()" .. self.id());
+    --print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
 
-    --for _, entity in ipairs(self.entities) do
+    for _, entity in ipairs(self.pool) do
 
         -- Remove from SG
-        --scenegraph:remove_entity(entity)
+        scenegraph:remove_entity(entity)
 
         -- Flag for destruction
-        --flag_entity_for_destruction(entity)
+        flag_entity_for_destruction(entity)
 
-    --end
+    end
 
 end
 

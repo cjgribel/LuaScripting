@@ -2,6 +2,19 @@
 -- Adjust the package path to include the "../../LuaGame/lua" directory
 package.path = package.path .. ";../../LuaGame/lua/?.lua"
 
+game = {
+
+}
+
+function game:init()
+    print("game:init() called")
+end
+
+function game:destroy()
+    print("game:destroy() called")
+end
+
+-- remove local here and make it global to entire lua state?
 local prefabloaders = require("prefabs")
 
 PlayerCollisionBit = 0x1
@@ -173,9 +186,14 @@ log("Lua init done")
 print('Lua init script done')
 
 -- destroy()
--- REMOVE FROM SG TEST
---print('Removing player entity node from SG')
+-- Remove from SG
+--scenegraph:remove_entity(phasemanager_entity)
 --scenegraph:remove_entity(player_entity)
--- -> will erase root & all remaining nodes
---print('Removing game root entity node from SG')
+--scenegraph:remove_entity(projectilepool_entity)
 --scenegraph:remove_entity(game_entity)
+
+-- Destroy entities
+--flag_entity_for_destruction(phasemanager_entity)
+--flag_entity_for_destruction(player_entity)
+--flag_entity_for_destruction(projectilepool_entity)
+--flag_entity_for_destruction(game_entity)

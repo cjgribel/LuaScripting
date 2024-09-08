@@ -60,7 +60,7 @@ end
 
 function node:destroy()
 
-	--print('bounce_behavior [#' .. self.id() .. '] destroy()', self)
+	print('bounce_behavior:destroy() #' .. self.id())
 
 end
 

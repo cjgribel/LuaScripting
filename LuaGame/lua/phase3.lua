@@ -5,7 +5,7 @@ local phase3 = {
     name = 'Phase 3',
     entities = {},
     timer = 0.0,
-    nbr_enemies = 1,
+    nbr_enemies = 50,
     start_nbr_killed
 }
 
@@ -44,6 +44,7 @@ end
 function phase3:destroy()
 
     log("phase3 ends, flagging " .. #self.entities .. " entities for destruction")
+    print("phase3:destroy()")
 
     for _, entity in ipairs(self.entities) do
         --registry:destroy(entity, registry:valid(entity))

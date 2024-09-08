@@ -6,7 +6,7 @@ local phase1 = {
     entities = {},
     timer = 0.0,
     dur = 15.0,
-    nbr_enemies = 5,
+    nbr_enemies = 1,
     start_nbr_killed
 }
 
@@ -53,6 +53,7 @@ end
 function phase1:destroy()
 
     log("phase1 ends, flagging " .. #self.entities .. " entities for destruction")
+    print("phase1:destroy()")
 
     for _, entity in ipairs(self.entities) do
 
@@ -69,7 +70,6 @@ function phase1:destroy()
     
     audio_manager:fadeOutMusic(0)
 
-    --print("phase1:destroy() called")
 end
 
 return phase1

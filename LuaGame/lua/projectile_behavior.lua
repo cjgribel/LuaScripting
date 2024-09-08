@@ -51,7 +51,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
 end
 
 function node:destroy()
-	print('bye, bye! from: node #' .. self.id())
+	print('projectile:destroy() #' .. self.id())
 end
 
 return node

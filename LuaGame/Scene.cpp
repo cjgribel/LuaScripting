@@ -1084,21 +1084,21 @@ bool Scene::init(const v2i& windowSize)
                 bool result = scenegraph.create_node(entity, parent_entity);
                 assert(result);
                 // Debug print SG
-                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
                 bool result = scenegraph.create_node(entity);
                 assert(result);
                 // Debug print SG
-                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
                 bool result = scenegraph.erase_node(entity);
                 assert(result);
                 // Debug print SG
-                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             // + dump_to_cout
@@ -1192,10 +1192,16 @@ bool Scene::init(const v2i& windowSize)
         // Bind observer
         bind_conditional_observer(lua, observer);
 
-        // Run init script
+        // Load & execute init script
         lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
 
-        // 
+        assert(lua["game"].valid());
+        assert(lua["game"]["init"].valid());
+        assert(lua["game"]["destroy"].valid());
+        lua["game"]["init"]();
+        // lua["game"]["destroy"]();
+
+        // To test inspection
         auto debug_entity = registry.create();
         registry.emplace<DebugClass>(debug_entity);
 
@@ -1302,10 +1308,16 @@ void Scene::update(float time_s, float deltaTime_s)
     particleBuffer.update(deltaTime_s);
 
     script_system_update(registry, deltaTime_s);
+
     // Entity destruction takes place outside the update loop
     if (entities_pending_destruction.size())
     {
-        eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
+        //
+        std::cout << "Destroying " << (int)entities_pending_destruction.size() << " entities... ";
+        for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
+        std::cout << std::endl;
+
+        //eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
         for (auto entity : entities_pending_destruction)
             registry.destroy(entity);
         entities_pending_destruction.clear();
@@ -1672,13 +1684,22 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 
 void Scene::destroy()
 {
-    // Explicitly destroy all ScriptedBehaviorComponent in order to invoke 
-    // registry.on_destroy<ScriptedBehaviorComponent> which in turn calls 
-    // destroy for all scripts. Simply clearing the registry won't achieve this.
-    // This must be done before the Lua state is de stroyed.
-    registry.clear<ScriptedBehaviorComponent>();
+    // Call the 
+    lua["game"]["destroy"](); // <- entities flagged for destruction ???
 
+    // NOTE: registry should be empty here, so 
+
+    // clear() seem to invoke registry.on_destroy<ScriptedBehaviorComponent>,
+    // which will cause destroy() to be called for all behaviors
+    // https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system
+    //
+    // Explicitly destroy all ScriptedBehaviorComponent, in order to invoke 
+    // registry.on_destroy<ScriptedBehaviorComponent>
+    // registry.clear<ScriptedBehaviorComponent>();
+    std::cout << "registry.clear()" << std::endl;
     registry.clear();
+
+    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
     is_initialized = false;
 }

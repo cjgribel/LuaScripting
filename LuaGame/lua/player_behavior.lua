@@ -124,7 +124,8 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
 end
 
 function node:destroy()
-    print('player_behavior [#' .. self.id() .. '] destroy()', self)
+
+    print("player_behavior:destroy() " .. self.id() )
 end
 
 return node

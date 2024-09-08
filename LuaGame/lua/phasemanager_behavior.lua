@@ -66,6 +66,8 @@ end
 
 function behavior:destroy()
 
+    print("phasemanager:destroy() " .. self.id());
+
     if self.current_phase then
         self.current_phase:destroy()
     end
