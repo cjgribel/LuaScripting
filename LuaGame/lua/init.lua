@@ -3,15 +3,57 @@
 package.path = package.path .. ";../../LuaGame/lua/?.lua"
 
 game = {
-
+    game_entity = {}
 }
 
 function game:init()
+
     print("game:init() called")
+
+    --self.foo = 0
+
+    -- Game root entity
+    -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
+    self.game_entity = registry:create() -- global for now so it's reachable to phases
+    -- Header
+    registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
+    -- SG
+    scenegraph:add_entity_as_root(self.game_entity)
+
+    -- Projectile pool
+    log("Creating projectile pool...")
+    self.projectilepool_entity = self:create_projectile_pool_entity(self.game_entity)
+    local projectilepool_table = get_script(registry, self.projectilepool_entity, "projectile_pool_behavior")
+
+    -- Create player(s)
+    log("Creating player...")
+    self.player_entity = self:create_player_entity(0.5, 0xffffffff, projectilepool_table, self.game_entity)
+
+    log("Creating phases...")
+    self.phasemanager_entity = self:create_phasemanager_entity(self.game_entity)
+
+    log("Lua init done")
+    print('Lua init script done')
+
 end
 
 function game:destroy()
+
     print("game:destroy() called")
+
+    -- destroy()
+    -- Remove from SG
+    scenegraph:remove_entity(self.phasemanager_entity)
+    scenegraph:remove_entity(self.player_entity)
+    --scenegraph:remove_entity(self.projectilepool_entity)
+    --scenegraph:remove_entity(self.game_entity)
+
+    -- Destroy entities
+    flag_entity_for_destruction(self.phasemanager_entity)
+    flag_entity_for_destruction(self.player_entity)
+    flag_entity_for_destruction(self.projectilepool_entity)
+    flag_entity_for_destruction(self.game_entity)
+
 end
 
 -- remove local here and make it global to entire lua state?
@@ -39,7 +81,7 @@ function random_color()
     return color
 end
 
-local function create_projectile_pool_entity(parent_entity)
+function game:create_projectile_pool_entity(parent_entity)
 
     local entity = registry:create()
     --attach_entity_to_scenegraph(entity, "ProjectilePool", "root");
@@ -55,7 +97,7 @@ local function create_projectile_pool_entity(parent_entity)
     return entity
 end
 
-local function create_player_entity(size, color, projectile_pool, parent_entity)
+function game:create_player_entity(size, color, projectile_pool, parent_entity)
     
     local entity = registry:create()
 
@@ -103,7 +145,7 @@ local function create_background_entity(size, color)
     return entity
 end
 
-local function create_phasemanager_entity(parent_entity)
+function game:create_phasemanager_entity(parent_entity)
 
     local entity = registry:create()
     
@@ -158,42 +200,7 @@ audio_manager:registerEffect(config.sounds.player_death, "../../assets/sounds/Mi
 audio_manager:registerEffect(config.sounds.element_explode, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
 -- Volume
 audio_manager:setMasterVolume(128)  -- Set master volume to 50%
-audio_manager:setMusicVolume("music1", 64)  -- Set music volume to 25%
+--audio_manager:setMusicVolume("music1", 64)  -- Set music volume to 25%
 audio_manager:setEffectVolume(config.sounds.projectile_fire1, 32)
 audio_manager:setEffectVolume(config.sounds.element_explode, 32)
 
--- Game root entity
--- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-local game_entity = registry:create() -- global for now so it's reachable to phases
--- Header
-registry:emplace(game_entity, HeaderComponent("GameRoot"))
--- SG
-scenegraph:add_entity_as_root(game_entity)
-
--- Projectile pool
-log("Creating projectile pool...")
-local projectilepool_entity = create_projectile_pool_entity(game_entity)
-local projectilepool_table = get_script(registry, projectilepool_entity, "projectile_pool_behavior")
-
--- Create player(s)
-log("Creating player...")
-local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table, game_entity)
-
-log("Creating phases...")
-local phasemanager_entity = create_phasemanager_entity(game_entity)
-
-log("Lua init done")
-print('Lua init script done')
-
--- destroy()
--- Remove from SG
---scenegraph:remove_entity(phasemanager_entity)
---scenegraph:remove_entity(player_entity)
---scenegraph:remove_entity(projectilepool_entity)
---scenegraph:remove_entity(game_entity)
-
--- Destroy entities
---flag_entity_for_destruction(phasemanager_entity)
---flag_entity_for_destruction(player_entity)
---flag_entity_for_destruction(projectilepool_entity)
---flag_entity_for_destruction(game_entity)

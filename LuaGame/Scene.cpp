@@ -1095,10 +1095,12 @@ bool Scene::init(const v2i& windowSize)
                 return result;
                 });
             my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
+                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                std::cout << "remove_entity " << entt::to_integral(entity) << std::endl;
                 bool result = scenegraph.erase_node(entity);
                 assert(result);
                 // Debug print SG
-                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
                 return result;
                 });
             // + dump_to_cout
@@ -1198,7 +1200,7 @@ bool Scene::init(const v2i& windowSize)
         assert(lua["game"].valid());
         assert(lua["game"]["init"].valid());
         assert(lua["game"]["destroy"].valid());
-        lua["game"]["init"]();
+        lua["game"]["init"](lua["game"]);
         // lua["game"]["destroy"]();
 
         // To test inspection
@@ -1684,8 +1686,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 
 void Scene::destroy()
 {
+    std::cout << "Scene::destroy()" << std::endl;
+    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
+
     // Call the 
-    lua["game"]["destroy"](); // <- entities flagged for destruction ???
+    lua["game"]["destroy"](lua["game"]); // <- entities flagged for destruction ???
+
+    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
     // NOTE: registry should be empty here, so 
 
@@ -1702,4 +1709,6 @@ void Scene::destroy()
     std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
     is_initialized = false;
+
+    std::cout << "Done: Scene::destroy()" << std::endl;
 }
