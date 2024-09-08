@@ -169,7 +169,7 @@ public:
             prit--;
         }
 
-        // Update parent indices
+        // Update parent offsets
         // Iterate forward up until the next root and increment parent ofs'
         // ranging to the insertion
         //
@@ -201,14 +201,15 @@ public:
         if (node_index == VecTree_NullIndex) return false;
 
         auto& node = nodes[node_index];
-        auto nbr_children = node.m_nbr_children;
+        //auto nbr_children = node.m_nbr_children;
         auto branch_stride = node.m_branch_stride;
 
         // Parent node
         auto pit = nodes.begin() + (node_index - node.m_parent_ofs);
 
-        // From parent and up the tree, update branch strides that range over
-        // the to-be-removed branch
+        // From parent and up the tree, 
+        // update branch strides that range over the node
+        //
         auto prit = pit;
         while (prit >= nodes.begin())
         {
@@ -219,6 +220,20 @@ public:
             if (!prit->m_parent_ofs)
                 break;
             prit--;
+        }
+
+        // From after the node's branch, 
+        // update parent offsets that range backward past the enode
+        //
+        auto pfit = nodes.begin() + node_index + branch_stride; 
+        //auto pfit = pit + branch_stride; // pit + 1;
+        while (pfit < nodes.end())
+        {
+            if (!pfit->m_parent_ofs) // discontinue at succeeding root
+                break;
+            if (pfit->m_parent_ofs >= (unsigned)std::distance(pit, pfit))
+                pfit->m_parent_ofs -= branch_stride;
+            pfit++;
         }
 
         pit->m_nbr_children--;
