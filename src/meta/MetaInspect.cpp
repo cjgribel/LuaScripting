@@ -22,6 +22,7 @@ namespace Editor {
         entt::entity entity, 
         entt::meta_type meta_type_with_name)
     {
+        assert(registry.valid(entity));
         auto entity_str = std::to_string(entt::to_integral(entity));
 
         // No meta type to use
@@ -33,6 +34,7 @@ namespace Editor {
 
         // Find storage for component type
         auto storage = registry.storage(meta_type_with_name.id());
+        if (!storage) return entity_str;
         if (!storage->contains(entity)) return entity_str;
 
         // Instantiate component
