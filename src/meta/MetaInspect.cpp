@@ -22,8 +22,11 @@ namespace Editor {
         entt::entity entity, 
         entt::meta_type meta_type_with_name)
     {
-        assert(registry.valid(entity));
+        //assert(registry.valid(entity));
         auto entity_str = std::to_string(entt::to_integral(entity));
+
+        // DEBUG
+        if (!registry.valid(entity)) entity_str = entity_str + "(invalid)";
 
         // No meta type to use
         if (!meta_type_with_name) return entity_str;

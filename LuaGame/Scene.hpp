@@ -16,7 +16,7 @@
 
 class Scene : public eeng::SceneBase
 {
-protected:
+// protected:
     sol::state lua{};
 
     entt::registry registry{};
@@ -34,6 +34,8 @@ protected:
 
     ConditionalObserver observer;
     ParticleBuffer particleBuffer{};
+
+    void destroy_entities();
 
 public:
     bool init(const v2i& windowSize) override;

@@ -60,6 +60,9 @@ function ProjectilePool:destroy()
 
     end
 
+    -- Remove from SG
+    scenegraph:remove_entity(self.id())
+
 end
 
 -- Get an inactive projectile from the pool

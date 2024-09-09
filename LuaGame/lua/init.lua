@@ -41,10 +41,11 @@ function game:destroy()
 
     print("game:destroy() called")
 
+    -- THESE SHOULD ALL BE DONE IN destroy() -> including a "game entity" (probably skip it for now - use global scope for that)
     -- destroy()
     -- Remove from SG
-    scenegraph:remove_entity(self.phasemanager_entity)
-    scenegraph:remove_entity(self.player_entity)
+--    scenegraph:remove_entity(self.phasemanager_entity) -- -> destroy?
+--    scenegraph:remove_entity(self.player_entity) -- -> destroy?
     --scenegraph:remove_entity(self.projectilepool_entity)
     --scenegraph:remove_entity(self.game_entity)
 

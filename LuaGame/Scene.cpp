@@ -1012,6 +1012,28 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
     // When this function exits, Lua will exhibit default behavior and abort()
 }
 
+void Scene::destroy_entities()
+{
+    int count = 0;
+    while (entities_pending_destruction.size())
+    {
+         auto entity = entities_pending_destruction.back();
+         entities_pending_destruction.pop_back();
+
+        // Destroy entity. May lead to additional entities being added to the queue.
+        registry.destroy(entity);
+
+        // Remove from scene graph
+        if (scenegraph.tree.contains(entity))
+            scenegraph.erase_node(entity);
+
+        count++;
+    }
+    
+    if (count)
+        eeng::Log::log("%i entities destroyed", count);
+}
+
 bool Scene::init(const v2i& windowSize)
 {
     assert(!is_initialized);
@@ -1095,13 +1117,13 @@ bool Scene::init(const v2i& windowSize)
                 return result;
                 });
             my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
-                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                std::cout << "remove_entity " << entt::to_integral(entity) << std::endl;
-                bool result = scenegraph.erase_node(entity);
-                assert(result);
-                // Debug print SG
-                scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                return result;
+                // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                // std::cout << "remove_entity " << entt::to_integral(entity) << std::endl;
+                // bool result = scenegraph.erase_node(entity);
+                // assert(result);
+                // // Debug print SG
+                // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+                // return result;
                 });
             // + dump_to_cout
             lua["scenegraph"] = my_table;
@@ -1311,19 +1333,28 @@ void Scene::update(float time_s, float deltaTime_s)
 
     script_system_update(registry, deltaTime_s);
 
-    // Entity destruction takes place outside the update loop
+    // Debug print
     if (entities_pending_destruction.size())
     {
-        //
         std::cout << "Destroying " << (int)entities_pending_destruction.size() << " entities... ";
         for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
         std::cout << std::endl;
-
-        //eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
-        for (auto entity : entities_pending_destruction)
-            registry.destroy(entity);
-        entities_pending_destruction.clear();
     }
+
+    // Entity destruction takes place outside the update loop
+    destroy_entities();
+    // if (entities_pending_destruction.size())
+    // {
+    //     //
+    //     std::cout << "Destroying " << (int)entities_pending_destruction.size() << " entities... ";
+    //     for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
+    //     std::cout << std::endl;
+
+    //     //eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
+    //     for (auto entity : entities_pending_destruction)
+    //         registry.destroy(entity);
+    //     entities_pending_destruction.clear();
+    // }
 
     // Placeholder collision system
 #if 1
@@ -1694,6 +1725,7 @@ void Scene::destroy()
 
     std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
+    destroy_entities();
     // NOTE: registry should be empty here, so 
 
     // clear() seem to invoke registry.on_destroy<ScriptedBehaviorComponent>,
@@ -1703,12 +1735,20 @@ void Scene::destroy()
     // Explicitly destroy all ScriptedBehaviorComponent, in order to invoke 
     // registry.on_destroy<ScriptedBehaviorComponent>
     // registry.clear<ScriptedBehaviorComponent>();
-    std::cout << "registry.clear()" << std::endl;
+    
+    {
+        std::cout << "Entities in registry: ";
+        auto view = registry.view<entt::entity>();
+        for (auto entity : view) std::cout << entt::to_integral( entity) << " ";
+        std::cout << std::endl;
+    }
     registry.clear();
 
     std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
     is_initialized = false;
+
+    scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
 
     std::cout << "Done: Scene::destroy()" << std::endl;
 }
