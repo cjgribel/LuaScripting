@@ -498,6 +498,33 @@ namespace {
     //     }
     // }
 
+
+    void dump_lua_state(sol::state& lua, sol::table tbl, const std::string& indent = "")
+    {
+        for (auto& kv : tbl)
+        {
+            sol::object key = kv.first;
+            sol::object value = kv.second;
+
+            // Assuming the key is a string for simplicity
+            std::string key_str = key.as<std::string>();
+
+            std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
+
+            std::cout << indent << key_str << " (type: " << type_name << ")\n";
+
+            if (value.get_type() == sol::type::table) {
+                dump_lua_state(lua, value.as<sol::table>(), indent + "    ");
+            }
+            else if (value.get_type() == sol::type::function) {
+                std::cout << indent << "    [function]\n";
+            }
+            else {
+                std::cout << indent << "    [" << lua["tostring"](value).get<std::string>() << "]\n";
+            }
+        }
+    }
+
     void release_script(entt::registry& registry, entt::entity entity)
     {
         auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
@@ -1087,6 +1114,7 @@ bool Scene::init(const v2i& windowSize)
             sol::lib::table);
 
         // - Start of Lua binding -
+
         lua.create_named_table("engine");
 
         lua["engine"]["entity_null"] = entt::entity{ entt::null };
@@ -1251,46 +1279,15 @@ bool Scene::init(const v2i& windowSize)
         lua["game"]["init"](lua["game"]);
         // lua["game"]["destroy"]();
 
-        // Lua binding done
-        
+        // - Lua binding done -
+
         // Inspect the Lua state
-        {
-            // Lambda function to inspect Lua tables
-            std::function<void(sol::state&, sol::table, const std::string)>
-                inspect_lua = [&](sol::state& lua, sol::table tbl, const std::string indent) 
-                {
-                for (auto& kv : tbl) 
-                {
-                    sol::object key = kv.first;
-                    sol::object value = kv.second;
+        std::cout << "Inspect Lua engine state:" << std::endl;
+        dump_lua_state(lua, lua["engine"], "    ");
+        std::cout << "Inspect Lua game state:" << std::endl;
+        dump_lua_state(lua, lua["game"], "    ");
 
-                    // Assuming the key is a string for simplicity
-                    std::string key_str = key.as<std::string>();
-
-                    // Correct usage of lua_typename with the Lua state and the type code
-                    std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
-
-                    std::cout << indent << key_str << " (" << type_name << ")\n";
-
-                    if (value.get_type() == sol::type::table) {
-                        inspect_lua(lua, value.as<sol::table>(), indent + "   ");
-                    }
-                    else if (value.get_type() == sol::type::function) {
-                        std::cout << indent << "  [function]\n";
-                    }
-                    else {
-                        std::cout << indent << "  [" << lua["tostring"](value).get<std::string>() << "]\n";
-                    }
-                }
-                };
-
-                std::cout << "Inspect Lua engine state:" << std::endl;
-                inspect_lua(lua, lua["engine"], "   ");
-                std::cout << "Inspect Lua game state:" << std::endl;
-                inspect_lua(lua, lua["game"], "   ");
-        }
-
-        // To test inspection
+        // Debugging inspection
         auto debug_entity = registry.create();
         registry.emplace<DebugClass>(debug_entity);
 
@@ -1594,7 +1591,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
-    }
+}
 
 void Scene::renderUI()
 {
