@@ -48,8 +48,7 @@ end
 
 function phase1:destroy()
 
-    log("phase1 ends, flagging " .. #self.entities .. " entities for destruction")
-    print("phase1:destroy()")
+    log("phase1 ends")
 
     for _, entity in ipairs(self.entities) do
 

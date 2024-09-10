@@ -42,8 +42,7 @@ end
 
 function phase4:destroy()
 
-    log("phase4 ends, flagging " .. #self.entities .. " entities for destruction")
-    print("phase4:destroy()")
+    log("phase4 ends")
 
     for _, entity in ipairs(self.entities) do
         flag_entity_for_destruction(entity)

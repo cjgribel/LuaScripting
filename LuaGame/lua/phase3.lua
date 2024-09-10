@@ -43,8 +43,7 @@ end
 
 function phase3:destroy()
 
-    log("phase3 ends, flagging " .. #self.entities .. " entities for destruction")
-    print("phase3:destroy()")
+    log("phase3 ends")
 
     for _, entity in ipairs(self.entities) do
         --registry:destroy(entity, registry:valid(entity))

@@ -137,6 +137,7 @@ function game:create_phasemanager_entity(parent_entity)
     -- Header
     registry:emplace(entity, HeaderComponent("PhaseManager"))
 
+    -- Behavior
     add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
     
     return entity

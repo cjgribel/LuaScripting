@@ -893,8 +893,13 @@ namespace Inspector
         auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
+        // Add entity nbr to start for clarity
+        label = "[" + std::to_string(entt::to_integral(entity)) + "] " + label;
 
-        if (ImGui::TreeNode(label.c_str(), "%s", label.c_str())) {
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
+        if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf;
+        
+        if (ImGui::TreeNodeEx(label.c_str(), flags)) {
 
             // Recursively display each child node
             int child_index = index + 1;
