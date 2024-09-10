@@ -50,7 +50,7 @@ function ProjectilePool:destroy()
     for _, entity in ipairs(self.pool) do
 
         -- Flag for destruction
-        flag_entity_for_destruction(entity)
+        engine.destroy_entity(entity)
 
     end
 

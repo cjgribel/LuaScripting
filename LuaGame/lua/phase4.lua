@@ -45,7 +45,7 @@ function phase4:destroy()
     log("phase4 ends")
 
     for _, entity in ipairs(self.entities) do
-        flag_entity_for_destruction(entity)
+        engine.destroy_entity(entity)
     end
 
     -- Clear the entities list after destroying them

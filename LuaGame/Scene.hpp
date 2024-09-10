@@ -35,7 +35,7 @@ class Scene : public eeng::SceneBase
     ConditionalObserver observer;
     ParticleBuffer particleBuffer{};
 
-    void destroy_entities();
+    void destroy_pending_entities();
 
 public:
     bool init(const v2i& windowSize) override;

@@ -53,7 +53,7 @@ function phase1:destroy()
     for _, entity in ipairs(self.entities) do
 
         -- Flag for destruction
-        flag_entity_for_destruction(entity)
+        engine.destroy_entity(entity)
 
     end
 

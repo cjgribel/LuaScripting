@@ -40,10 +40,10 @@ function game:destroy()
     print("game:destroy() called")
 
     -- Destroy entities
-    flag_entity_for_destruction(self.phasemanager_entity)
-    flag_entity_for_destruction(self.player_entity)
-    flag_entity_for_destruction(self.projectilepool_entity)
-    flag_entity_for_destruction(self.game_entity)
+    engine.destroy_entity(self.phasemanager_entity)
+    engine.destroy_entity(self.player_entity)
+    engine.destroy_entity(self.projectilepool_entity)
+    engine.destroy_entity(self.game_entity)
 
 end
 

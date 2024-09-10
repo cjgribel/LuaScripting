@@ -48,7 +48,7 @@ function phase2:destroy()
 
     for _, entity in ipairs(self.entities) do
         --registry:destroy(entity, registry:valid(entity))
-        flag_entity_for_destruction(entity)
+        engine.destroy_entity(entity)
     end
 
     -- Clear the entities list after destroying them

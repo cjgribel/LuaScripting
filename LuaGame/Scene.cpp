@@ -894,11 +894,12 @@ namespace Inspector
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
         // Add entity nbr to start for clarity
-        label = "[" + std::to_string(entt::to_integral(entity)) + "] " + label;
+        label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
 
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
         if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf;
-        
+
+        ImGui::SetNextItemOpen(true);
         if (ImGui::TreeNodeEx(label.c_str(), flags)) {
 
             // Recursively display each child node
@@ -1017,7 +1018,7 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
     // When this function exits, Lua will exhibit default behavior and abort()
 }
 
-void Scene::destroy_entities()
+void Scene::destroy_pending_entities()
 {
     int count = 0;
     while (entities_pending_destruction.size())
@@ -1090,7 +1091,8 @@ bool Scene::init(const v2i& windowSize)
 
         lua["engine"]["entity_null"] = entt::entity{ entt::null };
 
-        // Creating an entity and adding it to the scene graph
+        // Create entity
+        //
         lua["engine"]["create_entity"] = [&](entt::entity parent_entity) {
             auto entity = registry.create();
             if (parent_entity == entt::null)
@@ -1103,6 +1105,13 @@ bool Scene::init(const v2i& windowSize)
                 scenegraph.create_node(entity, parent_entity);
             }
             return entity;
+            };
+
+        // Destroy entity
+        //
+        lua["engine"]["destroy_entity"] = [&](entt::entity entity) {
+            assert(registry.valid(entity));
+            entities_pending_destruction.push_back(entity);
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
@@ -1147,10 +1156,10 @@ bool Scene::init(const v2i& windowSize)
         // }
 
         // Entities are destroyed outside the regular update loop
-        lua["flag_entity_for_destruction"] = [&](entt::entity entity)
-            {
-                entities_pending_destruction.push_back(entity);
-            };
+        // lua["flag_entity_for_destruction"] = [&](entt::entity entity)
+        //     {
+        //         entities_pending_destruction.push_back(entity);
+        //     };
 
         // Logging from Lua
         lua["log"] = [&](const std::string& text)
@@ -1241,6 +1250,45 @@ bool Scene::init(const v2i& windowSize)
         assert(lua["game"]["destroy"].valid());
         lua["game"]["init"](lua["game"]);
         // lua["game"]["destroy"]();
+
+        // Lua binding done
+        
+        // Inspect the Lua state
+        {
+            // Lambda function to inspect Lua tables
+            std::function<void(sol::state&, sol::table, const std::string)>
+                inspect_lua = [&](sol::state& lua, sol::table tbl, const std::string indent) 
+                {
+                for (auto& kv : tbl) 
+                {
+                    sol::object key = kv.first;
+                    sol::object value = kv.second;
+
+                    // Assuming the key is a string for simplicity
+                    std::string key_str = key.as<std::string>();
+
+                    // Correct usage of lua_typename with the Lua state and the type code
+                    std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
+
+                    std::cout << indent << key_str << " (" << type_name << ")\n";
+
+                    if (value.get_type() == sol::type::table) {
+                        inspect_lua(lua, value.as<sol::table>(), indent + "   ");
+                    }
+                    else if (value.get_type() == sol::type::function) {
+                        std::cout << indent << "  [function]\n";
+                    }
+                    else {
+                        std::cout << indent << "  [" << lua["tostring"](value).get<std::string>() << "]\n";
+                    }
+                }
+                };
+
+                std::cout << "Inspect Lua engine state:" << std::endl;
+                inspect_lua(lua, lua["engine"], "   ");
+                std::cout << "Inspect Lua game state:" << std::endl;
+                inspect_lua(lua, lua["game"], "   ");
+        }
 
         // To test inspection
         auto debug_entity = registry.create();
@@ -1359,7 +1407,7 @@ void Scene::update(float time_s, float deltaTime_s)
     }
 
     // Entity destruction takes place outside the update loop
-    destroy_entities();
+    destroy_pending_entities();
     // if (entities_pending_destruction.size())
     // {
     //     //
@@ -1546,7 +1594,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
-}
+    }
 
 void Scene::renderUI()
 {
@@ -1742,7 +1790,7 @@ void Scene::destroy()
 
     std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
 
-    destroy_entities();
+    destroy_pending_entities();
     // NOTE: registry should be empty here, so 
 
     // clear() seem to invoke registry.on_destroy<ScriptedBehaviorComponent>,
