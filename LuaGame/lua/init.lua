@@ -10,15 +10,15 @@ function game:init()
 
     print("game:init() called")
 
-    --self.foo = 0
+    --local e = engine.entity_null
 
     -- Game root entity
     -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-    self.game_entity = registry:create() -- global for now so it's reachable to phases
+    self.game_entity = engine.create_entity(engine.entity_null) -- registry:create() -- global for now so it's reachable to phases
     -- Header
     registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
     -- SG
-    scenegraph:add_entity_as_root(self.game_entity)
+    --scenegraph:add_entity_as_root(self.game_entity)
 
     -- Projectile pool
     log("Creating projectile pool...")

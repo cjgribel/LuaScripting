@@ -1017,8 +1017,8 @@ void Scene::destroy_entities()
     int count = 0;
     while (entities_pending_destruction.size())
     {
-         auto entity = entities_pending_destruction.back();
-         entities_pending_destruction.pop_back();
+        auto entity = entities_pending_destruction.back();
+        entities_pending_destruction.pop_back();
 
         // Destroy entity. May lead to additional entities being added to the queue.
         registry.destroy(entity);
@@ -1029,7 +1029,7 @@ void Scene::destroy_entities()
 
         count++;
     }
-    
+
     if (count)
         eeng::Log::log("%i entities destroyed", count);
 }
@@ -1079,6 +1079,26 @@ bool Scene::init(const v2i& windowSize)
             sol::lib::math,
             sol::lib::os,
             sol::lib::table);
+
+        // - Start of Lua binding -
+        lua.create_named_table("engine");
+
+        lua["engine"]["entity_null"] = entt::entity{ entt::null };
+
+        // Creating an entity and adding it to the scene graph
+        lua["engine"]["create_entity"] = [&](entt::entity parent_entity) {
+            auto entity = registry.create();
+            if (parent_entity == entt::null)
+            {
+                scenegraph.create_node(entity);
+            }
+            else
+            {
+                assert(scenegraph.tree.contains(parent_entity));
+                scenegraph.create_node(entity, parent_entity);
+            }
+            return entity;
+            };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
         lua["add_script"] = &add_script;
@@ -1735,11 +1755,11 @@ void Scene::destroy()
     // Explicitly destroy all ScriptedBehaviorComponent, in order to invoke 
     // registry.on_destroy<ScriptedBehaviorComponent>
     // registry.clear<ScriptedBehaviorComponent>();
-    
+
     {
         std::cout << "Entities in registry: ";
         auto view = registry.view<entt::entity>();
-        for (auto entity : view) std::cout << entt::to_integral( entity) << " ";
+        for (auto entity : view) std::cout << entt::to_integral(entity) << " ";
         std::cout << std::endl;
     }
     registry.clear();
