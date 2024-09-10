@@ -16,10 +16,6 @@ function phase1:init()
     for i = 1, self.nbr_enemies do
 
         local entity = prefabloaders.bouncing_enemy_cross(0xffffffff)
-        
-        -- SG
-        -- Note: this behavior is owned by PhaseManager and has no self.id()
-        scenegraph:add_entity_as_root(entity)
 
         table.insert(self.entities, entity)
     end
@@ -56,9 +52,6 @@ function phase1:destroy()
     print("phase1:destroy()")
 
     for _, entity in ipairs(self.entities) do
-
-        -- Remove from SG
-        scenegraph:remove_entity(entity)
 
         -- Flag for destruction
         flag_entity_for_destruction(entity)

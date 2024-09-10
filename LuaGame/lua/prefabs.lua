@@ -2,7 +2,7 @@ local prefabloaders = {}
 
 function prefabloaders.projectile(size, projectile_pool)
     
-        local entity = registry:create()
+        local entity = engine.create_entity(projectile_pool.id())
 
         -- Header
         registry:emplace(entity, HeaderComponent("Projectile"))
@@ -31,7 +31,7 @@ end
 
 function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
 
-    local entity = registry:create()
+    local entity = engine.create_entity(engine.entity_null)
     print("Created entity ID:", entity)
     
     -- Header
@@ -90,7 +90,7 @@ end
 
 function prefabloaders.bouncing_enemy_cross(color)
 
-    local entity = registry:create()
+    local entity = engine.create_entity(engine.entity_null)
     print("prefabloaders.bouncing_enemy_cross(): created entity ID:", entity)
     
     -- Header

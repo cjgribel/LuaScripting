@@ -1111,43 +1111,35 @@ bool Scene::init(const v2i& windowSize)
         // // Add scene graph root node
         // scene_graph.create_node(root_entity, entt::null);
 
-        {
-            // Bind scene graph op's
-
-            // lua["attach_entity_to_scenegraph"] = [&](
-            //     entt::entity entity,
-            //     const std::string& node_name,
-            //     const std::string& parent_name)
-            //     {
-            //         scene_graph.create_node(entity, node_name, parent_name);
-            //     };
-            sol::table my_table = lua.create_table();
-            my_table.set_function("add_entity", [&](sol::table self, entt::entity entity, entt::entity parent_entity) {
-                bool result = scenegraph.create_node(entity, parent_entity);
-                assert(result);
-                // Debug print SG
-                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                return result;
-                });
-            my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
-                bool result = scenegraph.create_node(entity);
-                assert(result);
-                // Debug print SG
-                //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                return result;
-                });
-            my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
-                // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                // std::cout << "remove_entity " << entt::to_integral(entity) << std::endl;
-                // bool result = scenegraph.erase_node(entity);
-                // assert(result);
-                // // Debug print SG
-                // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-                // return result;
-                });
-            // + dump_to_cout
-            lua["scenegraph"] = my_table;
-        }
+        // {
+        //     // Bind scene graph op's
+        //     sol::table my_table = lua.create_table();
+        //     my_table.set_function("add_entity", [&](sol::table self, entt::entity entity, entt::entity parent_entity) {
+        //         bool result = scenegraph.create_node(entity, parent_entity);
+        //         assert(result);
+        //         // Debug print SG
+        //         //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+        //         return result;
+        //         });
+        //     my_table.set_function("add_entity_as_root", [&](sol::table self, entt::entity entity) {
+        //         bool result = scenegraph.create_node(entity);
+        //         assert(result);
+        //         // Debug print SG
+        //         //scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+        //         return result;
+        //         });
+        //     my_table.set_function("remove_entity", [&](sol::table self, entt::entity entity) {
+        //         // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+        //         // std::cout << "remove_entity " << entt::to_integral(entity) << std::endl;
+        //         // bool result = scenegraph.erase_node(entity);
+        //         // assert(result);
+        //         // // Debug print SG
+        //         // scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+        //         // return result;
+        //         });
+        //     // + dump_to_cout
+        //     lua["scenegraph"] = my_table;
+        // }
 
         // Entities are destroyed outside the regular update loop
         lua["flag_entity_for_destruction"] = [&](entt::entity entity)

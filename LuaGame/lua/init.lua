@@ -17,8 +17,6 @@ function game:init()
     self.game_entity = engine.create_entity(engine.entity_null) -- registry:create() -- global for now so it's reachable to phases
     -- Header
     registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
-    -- SG
-    --scenegraph:add_entity_as_root(self.game_entity)
 
     -- Projectile pool
     log("Creating projectile pool...")
@@ -40,14 +38,6 @@ end
 function game:destroy()
 
     print("game:destroy() called")
-
-    -- THESE SHOULD ALL BE DONE IN destroy() -> including a "game entity" (probably skip it for now - use global scope for that)
-    -- destroy()
-    -- Remove from SG
---    scenegraph:remove_entity(self.phasemanager_entity) -- -> destroy?
---    scenegraph:remove_entity(self.player_entity) -- -> destroy?
-    --scenegraph:remove_entity(self.projectilepool_entity)
-    --scenegraph:remove_entity(self.game_entity)
 
     -- Destroy entities
     flag_entity_for_destruction(self.phasemanager_entity)
@@ -84,11 +74,8 @@ end
 
 function game:create_projectile_pool_entity(parent_entity)
 
-    local entity = registry:create()
-    --attach_entity_to_scenegraph(entity, "ProjectilePool", "root");
-
-    -- SG
-    scenegraph:add_entity(entity, parent_entity)
+    --local entity = registry:create()
+    local entity = engine.create_entity(parent_entity)
 
     -- Header
     registry:emplace(entity, HeaderComponent("ProjectilePool"))
@@ -100,10 +87,7 @@ end
 
 function game:create_player_entity(size, color, projectile_pool, parent_entity)
     
-    local entity = registry:create()
-
-    -- SG
-    scenegraph:add_entity(entity, parent_entity)
+    local entity = engine.create_entity(parent_entity)
 
     -- Header
     registry:emplace(entity, HeaderComponent("Player"))
@@ -148,10 +132,7 @@ end
 
 function game:create_phasemanager_entity(parent_entity)
 
-    local entity = registry:create()
-    
-    -- SG
-    scenegraph:add_entity(entity, parent_entity)
+    local entity = engine.create_entity(parent_entity)
 
     -- Header
     registry:emplace(entity, HeaderComponent("PhaseManager"))

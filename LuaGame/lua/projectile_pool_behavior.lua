@@ -17,9 +17,6 @@ function ProjectilePool:init()
 
         local entity = prefabloaders.projectile(0.2, self)
 
-        -- SG
-        scenegraph:add_entity(entity, self.id())
-
         table.insert(self.pool, entity)
         self.entityToIndex[entity] = i
 
@@ -52,16 +49,10 @@ function ProjectilePool:destroy()
 
     for _, entity in ipairs(self.pool) do
 
-        -- Remove from SG
-        scenegraph:remove_entity(entity)
-
         -- Flag for destruction
         flag_entity_for_destruction(entity)
 
     end
-
-    -- Remove from SG
-    scenegraph:remove_entity(self.id())
 
 end
 
