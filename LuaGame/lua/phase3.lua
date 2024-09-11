@@ -15,10 +15,10 @@ function phase3:init()
         table.insert(self.entities, prefabloaders.bouncing_enemy_block(1, 1, 0.25, 1.0, 0xffff8080))
     end
 
-    self.start_nbr_killed = config.enemy_kill_count
+    self.start_nbr_killed = game.config.enemy_kill_count
 
     -- Music
-    audio_manager:fadeInMusic(config.sounds.music_lvl3, 1, 4000)
+    audio_manager:fadeInMusic(game.config.sounds.music_lvl3, 1, 4000)
 
     -- Log
     log("phase3: loaded " .. #self.entities .. " entities")
@@ -37,7 +37,7 @@ end
 
 function phase3:has_finished()
 
-    return (config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
+    return (game.config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
 
 end
 

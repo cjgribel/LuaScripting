@@ -32,16 +32,16 @@ function node:update(dt)
     transform.rot = transform.rot + self.velocity.angle * dt
 
     -- Bounce at bounds
-    if transform.x - radius <= config.bounds.left or transform.x + radius >= config.bounds.right then
+    if transform.x - radius <= game.config.bounds.left or transform.x + radius >= game.config.bounds.right then
         self.velocity.x = -self.velocity.x
     end
-    if transform.y - radius <= config.bounds.bottom or transform.y + radius >= config.bounds.top then
+    if transform.y - radius <= game.config.bounds.bottom or transform.y + radius >= game.config.bounds.top then
         self.velocity.y = -self.velocity.y
     end
 
     -- Clamp to bounds
-    transform.x = math.max(config.bounds.left + radius, math.min(transform.x, config.bounds.right - radius))
-    transform.y = math.max(config.bounds.bottom + radius, math.min(transform.y, config.bounds.top - radius))
+    transform.x = math.max(game.config.bounds.left + radius, math.min(transform.x, game.config.bounds.right - radius))
+    transform.y = math.max(game.config.bounds.bottom + radius, math.min(transform.y, game.config.bounds.top - radius))
 
     -- Destroy detected islands
     -- Edit: Break one at a time with some frequency, rather than all at once
@@ -133,7 +133,7 @@ function node:hit_element(element_index, vel_x, vel_y)
     end
 
     -- Sound
-    audio_manager:playEffect(config.sounds.element_explode, 1)
+    audio_manager:playEffect(game.config.sounds.element_explode, 1)
 end
 
 function node:check_if_destroyed()
@@ -155,8 +155,8 @@ function node:check_if_destroyed()
     --    collider:set_active_flag_all(true)
     --    quad:set_active_flag_all(true)
         -- Random transform
-    --    transform.x = math.random() * (config.bounds.right - config.bounds.left) + config.bounds.left
-    --    transform.y = math.random() * (config.bounds.top - config.bounds.bottom) + config.bounds.bottom
+    --    transform.x = math.random() * (game.config.bounds.right - game.config.bounds.left) + game.config.bounds.left
+    --    transform.y = math.random() * (game.config.bounds.top - game.config.bounds.bottom) + game.config.bounds.bottom
         -- Random velocity
     --    self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
     --    self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
@@ -164,7 +164,7 @@ function node:check_if_destroyed()
         --quad:set_color_all(random_color())
 
         -- Kill counter
-        config.enemy_kill_count = config.enemy_kill_count + 1
+        game.config.enemy_kill_count = game.config.enemy_kill_count + 1
 
     end
 

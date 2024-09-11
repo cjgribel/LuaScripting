@@ -37,12 +37,12 @@ function node:update(dt)
     local quad_r = 0.25 --TODO getter
 
     -- Apply input to transform
-    transform.x = transform.x + input.axis_left_x * dt * config.player_speed
-    transform.y = transform.y - input.axis_left_y * dt * config.player_speed
+    transform.x = transform.x + input.axis_left_x * dt * game.config.player_speed
+    transform.y = transform.y - input.axis_left_y * dt * game.config.player_speed
 
     -- Clamp to bounds
-    transform.x = math.max(config.bounds.left + quad_r, math.min(transform.x, config.bounds.right - quad_r))
-    transform.y = math.max(config.bounds.bottom + quad_r, math.min(transform.y, config.bounds.top - quad_r))
+    transform.x = math.max(game.config.bounds.left + quad_r, math.min(transform.x, game.config.bounds.right - quad_r))
+    transform.y = math.max(game.config.bounds.bottom + quad_r, math.min(transform.y, game.config.bounds.top - quad_r))
 
     --if input.button_x then
         --print('button pressed')
@@ -89,8 +89,8 @@ function node:update(dt)
     ImGui_SetNextWindowWorldPos(-5, 7)
     ImGui_Begin("ProjectileCount2")
     ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
-    ImGui_Text('Targets destroyed ' .. tostring(config.enemy_kill_count))
-    ImGui_Text('Deaths ' .. tostring(config.player_deaths))
+    ImGui_Text('Targets destroyed ' .. tostring(game.config.enemy_kill_count))
+    ImGui_Text('Deaths ' .. tostring(game.config.player_deaths))
     ImGui_End()
 end
 
@@ -111,13 +111,13 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
         
         -- Reset
-        --transform.x, transform.y = config.bounds.right, config.bounds.bottom
+        --transform.x, transform.y = game.config.bounds.right, game.config.bounds.bottom
         
         -- Sound (death)
-        --audio_manager:playEffect(config.sounds.player_death, 0)
+        --audio_manager:playEffect(game.config.sounds.player_death, 0)
 
         self.last_death_time = self.time
-        config.player_deaths = config.player_deaths + 1
+        game.config.player_deaths = game.config.player_deaths + 1
 
     end
 

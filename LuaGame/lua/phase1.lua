@@ -20,10 +20,10 @@ function phase1:init()
         table.insert(self.entities, entity)
     end
 
-    self.start_nbr_killed = config.enemy_kill_count
+    self.start_nbr_killed = game.config.enemy_kill_count
 
     -- Music
-    --audio_manager:fadeInMusic(config.sounds.music_lvl1, 1, 4000)
+    --audio_manager:fadeInMusic(game.config.sounds.music_lvl1, 1, 4000)
 
     -- Log
     log("phase1: loaded " .. #self.entities .. " entities")
@@ -42,7 +42,7 @@ end
 
 function phase1:has_finished()
 
-    return (config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
+    return (game.config.enemy_kill_count - self.start_nbr_killed ) >= self.nbr_enemies
 
 end
 
