@@ -1064,7 +1064,7 @@ void Scene::destroy_pending_entities()
     }
 
     if (count)
-        eeng::Log::log("%i entities destroyed", count);
+        eeng::Log("%i entities destroyed", count);
 }
 
 bool Scene::init(const v2i& windowSize)
@@ -1192,7 +1192,7 @@ bool Scene::init(const v2i& windowSize)
         // Logging from Lua
         lua["log"] = [&](const std::string& text)
             {
-                eeng::Log::log("[Lua] %s", text.c_str());
+                eeng::Log("[Lua] %s", text.c_str());
                 //eeng::Log::log((std::string("[Lua] ") + text).c_str());
             };
 
