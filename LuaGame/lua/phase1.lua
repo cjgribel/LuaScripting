@@ -23,7 +23,7 @@ function phase1:init()
     self.start_nbr_killed = game.config.enemy_kill_count
 
     -- Music
-    --audio_manager:fadeInMusic(game.config.sounds.music_lvl1, 1, 4000)
+    audio_manager:fadeInMusic(game.config.sounds.music_lvl1, 1, 4000)
 
     -- Log
     log("phase1: loaded " .. #self.entities .. " entities")
