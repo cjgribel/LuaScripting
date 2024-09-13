@@ -19,8 +19,18 @@ struct Transform
     // https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#pointer-stability
     static constexpr auto in_place_delete = true;
 
-    float x, y, rot;
-    float x_parent, y_parent, rot_parent; // TODO: meta for entt & sol
+    float x {0.0f}, y {0.0f}, rot {0.0f};
+
+    // Not meta-registered
+    float x_parent {0.0f}, y_parent {0.0f}, rot_parent {0.0f};
+    float x_global {0.0f}, y_global {0.0f}, rot_global {0.0f};
+
+    void compute_global_transform()
+    {
+        x_global = x * cos(rot_parent) - y * sin(rot_parent) + x_parent;
+        y_global = x * sin(rot_parent) + y * cos(rot_parent) + y_parent;
+        rot_global = rot + rot_parent;
+    }
 
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
@@ -77,7 +87,7 @@ void register_transform(sol::state& lua)
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
         .func<&inspect_Transform>(inspect_hs) // OPTIONAL
-        
+
         //.func<&vec3_to_json>(to_json_hs)
         //.func < [](nlohmann::json& j, const void* ptr) { to_json(j, *static_cast<const vec3*>(ptr)); }, entt::as_void_t > (to_json_hs)
         //.func < [](const nlohmann::json& j, void* ptr) { from_json(j, *static_cast<vec3*>(ptr)); }, entt::as_void_t > (from_json_hs)
