@@ -18,7 +18,7 @@ function phase2:init()
     self.start_nbr_killed = game.config.enemy_kill_count
 
     -- Music
-    audio_manager:fadeInMusic(game.config.sounds.music_lvl2, 1, 4000)
+    engine.audio:fadeInMusic(game.config.sounds.music_lvl2, 1, 4000)
 
     -- Log
     engine.log("phase2: loaded " .. #self.entities .. " entities")
@@ -54,7 +54,7 @@ function phase2:destroy()
     -- Clear the entities list after destroying them
     self.entities = {}
 
-    audio_manager:fadeOutMusic(0)
+    engine.audio:fadeOutMusic(0)
     
     --print("phase2:destroy() called")
 end

@@ -133,7 +133,7 @@ function node:hit_element(element_index, vel_x, vel_y)
     end
 
     -- Sound
-    audio_manager:playEffect(game.config.sounds.element_explode, 1)
+    engine.audio:playEffect(game.config.sounds.element_explode, 1)
 end
 
 function node:check_if_destroyed()

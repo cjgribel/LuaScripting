@@ -114,7 +114,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         --transform.x, transform.y = game.config.bounds.right, game.config.bounds.bottom
         
         -- Sound (death)
-        --audio_manager:playEffect(game.config.sounds.player_death, 0)
+        --engine.audio:playEffect(game.config.sounds.player_death, 0)
 
         self.last_death_time = self.time
         game.config.player_deaths = game.config.player_deaths + 1

@@ -36,20 +36,20 @@ function game:init()
     engine.log("Loading music & effects...")
     local sounds = game.config.sounds
     -- Music
-    audio_manager:registerMusic(sounds.music_title, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
-    audio_manager:registerMusic(sounds.music_end, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Ending.wav")
-    audio_manager:registerMusic(sounds.music_lvl1, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 1.wav")
-    audio_manager:registerMusic(sounds.music_lvl2, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 2.wav")
-    audio_manager:registerMusic(sounds.music_lvl3, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 3.wav")
+    engine.audio:registerMusic(sounds.music_title, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
+    engine.audio:registerMusic(sounds.music_end, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Ending.wav")
+    engine.audio:registerMusic(sounds.music_lvl1, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 1.wav")
+    engine.audio:registerMusic(sounds.music_lvl2, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 2.wav")
+    engine.audio:registerMusic(sounds.music_lvl3, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Level 3.wav")
     -- Effects
-    audio_manager:registerEffect(sounds.projectile_fire1, "../../assets/sounds/Misc Lasers/Fire 1.mp3")
-    audio_manager:registerEffect(sounds.player_death, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
-    audio_manager:registerEffect(sounds.element_explode, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
+    engine.audio:registerEffect(sounds.projectile_fire1, "../../assets/sounds/Misc Lasers/Fire 1.mp3")
+    engine.audio:registerEffect(sounds.player_death, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
+    engine.audio:registerEffect(sounds.element_explode, "../../assets/sounds/Misc Lasers/Fire 2.mp3")
     -- Volume
-    audio_manager:setMasterVolume(128)  -- Set master volume to 50%
-    --audio_manager:setMusicVolume("music1", 64)  -- Set music volume to 25%
-    audio_manager:setEffectVolume(sounds.projectile_fire1, 32)
-    audio_manager:setEffectVolume(sounds.element_explode, 32)
+    engine.audio:setMasterVolume(128)  -- Set master volume to 50%
+    --engine.audio:setMusicVolume("music1", 64)  -- Set music volume to 25%
+    engine.audio:setEffectVolume(sounds.projectile_fire1, 32)
+    engine.audio:setEffectVolume(sounds.element_explode, 32)
 
     -- Game root entity
     -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()

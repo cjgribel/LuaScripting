@@ -132,7 +132,7 @@ namespace {
             // }
         );
 
-        lua["audio_manager"] = &audioManager;
+        lua["engine"]["audio"] = &audioManager;
     }
 
     void registerCircleColliderGridComponent(sol::state& lua)
