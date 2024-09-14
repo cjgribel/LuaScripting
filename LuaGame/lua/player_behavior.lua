@@ -37,14 +37,14 @@ function node:update(dt)
     local quad_r = 0.25 --TODO getter
 
     -- Apply input to transform
-    transform.x = transform.x + input.axis_left_x * dt * game.config.player_speed
-    transform.y = transform.y - input.axis_left_y * dt * game.config.player_speed
+    transform.x = transform.x + engine.input.axis_left_x * dt * game.config.player_speed
+    transform.y = transform.y - engine.input.axis_left_y * dt * game.config.player_speed
 
     -- Clamp to bounds
     transform.x = math.max(game.config.bounds.left + quad_r, math.min(transform.x, game.config.bounds.right - quad_r))
     transform.y = math.max(game.config.bounds.bottom + quad_r, math.min(transform.y, game.config.bounds.top - quad_r))
 
-    --if input.button_x then
+    --if engine.input.button_x then
         --print('button pressed')
 
     --    local transform = self.owner:get(self.id(), Transform)
@@ -53,11 +53,11 @@ function node:update(dt)
 
     -- Firing
     if self.fire_delay > self.fire_cooldown then
-        local axis_right_len = math.sqrt(input.axis_right_x * input.axis_right_x + input.axis_right_y * input.axis_right_y)
+        local axis_right_len = math.sqrt(engine.input.axis_right_x * engine.input.axis_right_x + engine.input.axis_right_y * engine.input.axis_right_y)
         if axis_right_len > 0.5 then
             local transform = self.owner:get(self.id(), Transform)
-            local dir_x = input.axis_right_x/axis_right_len
-            local dir_y = input.axis_right_y/axis_right_len
+            local dir_x = engine.input.axis_right_x/axis_right_len
+            local dir_y = engine.input.axis_right_y/axis_right_len
             self.projectile_pool:fire(transform.x, transform.y, dir_x * 12.0, dir_y * -12.0)
 
             self.projectiles_fired = self.projectiles_fired + 1
@@ -68,9 +68,9 @@ function node:update(dt)
     --print(self.fire_delay, self.fire_cooldown)
 
     -- Trail particles
-    local axis_left_len = math.sqrt(input.axis_left_x * input.axis_left_x + input.axis_left_y * input.axis_left_y)
+    local axis_left_len = math.sqrt(engine.input.axis_left_x * engine.input.axis_left_x + engine.input.axis_left_y * engine.input.axis_left_y)
     if axis_left_len > 0.1 then
-        emit_trail(transform.x, transform.y, -input.axis_left_x * 5.0, input.axis_left_y * 5.0, 2, quad_color)
+        engine.emit_trail(transform.x, transform.y, -engine.input.axis_left_x * 5.0, engine.input.axis_left_y * 5.0, 2, quad_color)
     end
 
     -- Update time and invincibility
@@ -108,13 +108,13 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
         local transform = self.owner:get(self.id(), Transform)
         
         -- Particles
-        emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
+        engine.emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
         
         -- Reset
         --transform.x, transform.y = game.config.bounds.right, game.config.bounds.bottom
         
         -- Sound (death)
-        audio_manager:playEffect(game.config.sounds.player_death, 0)
+        --audio_manager:playEffect(game.config.sounds.player_death, 0)
 
         self.last_death_time = self.time
         game.config.player_deaths = game.config.player_deaths + 1

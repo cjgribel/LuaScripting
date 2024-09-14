@@ -107,7 +107,7 @@ function node:hit_element(element_index, vel_x, vel_y)
     -- Emit particles in the (vel_x, vel_y) direction
     local x, y = quadgrid:get_pos_at(element_index)
     xrot, yrot = rotate(x, y, transform.rot)
-    emit_explosion(
+    engine.emit_explosion(
         transform.x + xrot, 
         transform.y + yrot, 
         vel_x, 

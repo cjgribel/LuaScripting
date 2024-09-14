@@ -21,7 +21,7 @@ function phase4:init()
     audio_manager:fadeInMusic(game.config.sounds.music_end, 2, 4000)
 
     -- Log
-    log("phase4: loaded " .. #self.entities .. " entities")
+    engine.log("phase4: loaded " .. #self.entities .. " entities")
 end
 
 function phase4:update(dt)
@@ -42,7 +42,7 @@ end
 
 function phase4:destroy()
 
-    log("phase4 ends")
+    engine.log("phase4 ends")
 
     for _, entity in ipairs(self.entities) do
         engine.destroy_entity(entity)

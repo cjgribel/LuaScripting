@@ -772,6 +772,8 @@ const v3f v3f_110 {1.0f, 1.0f, 0.0f};
 const v3f v3f_011 {0.0f, 1.0f, 1.0f};
 const v3f v3f_101 {1.0f, 0.0f, 1.0f};
 
+const v4f v4f_0000 {0.0f, 0.0f, 0.0f, 0.0f};
+
 template<class T, int N> class vec
 {
 public:

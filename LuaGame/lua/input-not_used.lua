@@ -1,3 +1,4 @@
+
 -- input.lua
 input = {
     axis_left_x = 0.0,

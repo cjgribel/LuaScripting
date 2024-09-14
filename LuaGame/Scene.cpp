@@ -562,36 +562,16 @@ namespace {
         }
     }
 
-    // Register the input module with Lua
-    void register_input_script(sol::state& lua)
+    void update_input_lua(sol::state& lua, v4f axes, vec4<bool> buttons)
     {
-        // sol::load_result result = lua.load_file("lua/input.lua");
-        sol::load_result result = lua.load_file("../../LuaGame/lua/input.lua"); // TODO: working directory
-        if (!result.valid()) {
-            sol::error err = result;
-            std::cerr << "Failed to load input.lua: " << err.what() << std::endl;
-            return;
-        }
-        sol::protected_function_result script_result = result();
-        if (!script_result.valid()) {
-            sol::error err = script_result;
-            std::cerr << "Failed to execute input.lua: " << err.what() << std::endl;
-            return;
-        }
-    }
-
-    void update_input_script(sol::state& lua, v4f axes, vec4<bool> buttons)
-    {
-        lua["update_input"](
-            axes.x,
-            axes.y,
-            axes.z,
-            axes.w,
-            buttons.x,
-            buttons.y,
-            buttons.z,
-            buttons.w
-            );
+        lua["engine"]["input"]["axis_left_x"] = axes.x;
+        lua["engine"]["input"]["axis_left_y"] = axes.y;
+        lua["engine"]["input"]["axis_right_x"] = axes.z;
+        lua["engine"]["input"]["axis_right_y"] = axes.w;
+        lua["engine"]["input"]["button_a"] = buttons.x;
+        lua["engine"]["input"]["button_b"] = buttons.y;
+        lua["engine"]["input"]["button_x"] = buttons.z;
+        lua["engine"]["input"]["button_y"] = buttons.w;
     }
 
     // Called from Lua
@@ -1190,14 +1170,14 @@ bool Scene::init(const v2i& windowSize)
         //     };
 
         // Logging from Lua
-        lua["log"] = [&](const std::string& text)
+        lua["engine"]["log"] = [&](const std::string& text)
             {
                 eeng::Log("[Lua] %s", text.c_str());
                 //eeng::Log::log((std::string("[Lua] ") + text).c_str());
             };
 
         // Particle emitter functions
-        lua["emit_particle"] = [&](
+        lua["engine"]["emit_particle"] = [&](
             float x,
             float y,
             float vx,
@@ -1206,7 +1186,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_point(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
             };
-        lua["emit_explosion"] = [&](
+        lua["engine"]["emit_explosion"] = [&](
             float x,
             float y,
             float vx,
@@ -1216,7 +1196,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
-        lua["emit_trail"] = [&](
+        lua["engine"]["emit_trail"] = [&](
             float x,
             float y,
             float vx,
@@ -1227,14 +1207,9 @@ bool Scene::init(const v2i& windowSize)
                 particleBuffer.push_trail(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
 
-        // Register to Lua: input module
-        register_input_script(lua);
-        if (!lua["input"].valid()) {
-            std::cerr << "Error: 'input' table not loaded properly" << std::endl;
-            // return -1;
-            assert(0);
-        }
-        //update_input_script(lua, 0.0f, 0.0f, false);
+        // Input v2
+        lua["engine"]["input"] = lua.create_table();
+        update_input_lua(lua, linalg::v4f_0000, vec4<bool> {false, false, false, false});
 
         // Attach registry to Lua state
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
@@ -1389,7 +1364,7 @@ void Scene::update(float time_s, float deltaTime_s)
     // View matrix
     V = m4f::TRS(eyePos, 0.0f, v3f{ 1.0f, 0.0f, 0.0f }, v3f{ 1.0f, 1.0f, 1.0f }).inverse();
 
-    update_input_script(lua, SceneBase::axes, SceneBase::buttons);
+    update_input_lua(lua, SceneBase::axes, SceneBase::buttons);
 
     particleBuffer.update(deltaTime_s);
 

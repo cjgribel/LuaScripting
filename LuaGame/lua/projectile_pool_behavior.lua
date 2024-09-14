@@ -22,7 +22,7 @@ function ProjectilePool:init()
 
     end
 
-    log("Pooled " .. self.poolSize .. " projectiles")
+    engine.log("Pooled " .. self.poolSize .. " projectiles")
 end
 
 -- Update function for projectiles

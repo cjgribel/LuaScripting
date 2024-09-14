@@ -24,18 +24,18 @@ function node:update(dt)
 	--print('node [#' .. self.id() .. '] update()', transform)
 
     -- Apply input to transform
-    transform.x = transform.x + input.axis_left_x * dt * 10.0
-    transform.y = transform.y - input.axis_left_y * dt * 10.0
+    transform.x = transform.x + engine.input.axis_left_x * dt * 10.0
+    transform.y = transform.y - engine.input.axis_left_y * dt * 10.0
     -- Clamp
     transform.x = math.max(-5.0, math.min(transform.x, 5.0))
     transform.y = math.max(-5.0, math.min(transform.y, 5.0))
 
     -- Input test
-    if input.button_pressed then
-        --transform.x = transform.x + input.x * dt
-        --transform.y = transform.y + input.y * dt
+    if engine.input.button_pressed then
+        --transform.x = transform.x + engine.input.x * dt
+        --transform.y = transform.y + engine.input.y * dt
     end
-    --print('Input type:', type(input.x), type(input.y))
+    --print('Input type:', type(engine.input.x), type(engine.input.y))
 
     -- Alter transform
     local theta = math.pi * dt

@@ -21,7 +21,7 @@ function phase3:init()
     audio_manager:fadeInMusic(game.config.sounds.music_lvl3, 1, 4000)
 
     -- Log
-    log("phase3: loaded " .. #self.entities .. " entities")
+    engine.log("phase3: loaded " .. #self.entities .. " entities")
 end
 
 function phase3:update(dt)
@@ -43,7 +43,7 @@ end
 
 function phase3:destroy()
 
-    log("phase3 ends")
+    engine.log("phase3 ends")
 
     for _, entity in ipairs(self.entities) do
         --registry:destroy(entity, registry:valid(entity))

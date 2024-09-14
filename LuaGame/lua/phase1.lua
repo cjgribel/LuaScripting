@@ -23,10 +23,10 @@ function phase1:init()
     self.start_nbr_killed = game.config.enemy_kill_count
 
     -- Music
-    audio_manager:fadeInMusic(game.config.sounds.music_lvl1, 1, 4000)
+    --audio_manager:fadeInMusic(game.config.sounds.music_lvl1, 1, 4000)
 
     -- Log
-    log("phase1: loaded " .. #self.entities .. " entities")
+    engine.log("phase1: loaded " .. #self.entities .. " entities")
 end
 
 function phase1:update(dt)
@@ -48,7 +48,7 @@ end
 
 function phase1:destroy()
 
-    log("phase1 ends")
+    engine.log("phase1 ends")
 
     for _, entity in ipairs(self.entities) do
 

@@ -33,7 +33,7 @@ function game:init()
     math.randomseed(os.time())
 
     -- Music and effects (for all phases)
-    log("Loading music & effects...")
+    engine.log("Loading music & effects...")
     local sounds = game.config.sounds
     -- Music
     audio_manager:registerMusic(sounds.music_title, "../../assets/sounds/music/Juhani Junkala [Retro Game Music Pack] Title Screen.wav")
@@ -58,15 +58,15 @@ function game:init()
     registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
 
     -- Projectile pool
-    log("Creating projectile pool...")
+    engine.log("Creating projectile pool...")
     self.projectilepool_entity = self:create_projectile_pool_entity(self.game_entity)
     local projectilepool_table = engine.get_script(registry, self.projectilepool_entity, "projectile_pool_behavior")
 
     -- Create player(s)
-    log("Creating player...")
+    engine.log("Creating player...")
     self.player_entity = self:create_player_entity(0.5, 0xffffffff, projectilepool_table, self.game_entity)
 
-    log("Creating phases...")
+    engine.log("Creating phases...")
     self.phasemanager_entity = self:create_phasemanager_entity(self.game_entity)
 
     print("game:init() done")
