@@ -53,14 +53,14 @@ function game:init()
 
     -- Game root entity
     -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-    self.game_entity = engine.create_entity(engine.entity_null) -- registry:create() -- global for now so it's reachable to phases
+    self.game_entity = engine.create_entity(engine.entity_null) -- engine.registry:create() -- global for now so it's reachable to phases
     -- Header
-    registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
+    engine.registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
 
     -- Projectile pool
     engine.log("Creating projectile pool...")
     self.projectilepool_entity = self:create_projectile_pool_entity(self.game_entity)
-    local projectilepool_table = engine.get_script(registry, self.projectilepool_entity, "projectile_pool_behavior")
+    local projectilepool_table = engine.get_script(engine.registry, self.projectilepool_entity, "projectile_pool_behavior")
 
     -- Create player(s)
     engine.log("Creating player...")
@@ -111,14 +111,14 @@ end
 
 function game:create_projectile_pool_entity(parent_entity)
 
-    --local entity = registry:create()
+    --local entity = engine.registry:create()
     local entity = engine.create_entity(parent_entity)
 
     -- Header
-    registry:emplace(entity, HeaderComponent("ProjectilePool"))
+    engine.registry:emplace(entity, HeaderComponent("ProjectilePool"))
 
     -- Behavior
-    engine.add_script(registry, entity, dofile("../../LuaGame/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
+    engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
     return entity
 end
 
@@ -127,23 +127,23 @@ function game:create_player_entity(size, color, projectile_pool, parent_entity)
     local entity = engine.create_entity(parent_entity)
 
     -- Header
-    registry:emplace(entity, HeaderComponent("Player"))
+    engine.registry:emplace(entity, HeaderComponent("Player"))
 
     -- Transform
-    registry:emplace(entity, Transform(0.0, 0.0, 0.0))
+    engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
     -- QuadGridComponent
     local quadgrid = QuadGridComponent(1, 1, true)
     quadgrid:set_quad_at(0, 0.0, 0.0, size, 0xffffffff, true)
-    registry:emplace(entity, quadgrid)
+    engine.registry:emplace(entity, quadgrid)
 
     -- CircleColliderGridComponent
     local collidergrid = CircleColliderGridComponent(1, 1, true, PlayerCollisionBit, EnemyCollisionBit)
     collidergrid:set_circle_at(0, 0.0, 0.0, size * 0.5, true)
-    registry:emplace(entity, collidergrid)
+    engine.registry:emplace(entity, collidergrid)
 
     -- Behavior
-    local player_table = engine.add_script(registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
+    local player_table = engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
     player_table.projectile_pool = projectile_pool
 
     return entity
@@ -152,17 +152,18 @@ end
 -- NOT USED
 local function create_background_entity(size, color)
 
-    local entity = registry:create()
+    --TODO local entity = engine.create_entity(engine.entity_null)
+    local entity = engine.registry:create()
     --attach_entity_to_scenegraph(entity, "Background", "root");
 
     -- Transform
     -- TODO: non-uniform size
-    registry:emplace(entity, Transform(0.0, 0.0, 0.0))
+    engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
     -- QuadGridComponent
     local quadgrid = QuadGridComponent(1, 1, true)
     quadgrid:set_quad_at(0, 0.0, 0.0, size, 0x40ffffff, true)
-    registry:emplace(entity, quadgrid)
+    engine.registry:emplace(entity, quadgrid)
 
     return entity
 end
@@ -172,10 +173,10 @@ function game:create_phasemanager_entity(parent_entity)
     local entity = engine.create_entity(parent_entity)
 
     -- Header
-    registry:emplace(entity, HeaderComponent("PhaseManager"))
+    engine.registry:emplace(entity, HeaderComponent("PhaseManager"))
 
     -- Behavior
-    engine.add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
+    engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
     
     return entity
 end

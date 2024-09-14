@@ -1213,10 +1213,11 @@ bool Scene::init(const v2i& windowSize)
 
         // Attach registry to Lua state
         lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
-        lua["registry"] = std::ref(registry);
+        lua["engine"]["registry"] = std::ref(registry);
 
         // Register AudioManager to Lua
         bindAudioManager(lua);
+        
         // Register core components to Lua
         register_transform(lua);
         registerQuadComponent(lua); // remove
@@ -1248,6 +1249,7 @@ bool Scene::init(const v2i& windowSize)
         // Load & execute init script
         lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
 
+        // Init the game itself
         assert(lua["game"].valid());
         assert(lua["game"]["init"].valid());
         assert(lua["game"]["destroy"].valid());

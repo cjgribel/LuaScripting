@@ -5,23 +5,23 @@ function prefabloaders.projectile(size, projectile_pool)
         local entity = engine.create_entity(projectile_pool.id())
 
         -- Header
-        registry:emplace(entity, HeaderComponent("Projectile"))
+        engine.registry:emplace(entity, HeaderComponent("Projectile"))
 
         -- Transform
-        registry:emplace(entity, Transform(0.0, 0.0, 0.0))
+        engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
         
         -- QuadGridComponent
         local qsc = QuadGridComponent(1, 1, false)
         qsc:set_quad_at(0, 0.0, 0.0, size, 0xff00ffff, true)
-        registry:emplace(entity, qsc)
+        engine.registry:emplace(entity, qsc)
 
         -- CircleColliderGridComponent
         local ccs = CircleColliderGridComponent(1, 1, false, ProjectileCollisionBit, EnemyCollisionBit)
         ccs:set_circle_at(0, 0.0, 0.0, size * 0.75, true)
-        registry:emplace(entity, ccs)
+        engine.registry:emplace(entity, ccs)
 
         -- Projectile_behavior
-        local projectile_behavior = engine.add_script(registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
+        local projectile_behavior = engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
         projectile_behavior.projectile_pool = projectile_pool
 
         print("prefabloaders:projectile(size, projectile_pool)")
@@ -35,15 +35,15 @@ function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
     print("Created entity ID:", entity)
     
     -- Header
-    registry:emplace(entity, HeaderComponent("BlockEnemy"))
+    engine.registry:emplace(entity, HeaderComponent("BlockEnemy"))
 
     -- Transform
-    registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
+    engine.registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
 
     --local size = 0.5 + math.random() * 0.0
-    --registry:emplace(entity, QuadComponent(size, random_color(), true))
+    --engine.registry:emplace(entity, QuadComponent(size, random_color(), true))
     
-    --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
+    --engine.registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     
     --local W = 7 -- Number of columns
     --local H = 7 -- Number of rows
@@ -74,15 +74,15 @@ function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
         end
     end
 
-    registry:emplace(entity, quadgrid)
-    registry:emplace(entity, collidergrid)
-    registry:emplace(entity, datagrid)
+    engine.registry:emplace(entity, quadgrid)
+    engine.registry:emplace(entity, collidergrid)
+    engine.registry:emplace(entity, datagrid)
 
     -- Island finder component
-    registry:emplace(entity, IslandFinderComponent(core_x, core_y))
+    engine.registry:emplace(entity, IslandFinderComponent(core_x, core_y))
 
     -- Bounce behavior
-    engine.add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
+    engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
 
     return entity
 
@@ -94,15 +94,15 @@ function prefabloaders.bouncing_enemy_cross(color)
     print("prefabloaders.bouncing_enemy_cross(): created entity ID:", entity)
     
     -- Header
-    registry:emplace(entity, HeaderComponent("CrossEnemy"))
+    engine.registry:emplace(entity, HeaderComponent("CrossEnemy"))
 
     -- Transform
-    registry:emplace(entity, Transform(0.0, 0.0, 0.0))
+    engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
 
     --local size = 0.5 + math.random() * 0.0
-    --registry:emplace(entity, QuadComponent(size, random_color(), true))
+    --engine.registry:emplace(entity, QuadComponent(size, random_color(), true))
     
-    --registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
+    --engine.registry:emplace(entity, CircleColliderComponent(size * 0.5, true))
     
     local W = 7 -- Number of columns
     local H = 7 -- Number of rows
@@ -138,15 +138,15 @@ function prefabloaders.bouncing_enemy_cross(color)
         end
     end
     
-    registry:emplace(entity, quadgrid)
-    registry:emplace(entity, collidergrid)
-    registry:emplace(entity, datagrid)
+    engine.registry:emplace(entity, quadgrid)
+    engine.registry:emplace(entity, collidergrid)
+    engine.registry:emplace(entity, datagrid)
 
     -- Island finder component
-    registry:emplace(entity, IslandFinderComponent(core_x, core_y))
+    engine.registry:emplace(entity, IslandFinderComponent(core_x, core_y))
 
     -- Bounce behavior
-    engine.add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
+    engine.add_script(engine.registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
 
     return entity
 

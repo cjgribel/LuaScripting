@@ -147,7 +147,7 @@ function ProjectilePool:fire(x, y, dx, dy)
     local entity = self:get()
     if entity then
         local transform = self.owner:get(entity, Transform)
-        --local velocity = registry:get(entity, "Velocity")
+        --local velocity = engine.registry:get(entity, "Velocity")
         transform.x, transform.y = x, y
         --velocity.dx, velocity.dy = dx, dy
 
