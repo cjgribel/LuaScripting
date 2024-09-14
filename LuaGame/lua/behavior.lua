@@ -13,7 +13,7 @@ function node:init()
 
     -- Test, add script to this entity
     --local script_table = dofile("lua/behavior.lua")
-    --add_script(self.owner, self.id(), script_table)
+    --engine.add_script(self.owner, self.id(), script_table)
 
 	print('node [#' .. self.id() .. '] init ()', self)
 end

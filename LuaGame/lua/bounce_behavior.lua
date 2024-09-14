@@ -68,14 +68,14 @@ end
 function node:on_collision(x, y, nx, ny, element_index, entity)
 
     -- Check script in the other entity
-    --local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    --local bounceBehavior = engine.get_script(self.owner, entity, "bounce_behavior")
     --if bounceBehavior then
     --    -- Interact with the scoreBehavior script
     --    --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     --end
 
     -- Hit by projectile?
-    local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+    local projectileBehavior = engine.get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
 
         -- Hit by projectile

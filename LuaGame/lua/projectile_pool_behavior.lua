@@ -102,7 +102,7 @@ function ProjectilePool:release(entity)
     --local quad = self.owner:get(entity, QuadComponent)
     --circle_collider.is_active, quad.is_visible = false, false
 
-    --local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+    --local projectileBehavior = engine.get_script(self.owner, entity, "projectile_behavior")
     --if projectileBehavior then
         --projectileBehavior.velocity.x, projectileBehavior.velocity.y = dx, dy
     --    projectileBehavior.is_active = false;
@@ -152,7 +152,7 @@ function ProjectilePool:fire(x, y, dx, dy)
         --velocity.dx, velocity.dy = dx, dy
 
         -- Set velocity too
-        local projectileBehavior = get_script(self.owner, entity, "projectile_behavior")
+        local projectileBehavior = engine.get_script(self.owner, entity, "projectile_behavior")
         if projectileBehavior then
             projectileBehavior.velocity.x, projectileBehavior.velocity.y = dx, dy
             --projectileBehavior.is_active = true;

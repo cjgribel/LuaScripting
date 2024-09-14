@@ -1143,8 +1143,8 @@ bool Scene::init(const v2i& windowSize)
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
-        lua["add_script"] = &add_script;
-        lua["get_script"] = &get_script;
+        lua["engine"]["add_script"] = &add_script;
+        lua["engine"]["get_script"] = &get_script;
 
         // // Try to reserve entity root ...
         // auto entity = registry.create(root_entity);

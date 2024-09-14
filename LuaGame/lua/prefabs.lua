@@ -21,7 +21,7 @@ function prefabloaders.projectile(size, projectile_pool)
         registry:emplace(entity, ccs)
 
         -- Projectile_behavior
-        local projectile_behavior = add_script(registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
+        local projectile_behavior = engine.add_script(registry, entity, dofile("../../LuaGame/lua/projectile_behavior.lua"), "projectile_behavior")
         projectile_behavior.projectile_pool = projectile_pool
 
         print("prefabloaders:projectile(size, projectile_pool)")
@@ -82,7 +82,7 @@ function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
     registry:emplace(entity, IslandFinderComponent(core_x, core_y))
 
     -- Bounce behavior
-    add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
+    engine.add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
 
     return entity
 
@@ -146,7 +146,7 @@ function prefabloaders.bouncing_enemy_cross(color)
     registry:emplace(entity, IslandFinderComponent(core_x, core_y))
 
     -- Bounce behavior
-    add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
+    engine.add_script(registry, entity, dofile("../../LuaGame/lua/bounce_behavior.lua"), "bounce_behavior")
 
     return entity
 

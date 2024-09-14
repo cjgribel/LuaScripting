@@ -102,7 +102,7 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     end
 
     -- Death
-    local bounceBehavior = get_script(self.owner, entity, "bounce_behavior")
+    local bounceBehavior = engine.get_script(self.owner, entity, "bounce_behavior")
     if bounceBehavior then
 
         local transform = self.owner:get(self.id(), Transform)

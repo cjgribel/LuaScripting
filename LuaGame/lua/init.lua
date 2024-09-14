@@ -60,7 +60,7 @@ function game:init()
     -- Projectile pool
     log("Creating projectile pool...")
     self.projectilepool_entity = self:create_projectile_pool_entity(self.game_entity)
-    local projectilepool_table = get_script(registry, self.projectilepool_entity, "projectile_pool_behavior")
+    local projectilepool_table = engine.get_script(registry, self.projectilepool_entity, "projectile_pool_behavior")
 
     -- Create player(s)
     log("Creating player...")
@@ -118,7 +118,7 @@ function game:create_projectile_pool_entity(parent_entity)
     registry:emplace(entity, HeaderComponent("ProjectilePool"))
 
     -- Behavior
-    add_script(registry, entity, dofile("../../LuaGame/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
+    engine.add_script(registry, entity, dofile("../../LuaGame/lua/projectile_pool_behavior.lua"), "projectile_pool_behavior")
     return entity
 end
 
@@ -143,7 +143,7 @@ function game:create_player_entity(size, color, projectile_pool, parent_entity)
     registry:emplace(entity, collidergrid)
 
     -- Behavior
-    local player_table = add_script(registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
+    local player_table = engine.add_script(registry, entity, dofile("../../LuaGame/lua/player_behavior.lua"), "player_behavior")
     player_table.projectile_pool = projectile_pool
 
     return entity
@@ -175,7 +175,7 @@ function game:create_phasemanager_entity(parent_entity)
     registry:emplace(entity, HeaderComponent("PhaseManager"))
 
     -- Behavior
-    add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
+    engine.add_script(registry, entity, dofile("../../LuaGame/lua/phasemanager_behavior.lua"), "phasemanager_behavior")
     
     return entity
 end
