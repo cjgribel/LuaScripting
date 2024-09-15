@@ -6,6 +6,8 @@
 
 namespace Editor {
 
+    struct InspectorState;
+
     // General type inspection template
     template<class T>
     bool inspect_type(T& t, InspectorState& inspector)

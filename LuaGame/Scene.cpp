@@ -1230,6 +1230,7 @@ bool Scene::init(const v2i& windowSize)
         registeDataGridComponent(lua);
         //
         HeaderComponent_metaregister(lua); // entt::meta (registry stuff added separately) + sol meta
+        ScriptedBehaviorComponent_metaregister(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);
