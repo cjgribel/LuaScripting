@@ -958,11 +958,14 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_registry(entt::registry& registry)
+    void inspect_registry(entt::registry& registry, /* */ sol::state& lua)
     {
         static Editor::InspectorState inspector{};
         static bool open = true;
         bool* p_open = &open;
+
+        // ...
+        inspector.lua = &lua;
 
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (!ImGui::Begin("Inspector", p_open))
@@ -1588,7 +1591,7 @@ void Scene::renderUI()
 
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
 
-    Inspector::inspect_registry(registry);
+    Inspector::inspect_registry(registry, lua);
 
     Inspector::inspect_scenegraph(scenegraph, registry);
 

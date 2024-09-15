@@ -5,17 +5,36 @@
 #include <array>
 #include <queue>
 
+// sol is used by
+// For ScriptedBehaviorComponent => its own hpp/cpp
+// Lua event
 #define SOL_ALL_SAFETIES_ON 1
-#include <sol/sol.hpp>
+#include <sol/sol.hpp> 
+// Fwwd decl?
+// namespace sol {
+//     class state;
+//     class state_view;
+//     class table;
+//     // Add other forward declarations as needed
+// }
 
 #include "vec.h"
 #include "SparseSet.hpp"
 
+using linalg::v2f;
+
 #define EntitySetSize 64
+
+// namespace CircleColliderGrid
+// {
+//     struct Component {}; // OK when exposing to Lua - still "Transform"?
+
+//     void register_meta() {} // entt + sol => cpp (include entt & sol here)
+// }
 
 struct CircleColliderGridComponent
 {
-    struct Circle 
+    struct Circle
     {
         v2f pos;
         float radius;
@@ -23,7 +42,7 @@ struct CircleColliderGridComponent
 
     std::array<Circle, EntitySetSize> circles;
     SparseSet<unsigned char, EntitySetSize> active_indices;
-     
+
     // v2f pos[EntitySetSize];
     // float radii[EntitySetSize];
     // bool is_active_flags[EntitySetSize] = { false };
@@ -166,6 +185,8 @@ struct ScriptedBehaviorComponent
         return ss.str();
     }
 };
+
+void ScriptedBehaviorComponent_metaregister(sol::state& lua);
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
