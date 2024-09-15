@@ -21,10 +21,17 @@ namespace
     //     return false;
     // }
 
-    bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
+    bool solfunction_inspect_(const sol::function& f, Editor::InspectorState& inspector)
     {
         ImGui::TextDisabled("sol::function");
         return false;
+    }
+
+    bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
+    {
+        return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
+        // ImGui::TextDisabled("sol::function");
+        // return false;
     }
 
     // Specialization? Base template in MetaInspect.hpp (now it's in )?
@@ -46,30 +53,33 @@ namespace
             std::string key_str = key.as<std::string>();
 
             //ImGui::TextDisabled("%s", key_str.c_str());
-            if (inspector.begin_node(key_str.c_str()))
-            {
                 std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
 
                 //std::string indent = "   ";
                 //std::cout << key_str << " (type: " << type_name << ")\n";
 
                 if (value.get_type() == sol::type::table) {
+            if (inspector.begin_node(key_str.c_str()))
+            {
                     soltable_inspect_rec(lua, value.as<sol::table>(), inspector);
+                inspector.end_node();
+            }
                 }
                 else if (value.get_type() == sol::type::function) {
                     //std::cout << indent << "    [function]\n";
                     //solfunction_inspect(&value.as<sol::table>(), inspector);
                     // ImGui::TextDisabled("sol::function");
+                    inspector.begin_leaf(key_str.c_str());
+                    solfunction_inspect_(value.as<sol::function>(), inspector);
+                    inspector.end_leaf();
                 }
                 else {
                     //std::cout << indent << "    [" << lua["tostring"](value).get<std::string>() << "]\n";
-                    inspector.begin_leaf("value");
+                    inspector.begin_leaf(key_str.c_str());
                     ImGui::Text("%s", lua["tostring"](value).get<std::string>().c_str());
                     inspector.end_leaf();
                 }
 
-                inspector.end_node();
-            }
         }
 
         return false;
