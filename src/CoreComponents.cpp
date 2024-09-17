@@ -13,6 +13,14 @@
 
 //#include <iostream>
 
+    // Inspect sol::function
+template<>
+bool Editor::inspect_type<sol::function>(sol::function& t, Editor::InspectorState& inspector)
+{
+    ImGui::TextDisabled("sol::function");
+    return false;
+}
+
 namespace
 {
     // bool soltable_inspect_with_luastate(sol::state& lua, void* ptr, Editor::InspectorState& inspector)
@@ -21,6 +29,8 @@ namespace
     //     return false;
     // }
 
+
+    // With type
     bool solfunction_inspect_(const sol::function& f, Editor::InspectorState& inspector)
     {
         ImGui::TextDisabled("sol::function");
@@ -29,56 +39,70 @@ namespace
 
     bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
     {
-        return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
-        // ImGui::TextDisabled("sol::function");
-        // return false;
+        return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector);
+
+        // return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
     }
 
     // Specialization? Base template in MetaInspect.hpp (now it's in )?
     bool soltable_inspect_rec(sol::state& lua, sol::table tbl, Editor::InspectorState& inspector)
     {
-        // leaf / node?
-        // ImGui::TextDisabled("sol::table");
-        // return false;
+        const auto sol_object_tostring = [](const sol::state& lua, const sol::object object)
+            {
+                return lua["tostring"](object).get<std::string>();
+            };
 
-        //auto& lua = *inspector.lua;
-
-        //sol::table* tbl = static_cast<sol::table*>(ptr);
         for (auto& kv : tbl)
         {
             sol::object key = kv.first;
             sol::object value = kv.second;
 
-            // Assuming the key is a string for simplicity
-            std::string key_str = key.as<std::string>();
+            std::string key_str = sol_object_tostring(lua, key);
+            std::string key_str_label = "##" + key_str;
+            // Append typename to key string
+            //std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
+            //key_str = key_str + " (" + type_name + ")";
 
-            //ImGui::TextDisabled("%s", key_str.c_str());
-                std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
-
-                //std::string indent = "   ";
-                //std::cout << key_str << " (type: " << type_name << ")\n";
-
-                if (value.get_type() == sol::type::table) {
-            if (inspector.begin_node(key_str.c_str()))
+            if (value.get_type() == sol::type::table)
             {
+                if (inspector.begin_node(key_str.c_str()))
+                {
                     soltable_inspect_rec(lua, value.as<sol::table>(), inspector);
-                inspector.end_node();
+                    inspector.end_node();
+                }
             }
-                }
-                else if (value.get_type() == sol::type::function) {
-                    //std::cout << indent << "    [function]\n";
-                    //solfunction_inspect(&value.as<sol::table>(), inspector);
-                    // ImGui::TextDisabled("sol::function");
-                    inspector.begin_leaf(key_str.c_str());
-                    solfunction_inspect_(value.as<sol::function>(), inspector);
-                    inspector.end_leaf();
-                }
-                else {
-                    //std::cout << indent << "    [" << lua["tostring"](value).get<std::string>() << "]\n";
-                    inspector.begin_leaf(key_str.c_str());
-                    ImGui::Text("%s", lua["tostring"](value).get<std::string>().c_str());
-                    inspector.end_leaf();
-                }
+            else if (value.get_type() == sol::type::number)
+            {
+                double exposed_val = value.as<double>();
+
+                inspector.begin_leaf(key_str.c_str());
+                //ImGui::Text("%f", val);
+                if (ImGui::InputDouble(key_str_label.c_str(), &exposed_val, 0.1, 0.5))
+                    tbl[key] = exposed_val;
+                inspector.end_leaf();
+            }
+            else if (value.get_type() == sol::type::function)
+            {
+                // sol::object might be a reference by itself - identofy a number, and try changing it
+                // sol::function* funcc = value.as<sol::function*>();
+                //auto func = value.as<sol::function&>(); 
+                // auto f = value.as<sol::function&>();
+                // value = sol::function {};
+
+                inspector.begin_leaf(key_str.c_str());
+                // Editor::inspect_type(value.as<sol::function>(), inspector);
+                solfunction_inspect_(value.as<sol::function>(), inspector);
+                inspector.end_leaf();
+            }
+            // Todo: more lua types
+            else
+            {
+                inspector.begin_leaf(key_str.c_str());
+                // ImGui::Text("%s", lua["tostring"](value).get<std::string>().c_str());
+                ImGui::Text("[tostring] %s", sol_object_tostring(lua, value).c_str());
+
+                inspector.end_leaf();
+            }
 
         }
 
@@ -106,7 +130,8 @@ void ScriptedBehaviorComponent_metaregister(sol::state& lua)
         .type("sol::function"_hs).prop(display_name_hs, "sol::function")
         // inspect
         .func<&solfunction_inspect>(inspect_hs)
-
+        // inspect v2 - 'widget not implemented' for BehaviorScript::update, on_collision
+        //.func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
         ;
 
     // ScriptedBehaviorComponent
