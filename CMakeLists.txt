@@ -11,6 +11,12 @@ project(LuaScripting
 message(STATUS "Starting CMake configuration")
 
 #
+# Set compiler version
+# TODO: uninstall this compiler
+#set(CMAKE_C_COMPILER "/opt/homebrew/Cellar/llvm@15/15.0.7/bin/clang-15")
+#set(CMAKE_CXX_COMPILER "/opt/homebrew/Cellar/llvm@15/15.0.7/bin/clang++")
+
+#
 # CPP
 #
 set(CMAKE_CXX_STANDARD 20)
@@ -188,7 +194,7 @@ if(NOT sol2_FOUND)
     FetchContent_Declare(
         sol2
         GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-        GIT_TAG ${SOL2_VERSION}  # Use the defined version variable
+        GIT_TAG main #${SOL2_VERSION}  # Use the defined version variable
     )
     FetchContent_MakeAvailable(sol2)
     message(STATUS "Fetched sol2 ${SOL2_VERSION}")
