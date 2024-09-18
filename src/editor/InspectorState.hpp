@@ -12,7 +12,7 @@ namespace Editor {
 
     struct InspectorState;
 
-    // General type inspection template
+    /// General type inspection template
     template<class T>
     bool inspect_type(T& t, InspectorState& inspector)
     {
@@ -20,44 +20,44 @@ namespace Editor {
         return false;
     }
 
-    // Inspect float
+    /// Inspect float
     template<>
     inline bool inspect_type<float>(float& t, InspectorState& inspector)
     {
         return ImGui::InputFloat("##label", &t, 1.0f);
     }
 
-    // Inspect const float
+    /// Inspect const float
     template<>
     inline bool inspect_type<const float>(const float& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%f", t);
+        ImGui::TextDisabled("%.2f", t);
         return false;
     }
 
-    // Inspect double
+    /// Inspect double
     template<>
     inline bool inspect_type<double>(double& t, InspectorState& inspector)
     {
         return ImGui::InputDouble("##label", &t, 1.0f);
     }
 
-    // Inspect const double
+    /// Inspect const double
     template<>
     inline bool inspect_type<const double>(const double& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%d", t); // % what for dbl?
+        ImGui::TextDisabled("%.2f", t);
         return false;
     }
 
-    // Inspect int
+    /// Inspect int
     template<>
     inline bool inspect_type<int>(int& t, InspectorState& inspector)
     {
         return ImGui::InputInt("##label", &t, 1);
     }
 
-    // Inspect const int
+    /// Inspect const int
     template<>
     inline bool inspect_type<const int>(const int& t, InspectorState& inspector)
     {
@@ -65,14 +65,14 @@ namespace Editor {
         return false;
     }
 
-    // Inspect bool
+    /// Inspect bool
     template<>
     inline bool inspect_type<bool>(bool& t, InspectorState& inspector)
     {
         return ImGui::Checkbox("##label", &t);
     }
 
-    // Inspect const bool
+    /// Inspect const bool
     template<>
     inline bool inspect_type<const bool>(const bool& t, InspectorState& inspector)
     {
@@ -83,14 +83,14 @@ namespace Editor {
         return false;
     }
 
-    // Inspect std::string
+    /// Inspect std::string
     template<>
     inline bool inspect_type<std::string>(std::string& t, InspectorState& inspector)
     {
         return ImGui::InputText("##label", &t); // label cannot be empty
     }
 
-    // Inspect const std::string
+    /// Inspect const std::string
     template<>
     inline bool inspect_type<const std::string>(const std::string& t, InspectorState& inspector)
     {
