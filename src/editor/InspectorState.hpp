@@ -46,7 +46,7 @@ namespace Editor {
     template<>
     inline bool inspect_type<const double>(const double& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%d", t);
+        ImGui::TextDisabled("%d", t); // % what for dbl?
         return false;
     }
 

@@ -13,115 +13,128 @@
 
 //#include <iostream>
 
-    // Inspect sol::function
+namespace
+{
+    std::string sol_object_to_string(const sol::state& lua, const sol::object object)
+    {
+        return lua["tostring"](object).get<std::string>();
+    }
+
+    std::string get_lua_type_name(const sol::state& lua, const sol::object object)
+    {
+        return lua_typename(lua.lua_state(), static_cast<int>(object.get_type()));
+    }
+}
+
+/// Inspect sol::function
 template<>
 bool Editor::inspect_type<sol::function>(sol::function& t, Editor::InspectorState& inspector)
 {
-    ImGui::TextDisabled("sol::function");
+    ImGui::TextDisabled("%s", sol_object_to_string(*inspector.lua, t).c_str());
     return false;
 }
 
+/// Inspect sol::table
+template<>
+bool Editor::inspect_type<sol::table>(sol::table& tbl, Editor::InspectorState& inspector)
+{
+    auto& lua = *inspector.lua;
+    bool mod = false;
 
-    // bool soltable_inspect_with_luastate(sol::state& lua, void* ptr, Editor::InspectorState& inspector)
-    // {
-    //     ImGui::TextDisabled("soltable_inspect_with_luastate");
-    //     return false;
-    // }
-
-
-    // With type
-    // bool solfunction_inspect_(const sol::function& f, Editor::InspectorState& inspector)
-    // {
-    //     ImGui::TextDisabled("sol::function");
-    //     return false;
-    // }
-
-    // bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
-    // {
-    //     return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector);
-
-    //     // return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
-    // }
-
-    // Specialization? Base template in MetaInspect.hpp (now it's in )?
-    template<>
-    bool Editor::inspect_type<sol::table>(sol::table& tbl, Editor::InspectorState& inspector)
-        //bool soltable_inspect_rec(/*sol::state& lua,*/ sol::table tbl, Editor::InspectorState& inspector)
+    for (auto& [key, value] : tbl)
     {
-        auto& lua = *inspector.lua;
+        std::string key_str = sol_object_to_string(lua, key);
+        std::string key_str_label = "##" + key_str;
 
-        const auto sol_object_tostring = [](const sol::state& lua, const sol::object object)
-            {
-                return lua["tostring"](object).get<std::string>();
-            };
+        // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
+        // This form,
+        //      value.get_type() == sol::type::table
+        // seems more precise when detecting types, even though it isn't type-safe
 
-        for (auto& kv : tbl)
+        if (value.get_type() == sol::type::table)
         {
-            sol::object key = kv.first;
-            sol::object value = kv.second;
-
-            std::string key_str = sol_object_tostring(lua, key);
-            std::string key_str_label = "##" + key_str;
-            // Append typename to key string
-            //std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
-            //key_str = key_str + " (" + type_name + ")";
-
-            if (value.get_type() == sol::type::table)
+            if (inspector.begin_node(key_str.c_str()))
             {
-                if (inspector.begin_node(key_str.c_str()))
-                {
-                    sol::table tbl_nested = value.as<sol::table>();
+                sol::table tbl_nested = value.as<sol::table>();
 
-                    if (Editor::inspect_type(tbl_nested, inspector)) { /* Read-only */ }
-                    // soltable_inspect_rec(value.as<sol::table>(), inspector);
-                    inspector.end_node();
+                mod |= Editor::inspect_type(tbl_nested, inspector);
+                inspector.end_node();
+            }
+        }
+        else if (value.get_type() == sol::type::userdata)
+        {
+            if (inspector.begin_node(key_str.c_str()))
+            {
+                sol::userdata ud = value.as<sol::userdata>();
+
+                // Check if the userdata has an `__index` metamethod that acts like a table
+                sol::optional<sol::table> metatable = ud[sol::metatable_key];
+                if (metatable && metatable->get<sol::object>("__index").is<sol::table>()) {
+                    sol::table index_table = metatable->get<sol::table>("__index");
+                    Editor::inspect_type(index_table, inspector);
                 }
+                else {
+                    ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
+                }
+                inspector.end_node();
+            }
+        }
+        else
+        {
+            inspector.begin_leaf(key_str.c_str());
+
+            if (value.get_type() == sol::type::function)
+            {
+                sol::function func = value.as<sol::function>();
+                mod |= Editor::inspect_type(func, inspector);
             }
             else if (value.get_type() == sol::type::number)
             {
                 double dbl = value.as<double>();
-
-                inspector.begin_leaf(key_str.c_str());
                 if (ImGui::InputDouble(key_str_label.c_str(), &dbl, 0.1, 0.5))
                 {
                     // Commit modified value to Lua
                     tbl[key] = dbl;
+                    mod = true;
                 }
-                inspector.end_leaf();
             }
-            //else if (value.get_type() == sol::type::boolean)
-            // else if (value.get_type() == sol::type::lightuserdata)
-            //else if (value.get_type() == sol::type::lua_nil)
-            // else if (value.get_type() == sol::type::none)
-            // else if (value.get_type() == sol::type::poly)
-            // else if (value.get_type() == sol::type::string)
-            // else if (value.get_type() == sol::type::thread)
-            // else if (value.get_type() == sol::type::userdata)
-            else if (value.get_type() == sol::type::function)
+            else if (value.get_type() == sol::type::boolean)
             {
-                sol::function func = value.as<sol::function>();
-
-                inspector.begin_leaf(key_str.c_str());
-                if (Editor::inspect_type(func, inspector)) { /* Read-only */ }
-                inspector.end_leaf();
+                bool b = value.as<bool>();
+                if (ImGui::Checkbox(key_str_label.c_str(), &b))
+                {
+                    // Commit modified value to Lua
+                    tbl[key] = b;
+                    mod = true;
+                }
+            }
+            else if (value.get_type() == sol::type::string)
+            {
+                std::string str = value.as<std::string>();
+                if (inspect_type(str, inspector))
+                {
+                    // Commit modified value to Lua
+                    tbl[key] = str;
+                    mod = true;
+                }
             }
             else
             {
-                inspector.begin_leaf(key_str.c_str());
-                ImGui::Text("[tostring] %s", sol_object_tostring(lua, value).c_str());
-                inspector.end_leaf();
-            }
-        }
+                // Fallback: display object as a string
+                // Applies to
+                // sol::type::lightuserdata
+                // sol::type::lua_nil
+                // sol::type::none
+                // sol::type::poly
+                // sol::type::thread
 
-        return false;
+                ImGui::TextDisabled("%s", sol_object_to_string(lua, value).c_str());
+            }
+            inspector.end_leaf();
+        }
     }
 
-    // bool soltable_inspect(void* ptr, Editor::InspectorState& inspector)
-    // {
-    //     return soltable_inspect_rec(*static_cast<sol::table*>(ptr), inspector);
-    // }
-namespace
-{
+    return mod;
 }
 
 void ScriptedBehaviorComponent_metaregister(sol::state& lua)
