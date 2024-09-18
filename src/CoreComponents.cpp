@@ -21,8 +21,7 @@ bool Editor::inspect_type<sol::function>(sol::function& t, Editor::InspectorStat
     return false;
 }
 
-namespace
-{
+
     // bool soltable_inspect_with_luastate(sol::state& lua, void* ptr, Editor::InspectorState& inspector)
     // {
     //     ImGui::TextDisabled("soltable_inspect_with_luastate");
@@ -31,22 +30,26 @@ namespace
 
 
     // With type
-    bool solfunction_inspect_(const sol::function& f, Editor::InspectorState& inspector)
-    {
-        ImGui::TextDisabled("sol::function");
-        return false;
-    }
+    // bool solfunction_inspect_(const sol::function& f, Editor::InspectorState& inspector)
+    // {
+    //     ImGui::TextDisabled("sol::function");
+    //     return false;
+    // }
 
-    bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
-    {
-        return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector);
+    // bool solfunction_inspect(void* ptr, Editor::InspectorState& inspector)
+    // {
+    //     return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector);
 
-        // return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
-    }
+    //     // return solfunction_inspect_(*static_cast<sol::function*>(ptr), inspector);
+    // }
 
     // Specialization? Base template in MetaInspect.hpp (now it's in )?
-    bool soltable_inspect_rec(sol::state& lua, sol::table tbl, Editor::InspectorState& inspector)
+    template<>
+    bool Editor::inspect_type<sol::table>(sol::table& tbl, Editor::InspectorState& inspector)
+        //bool soltable_inspect_rec(/*sol::state& lua,*/ sol::table tbl, Editor::InspectorState& inspector)
     {
+        auto& lua = *inspector.lua;
+
         const auto sol_object_tostring = [](const sol::state& lua, const sol::object object)
             {
                 return lua["tostring"](object).get<std::string>();
@@ -67,52 +70,58 @@ namespace
             {
                 if (inspector.begin_node(key_str.c_str()))
                 {
-                    soltable_inspect_rec(lua, value.as<sol::table>(), inspector);
+                    sol::table tbl_nested = value.as<sol::table>();
+
+                    if (Editor::inspect_type(tbl_nested, inspector)) { /* Read-only */ }
+                    // soltable_inspect_rec(value.as<sol::table>(), inspector);
                     inspector.end_node();
                 }
             }
             else if (value.get_type() == sol::type::number)
             {
-                double exposed_val = value.as<double>();
+                double dbl = value.as<double>();
 
                 inspector.begin_leaf(key_str.c_str());
-                //ImGui::Text("%f", val);
-                if (ImGui::InputDouble(key_str_label.c_str(), &exposed_val, 0.1, 0.5))
-                    tbl[key] = exposed_val;
+                if (ImGui::InputDouble(key_str_label.c_str(), &dbl, 0.1, 0.5))
+                {
+                    // Commit modified value to Lua
+                    tbl[key] = dbl;
+                }
                 inspector.end_leaf();
             }
+            //else if (value.get_type() == sol::type::boolean)
+            // else if (value.get_type() == sol::type::lightuserdata)
+            //else if (value.get_type() == sol::type::lua_nil)
+            // else if (value.get_type() == sol::type::none)
+            // else if (value.get_type() == sol::type::poly)
+            // else if (value.get_type() == sol::type::string)
+            // else if (value.get_type() == sol::type::thread)
+            // else if (value.get_type() == sol::type::userdata)
             else if (value.get_type() == sol::type::function)
             {
-                // sol::object might be a reference by itself - identofy a number, and try changing it
-                // sol::function* funcc = value.as<sol::function*>();
-                //auto func = value.as<sol::function&>(); 
-                // auto f = value.as<sol::function&>();
-                // value = sol::function {};
+                sol::function func = value.as<sol::function>();
 
                 inspector.begin_leaf(key_str.c_str());
-                // Editor::inspect_type(value.as<sol::function>(), inspector);
-                solfunction_inspect_(value.as<sol::function>(), inspector);
+                if (Editor::inspect_type(func, inspector)) { /* Read-only */ }
                 inspector.end_leaf();
             }
-            // Todo: more lua types
             else
             {
                 inspector.begin_leaf(key_str.c_str());
-                // ImGui::Text("%s", lua["tostring"](value).get<std::string>().c_str());
                 ImGui::Text("[tostring] %s", sol_object_tostring(lua, value).c_str());
-
                 inspector.end_leaf();
             }
-
         }
 
         return false;
     }
 
-    bool soltable_inspect(void* ptr, Editor::InspectorState& inspector)
-    {
-        return soltable_inspect_rec(*inspector.lua, *static_cast<sol::table*>(ptr), inspector);
-    }
+    // bool soltable_inspect(void* ptr, Editor::InspectorState& inspector)
+    // {
+    //     return soltable_inspect_rec(*static_cast<sol::table*>(ptr), inspector);
+    // }
+namespace
+{
 }
 
 void ScriptedBehaviorComponent_metaregister(sol::state& lua)
@@ -122,16 +131,18 @@ void ScriptedBehaviorComponent_metaregister(sol::state& lua)
     entt::meta<sol::table>()
         .type("sol::table"_hs).prop(display_name_hs, "sol::table")
         // inspect
-        .func<&soltable_inspect>(inspect_hs)
-
+        //.func<&soltable_inspect>(inspect_hs)
+        // inspect v2
+        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
         ;
 
+    // sol::function
     entt::meta<sol::function>()
         .type("sol::function"_hs).prop(display_name_hs, "sol::function")
         // inspect
-        .func<&solfunction_inspect>(inspect_hs)
+        //.func<&solfunction_inspect>(inspect_hs)
         // inspect v2 - 'widget not implemented' for BehaviorScript::update, on_collision
-        //.func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
+        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector); } > (inspect_hs)
         ;
 
     // ScriptedBehaviorComponent

@@ -35,6 +35,21 @@ namespace Editor {
         return false;
     }
 
+    // Inspect double
+    template<>
+    inline bool inspect_type<double>(double& t, InspectorState& inspector)
+    {
+        return ImGui::InputDouble("##label", &t, 1.0f);
+    }
+
+    // Inspect const double
+    template<>
+    inline bool inspect_type<const double>(const double& t, InspectorState& inspector)
+    {
+        ImGui::TextDisabled("%d", t);
+        return false;
+    }
+
     // Inspect int
     template<>
     inline bool inspect_type<int>(int& t, InspectorState& inspector)
