@@ -141,7 +141,7 @@ namespace Editor {
                         entt::meta_any data_any = meta_data.get(any);
 
                         // Check & set readonly
-                        bool readonly = get_meta_data_prop<bool, false>(meta_data, readonly_hs);
+                        bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
                         if (readonly) inspector.begin_disabled();
 
                         inspect_any(data_any, inspector);

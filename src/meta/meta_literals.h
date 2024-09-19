@@ -26,4 +26,6 @@ constexpr entt::hashed_string inspect_hs = "inspect"_hs;
 
 constexpr entt::hashed_string readonly_hs = "readonly"_hs;
 
+constexpr bool ReadonlyDefault = false;
+
 #endif /* meta_literals_h */
