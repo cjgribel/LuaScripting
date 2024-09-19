@@ -177,7 +177,10 @@ void ScriptedBehaviorComponent_metaregister(sol::state& lua)
 
     entt::meta<ScriptedBehaviorComponent::BehaviorScript>()
         .type("BehaviorScript"_hs).prop(display_name_hs, "BehaviorScript")
-        .data<&ScriptedBehaviorComponent::BehaviorScript::identifier>("identifier"_hs).prop(display_name_hs, "identifier") // TODO const
+
+        .data<&ScriptedBehaviorComponent::BehaviorScript::identifier>("identifier"_hs)
+        .prop(display_name_hs, "identifier")
+        .prop(readonly_hs, true)
         // sol stuff
         .data<&ScriptedBehaviorComponent::BehaviorScript::self>("self"_hs).prop(display_name_hs, "table")
         .data<&ScriptedBehaviorComponent::BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")

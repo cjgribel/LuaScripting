@@ -18,8 +18,8 @@
 namespace Editor {
 
     std::string get_entity_name(
-        entt::registry& registry, 
-        entt::entity entity, 
+        entt::registry& registry,
+        entt::entity entity,
         entt::meta_type meta_type_with_name)
     {
         //assert(registry.valid(entity));
@@ -46,7 +46,7 @@ namespace Editor {
         if (!comp_any) return entity_str;
 
         // Get data value
-        auto data = meta_data.get(comp_any); 
+        auto data = meta_data.get(comp_any);
 
         // Fetch name from component
         auto name_ptr = data.try_cast<std::string>();
@@ -60,7 +60,7 @@ namespace Editor {
     }
 
     bool inspect_enum_any(
-        entt::meta_any& any, 
+        entt::meta_any& any,
         InspectorState& inspector)
     {
         entt::meta_type meta_type = entt::resolve(any.type().id());
@@ -103,7 +103,7 @@ namespace Editor {
     }
 
     void inspect_any(
-        entt::meta_any& any, 
+        entt::meta_any& any,
         InspectorState& inspector)
     {
         assert(any);
@@ -132,16 +132,24 @@ namespace Editor {
                 // inspect() not available: traverse data members
                 for (auto&& [id, meta_data] : meta_type.data())
                 {
-                    // JSON key name is the display name if present, or the id type
                     std::string key_name = meta_data_name(id, meta_data);
+
 
                     ImGui::SetNextItemOpen(true); // Probably don't have this
                     if (inspector.begin_node(key_name.c_str()))
                     {
-                        entt::meta_any field_any = meta_data.get(any);
-                        inspect_any(field_any, inspector);
-                        meta_data.set(any, field_any);
+                        entt::meta_any data_any = meta_data.get(any);
+
+                        // Check & set readonly
+                        bool readonly = get_meta_data_prop<bool, false>(meta_data, readonly_hs);
+                        if (readonly) inspector.begin_disabled();
+
+                        inspect_any(data_any, inspector);
+                        meta_data.set(any, data_any);
                         inspector.end_node();
+
+                        // Unset readonly
+                        if (readonly) inspector.end_disabled();
                     }
                 }
             }
@@ -202,8 +210,8 @@ namespace Editor {
     }
 
     void inspect_registry(
-        entt::registry& registry, 
-        entt::meta_type name_comp_type, 
+        entt::registry& registry,
+        entt::meta_type name_comp_type,
         InspectorState& inspector)
     {
         auto view = registry.view<entt::entity>();

@@ -101,6 +101,7 @@ namespace Editor {
     struct InspectorState
     {
         sol::state* lua;
+        bool imgui_disabled = false;
         //entt::entity primary_entity;
         // int id = 0;
         // void push_id()
@@ -111,6 +112,27 @@ namespace Editor {
         // {
         //     ImGui::PopID();
         // }
+
+        void begin_disabled()
+        {
+            if (!imgui_disabled)
+            {
+                ImGui::BeginDisabled();
+                imgui_disabled = true;
+            }
+        }
+
+        void end_disabled()
+        {
+            if (imgui_disabled)
+            {
+                ImGui::EndDisabled();
+                imgui_disabled = false;
+            }
+        }
+
+        bool is_disabled() const { return imgui_disabled; }
+
         void begin_leaf(const char* label)
         {
             row();

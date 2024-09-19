@@ -84,8 +84,39 @@ bool try_apply(entt::meta_any& value, Callable callable)
     return internal::any_apply_impl(value, callable, internal::TryCastTypes{});
 }
 
+/// @brief 
+/// @tparam Type 
+/// @param any 
+/// @param id 
+/// @return 
+// template<class Type>
+// inline Type* try_cast_prop(const entt::meta_any any, entt::id_type id)
+// {
+//     assert(any);
+
+//     if (auto meta_type = entt::resolve(any.type().id()); meta_type)
+//         if (auto prop = meta_type.prop(id); prop)
+//             return prop.value().try_cast<Type>();
+
+//     return nullptr;
+// }
+
+/// @brief Get the value of a meta_data property
+/// @tparam Type Property type
+/// @tparam Default Value to be used if property does ot exist or cast to Type fails
+/// @param data 
+/// @param id 
+/// @return The property value or the default value
+template<class Type, Type Default>
+inline Type get_meta_data_prop(const entt::meta_data& data, const entt::id_type& id)
+{
+    if (auto prop = data.prop(id); prop)
+        if (auto ptr = prop.value().try_cast<Type>(); ptr)
+            return *ptr;
+    return Default;
+}
+
 /// Returns either 1) the display name or 2) the default-assigned name of the argument
-// TODO: -> meta_any_name
 inline auto meta_any_name(const entt::meta_any any)
 {
     assert(any);

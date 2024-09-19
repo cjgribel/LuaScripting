@@ -24,4 +24,6 @@ constexpr entt::hashed_string from_json_hs = "from_json"_hs;
 
 constexpr entt::hashed_string inspect_hs = "inspect"_hs;
 
+constexpr entt::hashed_string readonly_hs = "readonly"_hs;
+
 #endif /* meta_literals_h */
