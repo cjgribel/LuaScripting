@@ -26,117 +26,122 @@ namespace
     }
 }
 
-/// Inspect sol::function
-template<>
-bool Editor::inspect_type<sol::function>(sol::function& t, Editor::InspectorState& inspector)
-{
-    ImGui::TextDisabled("%s", sol_object_to_string(*inspector.lua, t).c_str());
-    return false;
-}
+namespace Editor {
 
-/// Inspect sol::table
-template<>
-bool Editor::inspect_type<sol::table>(sol::table& tbl, Editor::InspectorState& inspector)
-{
-    auto& lua = *inspector.lua;
-    bool mod = false;
-
-    for (auto& [key, value] : tbl)
+    /// Inspect sol::function
+    template<>
+    bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
     {
-        std::string key_str = sol_object_to_string(lua, key);
-        std::string key_str_label = "##" + key_str;
+        ImGui::TextDisabled("%s", sol_object_to_string(*inspector.lua, t).c_str());
+        return false;
+    }
 
-        // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
-        // This form,
-        //      value.get_type() == sol::type::table
-        // seems more precise when detecting types, even though it isn't type-safe
+    /// Inspect sol::table
+    template<>
+    bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
+    {
+        auto& lua = *inspector.lua;
+        bool mod = false;
 
-        if (value.get_type() == sol::type::table)
+        for (auto& [key, value] : tbl)
         {
-            if (inspector.begin_node(key_str.c_str()))
-            {
-                sol::table tbl_nested = value.as<sol::table>();
+            std::string key_str = sol_object_to_string(lua, key);
+            std::string key_str_label = "##" + key_str;
 
-                mod |= Editor::inspect_type(tbl_nested, inspector);
-                inspector.end_node();
-            }
-        }
-        else if (value.get_type() == sol::type::userdata)
-        {
-            if (inspector.begin_node(key_str.c_str()))
-            {
-                sol::userdata ud = value.as<sol::userdata>();
+            // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
+            // This form,
+            //      value.get_type() == sol::type::table
+            // seems more precise when detecting types, even though it isn't type-safe
 
-                // Check if the userdata has an `__index` metamethod that acts like a table
-                sol::optional<sol::table> metatable = ud[sol::metatable_key];
-                if (metatable && metatable->get<sol::object>("__index").is<sol::table>()) {
-                    sol::table index_table = metatable->get<sol::table>("__index");
-                    Editor::inspect_type(index_table, inspector);
-                }
-                else {
-                    ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
-                }
-                inspector.end_node();
-            }
-        }
-        else
-        {
-            inspector.begin_leaf(key_str.c_str());
+            if (value.get_type() == sol::type::table)
+            {
+                if (inspector.begin_node(key_str.c_str()))
+                {
+                    sol::table tbl_nested = value.as<sol::table>();
 
-            if (value.get_type() == sol::type::function)
-            {
-                sol::function func = value.as<sol::function>();
-                mod |= Editor::inspect_type(func, inspector);
-            }
-            else if (value.get_type() == sol::type::number)
-            {
-                double dbl = value.as<double>();
-                if (ImGui::InputDouble(key_str_label.c_str(), &dbl, 0.1, 0.5))
-                {
-                    // Commit modified value to Lua
-                    tbl[key] = dbl;
-                    mod = true;
+                    mod |= Editor::inspect_type(tbl_nested, inspector);
+                    inspector.end_node();
                 }
             }
-            else if (value.get_type() == sol::type::boolean)
+            else if (value.get_type() == sol::type::userdata)
             {
-                bool b = value.as<bool>();
-                if (ImGui::Checkbox(key_str_label.c_str(), &b))
+                if (inspector.begin_node(key_str.c_str()))
                 {
-                    // Commit modified value to Lua
-                    tbl[key] = b;
-                    mod = true;
-                }
-            }
-            else if (value.get_type() == sol::type::string)
-            {
-                std::string str = value.as<std::string>();
-                if (inspect_type(str, inspector))
-                {
-                    // Commit modified value to Lua
-                    tbl[key] = str;
-                    mod = true;
+                    sol::userdata ud = value.as<sol::userdata>();
+
+                    // Check if the userdata has an `__index` metamethod that acts like a table
+                    sol::optional<sol::table> metatable = ud[sol::metatable_key];
+                    if (metatable && metatable->get<sol::object>("__index").is<sol::table>()) {
+                        sol::table index_table = metatable->get<sol::table>("__index");
+                        Editor::inspect_type(index_table, inspector);
+                    }
+                    else {
+                        ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
+                    }
+                    inspector.end_node();
                 }
             }
             else
             {
-                // Fallback: display object as a string
-                // Applies to
-                // sol::type::lightuserdata
-                // sol::type::lua_nil
-                // sol::type::none
-                // sol::type::poly
-                // sol::type::thread
+                inspector.begin_leaf(key_str.c_str());
 
-                ImGui::TextDisabled("%s", sol_object_to_string(lua, value).c_str());
+                if (value.get_type() == sol::type::function)
+                {
+                    sol::function func = value.as<sol::function>();
+                    mod |= Editor::inspect_type(func, inspector);
+                }
+                else if (value.get_type() == sol::type::number)
+                {
+                    double dbl = value.as<double>();
+                    if (ImGui::InputDouble(key_str_label.c_str(), &dbl, 0.1, 0.5))
+                    {
+                        // Commit modified value to Lua
+                        tbl[key] = dbl;
+                        mod = true;
+                    }
+                }
+                else if (value.get_type() == sol::type::boolean)
+                {
+                    bool b = value.as<bool>();
+                    if (ImGui::Checkbox(key_str_label.c_str(), &b))
+                    {
+                        // Commit modified value to Lua
+                        tbl[key] = b;
+                        mod = true;
+                    }
+                }
+                else if (value.get_type() == sol::type::string)
+                {
+                    std::string str = value.as<std::string>();
+                    if (inspect_type(str, inspector))
+                    {
+                        // Commit modified value to Lua
+                        tbl[key] = str;
+                        mod = true;
+                    }
+                }
+                else
+                {
+                    // Fallback: display object as a string
+                    // Applies to
+                    // sol::type::lightuserdata
+                    // sol::type::lua_nil
+                    // sol::type::none
+                    // sol::type::poly
+                    // sol::type::thread
+
+                    ImGui::TextDisabled("%s", sol_object_to_string(lua, value).c_str());
+                }
+                inspector.end_leaf();
             }
-            inspector.end_leaf();
         }
+
+        return mod;
     }
 
-    return mod;
 }
 
+// specialize?
 void ScriptedBehaviorComponent_metaregister(sol::state& lua)
 {
     // TODO: Where should meta for sol stuff be placed (table, function etc)?
