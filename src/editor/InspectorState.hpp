@@ -4,9 +4,10 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
 
-namespace sol {
-    class state;
-}
+#include <sol/forward.hpp>
+// namespace sol {
+//     class state;
+// }
 
 namespace Editor {
 
@@ -98,6 +99,7 @@ namespace Editor {
         return false;
     }
 
+    /// @brief 
     struct InspectorState
     {
         sol::state* lua;
