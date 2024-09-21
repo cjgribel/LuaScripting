@@ -62,6 +62,11 @@ void register_transform(sol::state& lua)
         .data<&Transform::x>("x"_hs).prop(display_name_hs, "x")
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
+
+        // .data<&Transform::x_>("x"_hs).prop(display_name_hs, "x")
+        // .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
+        // .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
+
         .func<&inspect_Transform>(inspect_hs) // OPTIONAL
 
         //.func<&vec3_to_json>(to_json_hs)

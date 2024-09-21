@@ -56,6 +56,8 @@ function game:init()
     self.game_entity = engine.create_entity(engine.entity_null) -- engine.registry:create() -- global for now so it's reachable to phases
     -- Header
     engine.registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
+    -- Transform
+    engine.registry:emplace(self.game_entity, Transform(0.0, 0.0, 0.0))
 
     -- Projectile pool
     engine.log("Creating projectile pool...")

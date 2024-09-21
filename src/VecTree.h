@@ -234,7 +234,7 @@ public:
     /// Useful for hierarchical transformations. The tree is optimized for this type of traversal.
     /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&>
     void traverse_progressive(
         size_t start_index,
         const F& func)
@@ -249,19 +249,19 @@ public:
             auto& node = nodes[node_index];
 
             if (!node.m_parent_ofs)
-                func(node.m_payload, null_value<PayloadType>::value(), node_index, 0);
+                func(node.m_payload, null_value<PayloadType>::value());
 
             size_t child_index = node_index + 1;
             for (int j = 0; j < node.m_nbr_children; j++)
             {
-                func(nodes[child_index].m_payload, node.m_payload, child_index, node_index);
+                func(nodes[child_index].m_payload, node.m_payload);
                 child_index += nodes[child_index].m_branch_stride;
             }
         }
     }
 
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&>
     void traverse_progressive(
         const PayloadType& payload,
         const F& func)
@@ -272,7 +272,7 @@ public:
     }
 
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&>
     void traverse_progressive(
         const F& func)
     {
