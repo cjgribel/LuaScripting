@@ -28,6 +28,12 @@
 //                         // Is reset after traversal
 // };
 
+template <>
+struct null_value<entt::entity> 
+{
+    static entt::entity value() { return entt::null; }
+};
+
 class SceneGraph
 {
 public:

@@ -14,7 +14,7 @@
 #include "Scene.hpp"
 
 #include "bond.hpp"
-#include "transform.hpp"
+// #include "transform.hpp"
 //#include "kbhit.hpp"
 #include "AudioManager.hpp"
 #include "CoreComponents.hpp"
@@ -1220,7 +1220,7 @@ bool Scene::init(const v2i& windowSize)
 
         // Register AudioManager to Lua
         bindAudioManager(lua);
-        
+
         // Register core components to Lua
         register_transform(lua);
         registerQuadComponent(lua); // remove
@@ -1374,6 +1374,8 @@ void Scene::update(float time_s, float deltaTime_s)
 
     particleBuffer.update(deltaTime_s);
 
+    scenegraph.traverse(registry);
+
     script_system_update(registry, deltaTime_s);
 
     // Debug print
@@ -1428,7 +1430,7 @@ void Scene::update(float time_s, float deltaTime_s)
             const auto& collider1 = view.get<CircleColliderGridComponent>(entity1);
             if (!collider1.is_active) continue;
 
-            const auto R1 = m2f::rotation(transform1.rot);
+            const auto R1 = m2f::rotation(transform1.rot_global);
             for (auto it2 = it1; ++it2 != view.end(); )
             {
                 auto entity2 = *it2;
@@ -1439,7 +1441,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 // LAYER CHECK
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
 
-                const auto R2 = m2f::rotation(transform2.rot);
+                const auto R2 = m2f::rotation(transform2.rot_global);
                 // for (auto i = 0; i < collider1.count; i++)
                 for (int di = 0; di < collider1.active_indices.get_dense_count(); di++)
                 {
@@ -1454,10 +1456,10 @@ void Scene::update(float time_s, float deltaTime_s)
                         //if (!collider2.is_active_flags[j]) continue;
                         const auto pos2 = R2 * collider2.circles[j].pos;
 
-                        const float x1 = transform1.x + pos1.x;
-                        const float y1 = transform1.y + pos1.y;
-                        const float x2 = transform2.x + pos2.x;
-                        const float y2 = transform2.y + pos2.y;
+                        const float x1 = transform1.x_global + pos1.x;
+                        const float y1 = transform1.y_global + pos1.y;
+                        const float x2 = transform2.x_global + pos2.x;
+                        const float y2 = transform2.y_global + pos2.y;
 
                         const float r1 = collider1.circles[i].radius;
                         const float r2 = collider2.circles[j].radius;
@@ -1661,7 +1663,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             auto& quad_comp = registry.get<QuadComponent>(entity);
             if (!quad_comp.is_visible) continue;
 
-            const auto pos = v3f{ transform_comp.x, transform_comp.y, 0.0f };
+            const auto pos = v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f };
             const auto& size = quad_comp.w;
             const auto& color = quad_comp.color;
 
@@ -1684,8 +1686,8 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
-                v3f{ transform_comp.x, transform_comp.y, 0.0f },
-                transform_comp.rot, v3f_001,
+                v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
+                transform_comp.rot_global, v3f_001,
                 v3f_111
             );
 
@@ -1706,7 +1708,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     }
 #endif
 
-#if 0
+#if 1
     // Render all CircleColliderGridComponent
     if (debug_render)
     {
@@ -1717,23 +1719,37 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
-                v3f{ transform_comp.x, transform_comp.y, 0.0f },
-                transform_comp.rot, v3f_001,
+                v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
+                transform_comp.rot_global, v3f_001,
                 v3f_111
             );
 
-            for (int i = 0; i < collidergrid.count; i++)
+            // Render all circles in the grid & use a different shading for inactive ones
+            for (int i = 0; i < collidergrid.element_count; i++)
             {
-                const auto& pos = xy0(collidergrid.pos[i]);
-                const auto& r = collidergrid.radii[i];
+                // const int i = collidergrid.active_indices.get_dense(di);
+                const auto& pos = xy0(collidergrid.circles[i].pos);
+                const auto& r = collidergrid.circles[i].radius;
                 const auto M = set_translation(m4f::scaling(r, r, 1.0f), pos);
-                const bool visible = collidergrid.is_active_flags[i];
+                const bool visible = collidergrid.active_indices.contains(i);;
                 const auto color = 0xffffffff * visible + 0xff808080 * (1 - visible);
 
                 renderer->push_states(G * M, Renderer::Color4u{ color });
                 renderer->push_circle_ring<8>();
                 renderer->pop_states<m4f, Renderer::Color4u>();
             }
+            // for (int i = 0; i < collidergrid.count; i++)
+            // {
+            //     const auto& pos = xy0(collidergrid.pos[i]);
+            //     const auto& r = collidergrid.radii[i];
+            //     const auto M = set_translation(m4f::scaling(r, r, 1.0f), pos);
+            //     const bool visible = collidergrid.is_active_flags[i];
+            //     const auto color = 0xffffffff * visible + 0xff808080 * (1 - visible);
+
+            //     renderer->push_states(G * M, Renderer::Color4u{ color });
+            //     renderer->push_circle_ring<8>();
+            //     renderer->pop_states<m4f, Renderer::Color4u>();
+            // }
         }
     }
 #endif

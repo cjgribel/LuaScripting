@@ -8,9 +8,9 @@
 // sol is used by
 // For ScriptedBehaviorComponent => its own hpp/cpp
 // Lua event
-//#define SOL_ALL_SAFETIES_ON 1
-//#include <sol/sol.hpp> 
-#include <sol/forward.hpp>
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/sol.hpp> 
+//#include <sol/forward.hpp>
 // Fwwd decl?
 // namespace sol {
 //     class state;
@@ -23,15 +23,40 @@
 #include "SparseSet.hpp"
 
 using linalg::v2f;
-
 #define EntitySetSize 64
 
-// namespace CircleColliderGrid
-// {
-//     struct Component {}; // OK when exposing to Lua - still "Transform"?
+struct Transform
+{
+    // If stable pointers to Transform are needed, e.g. in scene graph nodes
+    // https://github.com/skypjack/entt/blob/master/docs/md/entity.md
+    //static constexpr auto in_place_delete = true;
 
-//     void register_meta() {} // entt + sol => cpp (include entt & sol here)
-// }
+    float x{ 0.0f }, y{ 0.0f }, rot{ 0.0f };
+
+    // Not meta-registered
+    float x_parent{ 0.0f }, y_parent{ 0.0f }, rot_parent{ 0.0f };
+    float x_global{ 0.0f }, y_global{ 0.0f }, rot_global{ 0.0f };
+
+    // void compute_global_transform()
+    // {
+    //     x_global = x * cos(rot_parent) - y * sin(rot_parent) + x_parent;
+    //     y_global = x * sin(rot_parent) + y * cos(rot_parent) + y_parent;
+    //     rot_global = rot + rot_parent;
+    // }
+
+    std::string to_string() const
+    {
+        std::stringstream ss;
+        ss << "Transform { x = " << std::to_string(x)
+            << ", y = " << std::to_string(y)
+            << ", rot = " << std::to_string(rot) << " }";
+        return ss.str();
+    }
+};
+
+void register_transform(sol::state& lua);
+
+// ===
 
 struct CircleColliderGridComponent
 {
@@ -190,6 +215,8 @@ struct ScriptedBehaviorComponent
 void ScriptedBehaviorComponent_metaregister(sol::state& lua);
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
+
+// ===
 
 struct LuaEvent {
     sol::table data;

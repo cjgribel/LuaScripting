@@ -16,37 +16,24 @@
 
 #define VecTree_NullIndex -1
 
+template <typename T>
+struct null_value
+{
+    static T value() { return T{}; }
+};
+
+template <typename T>
+concept EqualityComparable = requires(T a, T b) {
+    { a == b } -> std::convertible_to<bool>;
+};
+
 template<class T>
 struct TreeNode
 {
     unsigned m_nbr_children = 0;    // Nbr of children
     unsigned m_branch_stride = 1;   // Branch size including this node
     unsigned m_parent_ofs = 0;      // Distance to parent, relative parent.
-    // std::string m_name;             // 
-    T m_payload;
-
-    // TreeNode(const T& payload) : m_payload(payload) {} // takes away 'aggregate'
-};
-
-// struct SkeletonNode : public TreeNode
-// {
-// //    m4f local_tfm;          // Transform relative parent
-// //    m4f global_tfm = m4f_1; // Updated during tree traversal
-//     int bone_index = -1;
-//     int nbr_meshes = 0;
-//     std::string name = "";
-// //
-//     SkeletonNode() = default;
-//     SkeletonNode(const std::string &name)
-//     : name(name) {}
-// //    SkeletonNode(const std::string &name, const m4f &local_tfm)
-// //        : name(name),
-// //          local_tfm(local_tfm) {}
-// };
-
-template <typename T>
-concept EqualityComparable = requires(T a, T b) {
-    { a == b } -> std::convertible_to<bool>;
+    T m_payload;                    // Payload
 };
 
 /**
@@ -225,7 +212,7 @@ public:
         // From after the node's branch, 
         // update parent offsets that range backward past the enode
         //
-        auto pfit = nodes.begin() + node_index + branch_stride; 
+        auto pfit = nodes.begin() + node_index + branch_stride;
         //auto pfit = pit + branch_stride; // pit + 1;
         while (pfit < nodes.end())
         {
@@ -247,7 +234,7 @@ public:
     /// Useful for hierarchical transformations. The tree is optimized for this type of traversal.
     /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
     template<class F>
-        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
     void traverse_progressive(
         size_t start_index,
         const F& func)
@@ -261,6 +248,9 @@ public:
             auto node_index = start_index + i;
             auto& node = nodes[node_index];
 
+            if (!node.m_parent_ofs)
+                func(node.m_payload, null_value<PayloadType>::value(), node_index, 0);
+
             size_t child_index = node_index + 1;
             for (int j = 0; j < node.m_nbr_children; j++)
             {
@@ -271,7 +261,7 @@ public:
     }
 
     template<class F>
-        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
     void traverse_progressive(
         const PayloadType& payload,
         const F& func)
@@ -282,12 +272,19 @@ public:
     }
 
     template<class F>
-        requires std::invocable<F, PayloadType&, PayloadType&, size_t, size_t>
+        requires std::invocable<F, const PayloadType&, const PayloadType&, size_t, size_t>
     void traverse_progressive(
         const F& func)
     {
-        if (size())
-            traverse_progressive(0, func);
+        // if (size())
+        //     traverse_progressive(0, func);
+
+        size_t i = 0;
+        while (i < size())
+        {
+            traverse_progressive(i, func);
+            i += nodes[i].m_branch_stride;
+        }
     }
 
     /// @brief Traverse tree depth-first without level information
