@@ -63,11 +63,11 @@ void register_transform(sol::state& lua)
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
 
-        // .data<&Transform::x_>("x"_hs).prop(display_name_hs, "x")
-        // .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
-        // .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
+        // .data<&Transform::x_global>("x_global"_hs).prop(display_name_hs, "x_global")
+        // .data<&Transform::y_global>("y_global"_hs).prop(display_name_hs, "y_global")
+        // .data<&Transform::rot_global>("rot_global"_hs).prop(display_name_hs, "angle_global")
 
-        .func<&inspect_Transform>(inspect_hs) // OPTIONAL
+        // .func<&inspect_Transform>(inspect_hs) // OPTIONAL
 
         //.func<&vec3_to_json>(to_json_hs)
         //.func < [](nlohmann::json& j, const void* ptr) { to_json(j, *static_cast<const vec3*>(ptr)); }, entt::as_void_t > (to_json_hs)

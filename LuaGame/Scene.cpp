@@ -1370,13 +1370,22 @@ void Scene::update(float time_s, float deltaTime_s)
     // View matrix
     V = m4f::TRS(eyePos, 0.0f, v3f{ 1.0f, 0.0f, 0.0f }, v3f{ 1.0f, 1.0f, 1.0f }).inverse();
 
+    // Input
     update_input_lua(lua, SceneBase::axes, SceneBase::buttons);
 
-    particleBuffer.update(deltaTime_s);
+    // Update scripts
+    script_system_update(registry, deltaTime_s);
 
+    // Destroy pending entities
+    // After script update because: scripts may remove entities
+    destroy_pending_entities();
+
+    // Update scene graph
+    // After script update because: scripts may alter positions
     scenegraph.traverse(registry);
 
-    script_system_update(registry, deltaTime_s);
+    // Update particles
+    particleBuffer.update(deltaTime_s);
 
     // Debug print
     if (entities_pending_destruction.size())
@@ -1385,21 +1394,6 @@ void Scene::update(float time_s, float deltaTime_s)
         for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
         std::cout << std::endl;
     }
-
-    // Entity destruction takes place outside the update loop
-    destroy_pending_entities();
-    // if (entities_pending_destruction.size())
-    // {
-    //     //
-    //     std::cout << "Destroying " << (int)entities_pending_destruction.size() << " entities... ";
-    //     for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
-    //     std::cout << std::endl;
-
-    //     //eeng::Log::log("Destroying %i entities...", (int)entities_pending_destruction.size());
-    //     for (auto entity : entities_pending_destruction)
-    //         registry.destroy(entity);
-    //     entities_pending_destruction.clear();
-    // }
 
     // Placeholder collision system
 #if 1

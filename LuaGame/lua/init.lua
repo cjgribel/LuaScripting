@@ -2,6 +2,31 @@
 -- Adjust the package path to include the "../../LuaGame/lua" directory
 package.path = package.path .. ";../../LuaGame/lua/?.lua"
 
+-- remove local here and make it global to entire lua state?
+local prefabloaders = require("prefabs")
+
+PlayerCollisionBit = 0x1
+EnemyCollisionBit = 0x2
+ProjectileCollisionBit = 0x4
+
+function rotate(x, y, theta)
+
+    local cos_theta = math.cos(theta)
+    local sin_theta = math.sin(theta)
+    return x * cos_theta - y * sin_theta, x * sin_theta + y * cos_theta
+
+end
+
+function random_color()
+    local alpha = 0xff
+    local red = math.random(0, 255)
+    local green = math.random(0, 255)
+    local blue = math.random(0, 255)
+
+    local color = (alpha << 24) | (red << 16) | (green << 8) | blue
+    return color
+end
+
 game = {
     game_entity = {},
     config = {
@@ -51,6 +76,22 @@ function game:init()
     engine.audio:setEffectVolume(sounds.projectile_fire1, 32)
     engine.audio:setEffectVolume(sounds.element_explode, 32)
 
+    -- Debug hierarchy entitity (not destroyed when game is destroyed)
+    local node1 = engine.create_entity(engine.entity_null)
+    local node2 = engine.create_entity(node1)
+    local node3 = engine.create_entity(node2)
+    engine.registry:emplace(node1, HeaderComponent("Node1"))
+    engine.registry:emplace(node2, HeaderComponent("Node2"))
+    engine.registry:emplace(node3, HeaderComponent("Node3"))
+    engine.registry:emplace(node1, Transform(0.0, 0.0, 0.0))
+    engine.registry:emplace(node2, Transform(1.0, 0.0, 0.0))
+    engine.registry:emplace(node3, Transform(1.0, 0.0, 0.0))
+    local quadgrid = QuadGridComponent(1, 1, true)
+    quadgrid:set_quad_at(0, 0.0, 0.0, 0.5, 0xffffff00, true)
+    engine.registry:emplace(node1, quadgrid)
+    engine.registry:emplace(node2, quadgrid)
+    engine.registry:emplace(node3, quadgrid)
+
     -- Game root entity
     -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
     self.game_entity = engine.create_entity(engine.entity_null) -- engine.registry:create() -- global for now so it's reachable to phases
@@ -84,31 +125,6 @@ function game:destroy()
     engine.destroy_entity(self.projectilepool_entity)
     engine.destroy_entity(self.game_entity)
 
-end
-
--- remove local here and make it global to entire lua state?
-local prefabloaders = require("prefabs")
-
-PlayerCollisionBit = 0x1
-EnemyCollisionBit = 0x2
-ProjectileCollisionBit = 0x4
-
-function rotate(x, y, theta)
-
-    local cos_theta = math.cos(theta)
-    local sin_theta = math.sin(theta)
-    return x * cos_theta - y * sin_theta, x * sin_theta + y * cos_theta
-
-end
-
-function random_color()
-    local alpha = 0xff
-    local red = math.random(0, 255)
-    local green = math.random(0, 255)
-    local blue = math.random(0, 255)
-
-    local color = (alpha << 24) | (red << 16) | (green << 8) | blue
-    return color
 end
 
 function game:create_projectile_pool_entity(parent_entity)
