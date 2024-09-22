@@ -13,7 +13,7 @@
 
 //#include <iostream>
 
-// ==========
+// ========== Transform
 
 // + const (e.g. when used as key) ?
 bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
@@ -77,7 +77,7 @@ void register_transform(sol::state& lua)
         ;
 }
 
-// ===========
+// =========== ScriptedBehaviorComponent + sol stuff
 
 namespace
 {

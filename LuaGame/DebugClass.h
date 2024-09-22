@@ -38,7 +38,7 @@ inline void HeaderComponent_metaregister(sol::state& lua)
     // Register to entt::meta
 
     entt::meta<HeaderComponent>()
-        .type("HeaderComponent"_hs).prop(display_name_hs, "HeaderComponent")
+        .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
         .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
 
         // Optional meta functions

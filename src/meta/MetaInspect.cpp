@@ -205,7 +205,7 @@ namespace Editor {
                 Editor::inspect_type(value, inspector);
                 });
             if (!res)
-                throw std::runtime_error(std::string("Unable to cast ") + meta_any_name(any));
+                throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
     }
 
@@ -227,9 +227,9 @@ namespace Editor {
 
                 if (entt::meta_type meta_type = entt::resolve(id); meta_type)
                 {
-                    auto key_name = std::string{ meta_type.info().name() };
+                    auto type_name = meta_type_name(meta_type);
 
-                    if (inspector.begin_node(key_name.c_str()))
+                    if (inspector.begin_node(type_name.c_str()))
                     {
                         auto comp_any = meta_type.from_void(type.value(entity));
                         inspect_any(comp_any, inspector);
