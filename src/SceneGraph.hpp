@@ -12,27 +12,8 @@
 #include <stdio.h>
 #include <sstream>
 #include <entt/entt.hpp>
-// #include "vec.h"
-// #include "mat.h"
 #include "VecTree.h"
 #include "MetaInspect.hpp"
-//#include "manager.h"
-
-// using namespace linalg;
-
-// struct Transform
-// {
-//     m4f local_tfm;      // Never reset by scene graph
-//     m4f global_tfm;     // Computed during traversal
-//     m4f staging_tfm;    // Temporary transform - parent to local
-//                         // Is reset after traversal
-// };
-
-template <>
-struct null_value<entt::entity> 
-{
-    static entt::entity value() { return entt::null; }
-};
 
 class SceneGraph
 {
@@ -52,31 +33,14 @@ private:
         SceneGraphNode(entt::entity entity, const std::string& name)
             : entity(entity), name(name) {}
     };
-    // struct SceneGraphNode : public TreeNode
-    // {
-    //     Handle<Transform> transform_hnd;
-    //     std::string name;
-
-    //     SceneGraphNode(const Handle<Transform> transform_hnd,
-    //                    const std::string& name)
-    //     : transform_hnd(transform_hnd), name(name) { }
-    // };
 
 public: // TODO: don't expose directly
     VecTree<entt::entity> tree;
-    // VecTree<SceneGraphNode> tree;
-    // seqtree_t<SceneGraphNode> tree;
-    // TypedResourceManager<Transform> transforms;
-    // const std::string root = "Scene root";
 
 public:
     // std::string tree_dump;
 
-    SceneGraph()
-    {
-        // Handle<Transform> root_hnd = transforms.create(Transform {m4f_1, m4f_1});
-        // tree.insert(SceneGraphNode{root_hnd, root}, "");
-    }
+    SceneGraph() = default;
 
     bool create_node(
         entt::entity entity,

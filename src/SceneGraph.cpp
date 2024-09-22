@@ -13,24 +13,22 @@
 
 void SceneGraph::traverse(entt::registry& registry)
 {
-    // SHIFT SO FUNC IS CALLED FOR PARENT???
-    //
     // std::cout << "traverse:" << std::endl;
-    tree.traverse_progressive([&](const auto& entity, const auto& entity_parent) {
+    tree.traverse_progressive([&](entt::entity* entity_ptr, entt::entity* entity_parent_ptr) {
         // + Transform = parent tfm + tfm (+ maybe their aggregate)
     
         // std::cout << "node " << Editor::get_entity_name(registry, entity, entt::meta_type{});
         // std::cout << ", parent " << Editor::get_entity_name(registry, entity_parent, entt::meta_type{});
         // std::cout << std::endl;
 
-        if (!registry.all_of<Transform>(entity)) return;
-        assert(registry.valid(entity));
-        auto& tfm_node = registry.get<Transform>(entity);
+        if (!registry.all_of<Transform>(*entity_ptr)) return;
+        assert(registry.valid(*entity_ptr));
+        auto& tfm_node = registry.get<Transform>(*entity_ptr);
 
-        if (entity_parent != entt::null && registry.all_of<Transform>(entity_parent))
+        if (entity_parent_ptr && registry.all_of<Transform>(*entity_parent_ptr))
         {
-            assert(registry.valid(entity_parent)); // fix
-            auto& tfm_parent = registry.get<Transform>(entity_parent);
+            assert(registry.valid(*entity_parent_ptr)); // fix
+            auto& tfm_parent = registry.get<Transform>(*entity_parent_ptr);
             tfm_node.x_parent = tfm_parent.x_global;
             tfm_node.y_parent = tfm_parent.y_global;
             tfm_node.rot_parent = tfm_parent.rot_global;

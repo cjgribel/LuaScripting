@@ -17,12 +17,6 @@
 #define VecTree_NullIndex -1
 
 template <typename T>
-struct null_value
-{
-    static T value() { return T{}; }
-};
-
-template <typename T>
 concept EqualityComparable = requires(T a, T b) {
     { a == b } -> std::convertible_to<bool>;
 };
@@ -234,7 +228,7 @@ public:
     /// Useful for hierarchical transformations. The tree is optimized for this type of traversal.
     /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&>
+        requires std::invocable<F, PayloadType*, PayloadType*>
     void traverse_progressive(
         size_t start_index,
         const F& func)
@@ -249,19 +243,19 @@ public:
             auto& node = nodes[node_index];
 
             if (!node.m_parent_ofs)
-                func(node.m_payload, null_value<PayloadType>::value());
+                func(&node.m_payload, nullptr);
 
             size_t child_index = node_index + 1;
             for (int j = 0; j < node.m_nbr_children; j++)
             {
-                func(nodes[child_index].m_payload, node.m_payload);
+                func(&nodes[child_index].m_payload, &node.m_payload);
                 child_index += nodes[child_index].m_branch_stride;
             }
         }
     }
 
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&>
+        requires std::invocable<F, PayloadType*, PayloadType*>
     void traverse_progressive(
         const PayloadType& payload,
         const F& func)
@@ -272,7 +266,7 @@ public:
     }
 
     template<class F>
-        requires std::invocable<F, const PayloadType&, const PayloadType&>
+        requires std::invocable<F, PayloadType*, PayloadType*>
     void traverse_progressive(
         const F& func)
     {
