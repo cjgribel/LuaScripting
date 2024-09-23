@@ -149,7 +149,7 @@ namespace {
                 unsigned char layer_bit,
                 unsigned char layer_mask)
                 {
-                    assert(width * height <= EntitySetSize);
+                    assert(width * height <= GridSize);
                     auto c = CircleColliderGridComponent{
                         .element_count = width * height,
                         .width = width,
@@ -164,7 +164,7 @@ namespace {
             // "add_circle",
             // [](CircleColliderGridComponent& c, float x, float y, float radius, bool is_active)
             // {
-            //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
             //     c.pos[c.count].x = x;
             //     c.pos[c.count].y = y;
             //     c.radii[c.count] = radius;
@@ -203,21 +203,21 @@ namespace {
                 c.is_active = is_active;
             },
             // "get_radius", [](CircleColliderGridComponent& ccsc, int index) -> float {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     return ccsc.radii[index];
             // },
             // "set_radius", [](CircleColliderGridComponent& ccsc, int index, float value) {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     ccsc.radii[index] = value;
             // },
             // "get_is_active_flag", [](CircleColliderGridComponent& ccsc, int index) -> float {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     return ccsc.is_active_flags[index];
             // },
             "set_active_flag_at", [](CircleColliderGridComponent& c, int index, bool is_active)
             {
                 assert(index >= 0 && index < c.element_count);
-                //if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                //if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
                 //std::cout << index << std::endl;
                 // c.is_active_flags[index] = is_active;
                 if (is_active) c.active_indices.add(index);
@@ -280,7 +280,7 @@ namespace {
                 int height,
                 bool is_active)
                 {
-                    assert(width * height <= EntitySetSize);
+                    assert(width * height <= GridSize);
                     return QuadGridComponent{
                         .count = width * height,
                         .width = width,
@@ -288,7 +288,7 @@ namespace {
                     };
                 }),
             // "add_quad", [](QuadGridComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
-            //     if (c.count >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
             //     c.pos[c.count].x = x;
             //     c.pos[c.count].y = y;
             //     c.sizes[c.count] = size;
@@ -324,26 +324,26 @@ namespace {
                 return std::make_tuple(c.pos[index].x, c.pos[index].y);
             },
             // "set_pos", [](QuadGridComponent& c, int index, float x, float y) {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     c.pos[index].x = x;
             //     c.pos[index].y = y;
             // },
             "get_size_at", [](QuadGridComponent& c, int index) -> float {
-                //if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                //if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 return c.sizes[index];
             },
             // "set_size", [](QuadGridComponent& c, int index, float value) {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     c.sizes[index] = value;
             // },
             "get_color_at", [](QuadGridComponent& c, int index) -> uint32_t {
-                // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 return c.colors[index];
             },
             "set_color_at", [](QuadGridComponent& c, int index, uint32_t color) {
-                // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 c.colors[index] = color;
             },
@@ -352,11 +352,11 @@ namespace {
                     c.colors[i] = color;
             },
             // "get_is_active_flag", [](QuadGridComponent& c, int index) -> float {
-            //     if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             //     return c.is_active_flags[index];
             // },
             "set_active_flag_at", [](QuadGridComponent& c, int index, bool is_active) {
-                // if (index < 0 || index >= EntitySetSize) throw std::out_of_range("Index out of range");
+                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
                 assert(index >= 0 && index < c.count);
                 c.is_active_flags[index] = is_active;
             },
@@ -383,7 +383,7 @@ namespace {
                 int width,
                 int height)
                 {
-                    assert(width * height <= EntitySetSize);
+                    assert(width * height <= GridSize);
                     return DataGridComponent{
                         .count = width * height,
                         .width = width };

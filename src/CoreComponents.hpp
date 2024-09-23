@@ -23,7 +23,7 @@
 #include "SparseSet.hpp"
 
 using linalg::v2f;
-#define EntitySetSize 64
+#define GridSize 64
 
 struct Transform
 {
@@ -66,14 +66,14 @@ struct CircleColliderGridComponent
         float radius;
     };
 
-    std::array<Circle, EntitySetSize> circles;
-    SparseSet<unsigned char, EntitySetSize> active_indices;
+    std::array<Circle, GridSize> circles;
+    SparseSet<unsigned char, GridSize> active_indices;
 
-    // v2f pos[EntitySetSize];
-    // float radii[EntitySetSize];
-    // bool is_active_flags[EntitySetSize] = { false };
+    // v2f pos[GridSize];
+    // float radii[GridSize];
+    // bool is_active_flags[GridSize] = { false };
 
-    // int sparse[EntitySetSize]; // sparse
+    // int sparse[GridSize]; // sparse
     // int nbr_active = 0;
 
     int element_count = 0;
@@ -107,11 +107,11 @@ struct QuadGridComponent
 {
     // static constexpr auto in_place_delete = true;
 
-    v2f pos[EntitySetSize];
-    float sizes[EntitySetSize];
-    uint32_t colors[EntitySetSize];
-    bool is_active_flags[EntitySetSize] = { false };
-    // unsigned char active_indices[EntitySetSize];
+    v2f pos[GridSize];
+    float sizes[GridSize];
+    uint32_t colors[GridSize];
+    bool is_active_flags[GridSize] = { false };
+    // unsigned char active_indices[GridSize];
 
     int count = 0, width = 0;
     bool is_active = true;
@@ -132,8 +132,8 @@ struct QuadGridComponent
 
 struct DataGridComponent
 {
-    float slot1[EntitySetSize] = { 0.0f };
-    float slot2[EntitySetSize] = { 0.0f };
+    float slot1[GridSize] = { 0.0f };
+    float slot2[GridSize] = { 0.0f };
     int count = 0, width = 0;
 };
 

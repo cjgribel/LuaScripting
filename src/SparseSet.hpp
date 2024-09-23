@@ -30,7 +30,7 @@ public:
     /// @param index 
     void add(int index)
     {
-        assert(dense_count < N && "EntitySetSize limit reached");
+        assert(dense_count < N && "GridSize limit reached");
         assert(index >= 0 && index < N && "Index out of bounds");
         if (contains(index)) return;
 
