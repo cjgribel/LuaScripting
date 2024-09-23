@@ -1771,37 +1771,32 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 void Scene::destroy()
 {
     std::cout << "Scene::destroy()" << std::endl;
-    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
+    std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
 
-    // Call the 
+    std::cout << "Destroying game..." << std::endl;
     lua["game"]["destroy"](lua["game"]); // <- entities flagged for destruction ???
 
-    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
-
+    std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
     destroy_pending_entities();
-    // NOTE: registry should be empty here, so 
 
-    // clear() seem to invoke registry.on_destroy<ScriptedBehaviorComponent>,
-    // which will cause destroy() to be called for all behaviors
-    // https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system
-    //
-    // Explicitly destroy all ScriptedBehaviorComponent, in order to invoke 
-    // registry.on_destroy<ScriptedBehaviorComponent>
-    // registry.clear<ScriptedBehaviorComponent>();
+    // If the game destroys its entities properly, 
+    // the registry should be empty at this point
+    // (unless entities are added on the engine side)
 
+    std::cout << "Entities remaining in registry: ";
     {
-        std::cout << "Entities in registry: ";
         auto view = registry.view<entt::entity>();
         for (auto entity : view) std::cout << entt::to_integral(entity) << " ";
         std::cout << std::endl;
     }
+    std::cout << "Clearing registry...";
     registry.clear();
 
-    std::cout << "entities_pending_destruction.size() " << entities_pending_destruction.size() << std::endl;
+    // Check so entities were not queued for destruction by registry.clear()
+    assert(!entities_pending_destruction.size());
 
     is_initialized = false;
 
     scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
-
     std::cout << "Done: Scene::destroy()" << std::endl;
 }

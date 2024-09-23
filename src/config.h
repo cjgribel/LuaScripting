@@ -12,6 +12,7 @@
 #define EENG_FINF std::numeric_limits<float>::max()
 #define EENG_FNINF std::numeric_limits<float>::lowest()
 #define EENG_FEPSILON std::numeric_limits<float>::epsilon()
+#define EENG_PRINT_LOG_TO_COUT
 
 /// Rendering defines
 #define EENG_MSAA

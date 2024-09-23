@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdarg>
 #include "Log.hpp"
+#include "config.h"
 
 namespace {
     std::string formatString(const char* fmt, va_list args)
@@ -26,9 +27,11 @@ void eeng::Log(const char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     std::string formattedString = formatString(fmt, args);
-    std::cout << formattedString << std::endl;
     va_end(args);
 
+#ifdef EENG_PRINT_LOG_TO_COUT
+    std::cout << formattedString << std::endl;
+#endif
     internal::LogSingleton::instance().AddLog("[frame#%i] %s\n", ImGui::GetFrameCount(), formattedString.c_str());
 }
 
