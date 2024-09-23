@@ -5,6 +5,8 @@
 #include <array>
 #include <queue>
 
+#include "meta_reg.h"
+
 // sol is used by
 //      For ScriptedBehaviorComponent => its own hpp/cpp
 //      Lua event
@@ -53,6 +55,9 @@ struct Transform
         return ss.str();
     }
 };
+
+template<>
+void register_meta<Transform>(sol::state& lua);
 
 void register_transform(sol::state& lua);
 

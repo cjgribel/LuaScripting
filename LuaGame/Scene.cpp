@@ -1222,7 +1222,8 @@ bool Scene::init(const v2i& windowSize)
         bindAudioManager(lua);
 
         // Register core components to Lua
-        register_transform(lua);
+        // register_transform(lua);
+        register_meta<Transform>(lua);
         registerQuadComponent(lua); // remove
         registerCircleColliderComponent(lua); // remove
         registerScriptedBehaviorComponent(lua);

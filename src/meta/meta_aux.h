@@ -5,8 +5,8 @@
 //  Copyright © 2024 Carl Johan Gribel. All rights reserved.
 //
 
-#ifndef any_apply_h
-#define any_apply_h
+#ifndef any_aux_h
+#define any_aux_h
 
 #include <entt/entt.hpp>
 #include <tuple>

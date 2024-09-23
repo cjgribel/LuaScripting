@@ -36,8 +36,11 @@ bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
     return mod;
 }
 
-void register_transform(sol::state& lua)
+template<>
+void register_meta<Transform>(sol::state& lua)
 {
+    std::cout << "register_meta<Transform>" << std::endl;
+
     lua.new_usertype<Transform>("Transform",
         "type_id", &entt::type_hash<Transform>::value,
 
@@ -76,6 +79,10 @@ void register_transform(sol::state& lua)
         //.func<&vec3_to_string>(to_string_hs)
         ;
 }
+
+// void register_transform(sol::state& lua)
+// {
+// }
 
 // =========== ScriptedBehaviorComponent + sol stuff
 
