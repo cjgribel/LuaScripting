@@ -20,10 +20,13 @@ namespace internal {
 
 } // internal
 
+/// @brief 
+/// @tparam Type 
+/// @param lua 
 template<class Type>
 void register_meta(sol::state& lua)
 {
-
+    assert(0 && "Specialization not available for type");
 }
 
 #endif /* meta_reg */

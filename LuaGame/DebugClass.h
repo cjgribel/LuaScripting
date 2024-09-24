@@ -22,55 +22,7 @@
 
 // !! sol in included earlier ...
 
-// GET ME HOME
-struct HeaderComponent
-{
-    std::string name;
-};
 
-bool HeaderComponent_inspect(void* ptr, Editor::InspectorState& inspector)
-{
-    return false;
-}
-
-inline void HeaderComponent_metaregister(sol::state& lua)
-{
-    // Register to entt::meta
-
-    entt::meta<HeaderComponent>()
-        .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
-        .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
-
-        // Optional meta functions
-
-        // to_string, member version
-            //.func<&DebugClass::to_string>(to_string_hs)
-        // to_string, lambda version
-        .func < [](const void* ptr) {
-        return static_cast<const HeaderComponent*>(ptr)->name;
-        } > (to_string_hs)
-            // inspect
-                // .func<&inspect_Transform>(inspect_hs)
-            // clone
-                //.func<&cloneDebugClass>(clone_hs)
-            ;
-
-        // Register to sol
-
-        lua.new_usertype<HeaderComponent>("HeaderComponent",
-            "type_id", &entt::type_hash<HeaderComponent>::value,
-
-            sol::call_constructor,
-            sol::factories([](const std::string& name) {
-                return HeaderComponent{
-                    .name = name
-                };
-                }),
-            "name", &HeaderComponent::name
-
-            //sol::meta_function::to_string, &Transform::to_string
-            );
-}
 
 
 

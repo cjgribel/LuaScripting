@@ -56,7 +56,6 @@ void register_meta<Transform>(sol::state& lua)
 
         sol::meta_function::to_string, &Transform::to_string
     );
-    // clang-format on
 
     // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
     entt::meta<Transform>()
@@ -81,6 +80,59 @@ void register_meta<Transform>(sol::state& lua)
 }
 
 // void register_transform(sol::state& lua)
+// {
+// }
+
+// === HeaderComponent ========================================================
+
+namespace {
+    bool HeaderComponent_inspect(void* ptr, Editor::InspectorState& inspector)
+{
+    return false;
+}
+}
+
+template<>
+void register_meta<HeaderComponent>(sol::state& lua)
+{
+    // Register to entt::meta
+
+    entt::meta<HeaderComponent>()
+        .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
+        .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
+
+        // Optional meta functions
+
+        // to_string, member version
+            //.func<&DebugClass::to_string>(to_string_hs)
+        // to_string, lambda version
+        .func < [](const void* ptr) {
+        return static_cast<const HeaderComponent*>(ptr)->name;
+        } > (to_string_hs)
+            // inspect
+                // .func<&inspect_Transform>(inspect_hs)
+            // clone
+                //.func<&cloneDebugClass>(clone_hs)
+            ;
+
+        // Register to sol
+
+        lua.new_usertype<HeaderComponent>("HeaderComponent",
+            "type_id", &entt::type_hash<HeaderComponent>::value,
+
+            sol::call_constructor,
+            sol::factories([](const std::string& name) {
+                return HeaderComponent{
+                    .name = name
+                };
+                }),
+            "name", &HeaderComponent::name
+
+            //sol::meta_function::to_string, &Transform::to_string
+            );
+}
+
+// void HeaderComponent_metaregister(sol::state& lua)
 // {
 // }
 

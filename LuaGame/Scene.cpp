@@ -1224,6 +1224,8 @@ bool Scene::init(const v2i& windowSize)
         // Register core components to Lua
         // register_transform(lua);
         register_meta<Transform>(lua);
+        register_meta<HeaderComponent>(lua);
+        //
         registerQuadComponent(lua); // remove
         registerCircleColliderComponent(lua); // remove
         registerScriptedBehaviorComponent(lua);
@@ -1233,7 +1235,7 @@ bool Scene::init(const v2i& windowSize)
         registerIslandFinderComponent(lua);
         registeDataGridComponent(lua);
         //
-        HeaderComponent_metaregister(lua); // entt::meta (registry stuff added separately) + sol meta
+        // HeaderComponent_metaregister(lua); // entt::meta (registry stuff added separately) + sol meta
         ScriptedBehaviorComponent_metaregister(lua);
 
         // ImGui -> Lua

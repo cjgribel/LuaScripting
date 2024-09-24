@@ -27,6 +27,23 @@
 using linalg::v2f;
 #define GridSize 64
 
+// === HeaderComponent ========================================================
+
+// GET ME HOME
+struct HeaderComponent
+{
+    std::string name;
+};
+
+
+
+// void HeaderComponent_metaregister(sol::state& lua); // REMOVE
+
+template<>
+void register_meta<HeaderComponent>(sol::state& lua);
+
+// === Transform ==============================================================
+
 struct Transform
 {
     // If stable pointers to Transform are needed, e.g. in scene graph nodes
@@ -59,9 +76,9 @@ struct Transform
 template<>
 void register_meta<Transform>(sol::state& lua);
 
-void register_transform(sol::state& lua);
+// void register_transform(sol::state& lua);
 
-// ===
+// === CircleColliderGridComponent ============================================
 
 struct CircleColliderGridComponent
 {
@@ -96,6 +113,8 @@ struct CircleColliderGridComponent
     // }
 };
 
+// === IslandFinderComponent ==================================================
+
 struct IslandFinderComponent
 {
     int core_x, core_y;
@@ -107,6 +126,8 @@ struct IslandFinderComponent
     // Exposed to Lua
     std::vector<int> islands;
 };
+
+// === QuadGridComponent ======================================================
 
 struct QuadGridComponent
 {
@@ -135,6 +156,8 @@ struct QuadGridComponent
     }
 };
 
+// === DataGridComponent ======================================================
+
 struct DataGridComponent
 {
     float slot1[GridSize] = { 0.0f };
@@ -142,7 +165,8 @@ struct DataGridComponent
     int count = 0, width = 0;
 };
 
-// NOT USED
+// === NOT USED ===============================================================
+
 struct QuadComponent
 {
     // static constexpr auto in_place_delete = true;
@@ -158,7 +182,6 @@ struct QuadComponent
     }
 };
 
-// NOT USED
 struct CircleColliderComponent
 {
     // static constexpr auto in_place_delete = true;
@@ -173,7 +196,8 @@ struct CircleColliderComponent
     }
 };
 
-// ScriptedBehaviorComponent
+// === ScriptedBehaviorComponent ==============================================
+
 struct ScriptedBehaviorComponent
 {
     // BehaviorScript
@@ -221,7 +245,7 @@ void ScriptedBehaviorComponent_metaregister(sol::state& lua);
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
-// ===
+// === LuaEvent ===============================================================
 
 struct LuaEvent {
     sol::table data;
