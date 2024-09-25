@@ -73,8 +73,6 @@ struct HeaderComponent
     }
 };
 
-
-
 // === CircleColliderGridComponent ============================================
 
 struct CircleColliderGridComponent
@@ -100,14 +98,16 @@ struct CircleColliderGridComponent
     bool is_active = true;
     unsigned char layer_bit, layer_mask;
 
-    // [[nodiscard]] std::string to_string() const {
-    //     std::stringstream ss;
-    //     ss << "{ radii = ";
-    //     for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
-    //     ss << "{ is_active_flags = ";
-    //     for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
-    //     return ss.str();
-    // }
+    std::string to_string() const
+    {
+        return "CircleColliderGridComponent { ... }";
+        //     std::stringstream ss;
+        //     ss << "{ radii = ";
+        //     for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
+        //     ss << "{ is_active_flags = ";
+        //     for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+        //     return ss.str();
+    }
 };
 
 // === IslandFinderComponent ==================================================
@@ -122,34 +122,36 @@ struct IslandFinderComponent
 
     // Exposed to Lua
     std::vector<int> islands;
+
+    std::string to_string() const
+    {
+        return "IslandFinderComponent { ... }";
+    }
 };
 
 // === QuadGridComponent ======================================================
 
 struct QuadGridComponent
 {
-    // static constexpr auto in_place_delete = true;
-
     v2f pos[GridSize];
     float sizes[GridSize];
     uint32_t colors[GridSize];
     bool is_active_flags[GridSize] = { false };
-    // unsigned char active_indices[GridSize];
 
     int count = 0, width = 0;
     bool is_active = true;
-    // int nbr_active = 0;
 
-    // Todo: pos
-    [[nodiscard]] std::string to_string() const {
-        std::stringstream ss;
-        ss << "{ size = ";
-        for (int i = 0; i < count; i++) ss << std::to_string(sizes[i]) << ", ";
-        ss << "{ colors = ";
-        for (int i = 0; i < count; i++) ss << std::to_string(colors[i]) << ", ";
-        ss << "{ is_active_flags = ";
-        for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
-        return ss.str();
+    std::string to_string() const
+    {
+        return "QuadGridComponent { ... }";
+        // std::stringstream ss;
+        // ss << "{ size = ";
+        // for (int i = 0; i < count; i++) ss << std::to_string(sizes[i]) << ", ";
+        // ss << "{ colors = ";
+        // for (int i = 0; i < count; i++) ss << std::to_string(colors[i]) << ", ";
+        // ss << "{ is_active_flags = ";
+        // for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+        // return ss.str();
     }
 };
 
@@ -238,8 +240,6 @@ struct ScriptedBehaviorComponent
     }
 };
 
-void ScriptedBehaviorComponent_metaregister(sol::state& lua);
-
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
 // === LuaEvent ===============================================================
@@ -259,5 +259,20 @@ void register_meta<Transform>(sol::state& lua);
 
 template<>
 void register_meta<HeaderComponent>(sol::state& lua);
+
+template<>
+void register_meta<CircleColliderGridComponent>(sol::state& lua);
+
+template<>
+void register_meta<IslandFinderComponent>(sol::state& lua);
+
+template<>
+void register_meta<QuadGridComponent>(sol::state& lua);
+
+template<>
+void register_meta<DataGridComponent>(sol::state& lua);
+
+template<>
+void register_meta<ScriptedBehaviorComponent>(sol::state& lua);
 
 #endif // CoreComponents_hpp

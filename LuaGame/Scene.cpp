@@ -135,291 +135,45 @@ namespace {
         lua["engine"]["audio"] = &audioManager;
     }
 
-    void registerCircleColliderGridComponent(sol::state& lua)
-    {
-        lua.new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
-            "type_id",
-            &entt::type_hash<CircleColliderGridComponent>::value,
+    // void registerCircleColliderGridComponent(sol::state& lua)
+    // {
 
-            sol::call_constructor,
-            sol::factories([](
-                int width,
-                int height,
-                bool is_active,
-                unsigned char layer_bit,
-                unsigned char layer_mask)
-                {
-                    assert(width * height <= GridSize);
-                    auto c = CircleColliderGridComponent{
-                        .element_count = width * height,
-                        .width = width,
-                        .is_active = is_active,
-                        .layer_bit = layer_bit,
-                        .layer_mask = layer_mask };
-                    //for (int i = 0; i < width * height; i++)
-                    //    c.active_indices.add(i);
-                    return c;
-                }),
+    // }
 
-            // "add_circle",
-            // [](CircleColliderGridComponent& c, float x, float y, float radius, bool is_active)
-            // {
-            //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
-            //     c.pos[c.count].x = x;
-            //     c.pos[c.count].y = y;
-            //     c.radii[c.count] = radius;
-            //     c.is_active_flags[c.count] = is_active;
-            //     c.count++;
-            // },
-            "set_circle_at",
-            [](CircleColliderGridComponent& c,
-                int index,
-                float x,
-                float y,
-                float radius,
-                bool is_active)
-            {
-                assert(index >= 0 && index < c.element_count);
-                // c.pos[index].x = x;
-                // c.pos[index].y = y;
-                // c.radii[index] = radius;
-                // c.is_active_flags[index] = is_active;
+//     void registerIslandFinderComponent(sol::state& lua)
+//     {
+//         lua.new_usertype<IslandFinderComponent>("IslandFinderComponent",
+//             "type_id",
+//             &entt::type_hash<IslandFinderComponent>::value,
+//             sol::call_constructor,
+//             sol::factories([](int core_x, int core_y) {
+//                 return IslandFinderComponent{
+//                     .core_x = core_x,
+//                     .core_y = core_y
+//                 };
+//                 }),
+//             "get_nbr_islands", [](IslandFinderComponent& c) {
+//                 return c.islands.size();
+//             },
+//             "get_island_index_at", [](IslandFinderComponent& c, int index) {
+//                 assert(index < c.islands.size());
+//                 return c.islands[index];
+//             }
+//             // TODO
+// //            sol::meta_function::to_string,
+// //            &IslandFinderComponent::to_string
+// );
+//     }
 
-                auto& circle = c.circles[index];
-                circle.pos = v2f{ x, y };
-                circle.radius = radius;
+    // void registerQuadGridComponent(sol::state& lua)
+    // {
+        
+    // }
 
-                if (is_active) c.active_indices.add(index);
-                else c.active_indices.remove(index);
-            },
-            "set_active_flag_all", [](CircleColliderGridComponent& c, bool is_active)
-            {
-                for (int i = 0; i < c.element_count; i++)
-                {
-                    // c.is_active_flags[i] = is_active;
-                    if (is_active) c.active_indices.add(i);
-                    else c.active_indices.remove(i);
-                }
-                c.is_active = is_active;
-            },
-            // "get_radius", [](CircleColliderGridComponent& ccsc, int index) -> float {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     return ccsc.radii[index];
-            // },
-            // "set_radius", [](CircleColliderGridComponent& ccsc, int index, float value) {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     ccsc.radii[index] = value;
-            // },
-            // "get_is_active_flag", [](CircleColliderGridComponent& ccsc, int index) -> float {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     return ccsc.is_active_flags[index];
-            // },
-            "set_active_flag_at", [](CircleColliderGridComponent& c, int index, bool is_active)
-            {
-                assert(index >= 0 && index < c.element_count);
-                //if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-                //std::cout << index << std::endl;
-                // c.is_active_flags[index] = is_active;
-                if (is_active) c.active_indices.add(index);
-                else c.active_indices.remove(index);
-            },
-            // TODO
-            "is_any_active", [](CircleColliderGridComponent& c) -> bool
-            {
-                return c.active_indices.get_dense_count() > 0;
-                // for (int i = 0; i < c.count; i++)
-                // {
-                //     if (c.is_active_flags[i]) return true;
-                // }
-                // return false;
-            },
-            "get_element_count", [](CircleColliderGridComponent& c)
-            {
-                return c.element_count;
-            },
-            "is_active",
-            &CircleColliderGridComponent::is_active
-            // sol::meta_function::to_string,
-            // &CircleColliderGridComponent::to_string
-        );
-    }
-
-    void registerIslandFinderComponent(sol::state& lua)
-    {
-        lua.new_usertype<IslandFinderComponent>("IslandFinderComponent",
-            "type_id",
-            &entt::type_hash<IslandFinderComponent>::value,
-            sol::call_constructor,
-            sol::factories([](int core_x, int core_y) {
-                return IslandFinderComponent{
-                    .core_x = core_x,
-                    .core_y = core_y
-                };
-                }),
-            "get_nbr_islands", [](IslandFinderComponent& c) {
-                return c.islands.size();
-            },
-            "get_island_index_at", [](IslandFinderComponent& c, int index) {
-                assert(index < c.islands.size());
-                return c.islands[index];
-            }
-            // TODO
-//            sol::meta_function::to_string,
-//            &IslandFinderComponent::to_string
-);
-    }
-
-    void registerQuadGridComponent(sol::state& lua)
-    {
-        lua.new_usertype<QuadGridComponent>("QuadGridComponent",
-            "type_id",
-            &entt::type_hash<QuadGridComponent>::value,
-            sol::call_constructor,
-            sol::factories([](
-                int width,
-                int height,
-                bool is_active)
-                {
-                    assert(width * height <= GridSize);
-                    return QuadGridComponent{
-                        .count = width * height,
-                        .width = width,
-                        .is_active = is_active
-                    };
-                }),
-            // "add_quad", [](QuadGridComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
-            //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
-            //     c.pos[c.count].x = x;
-            //     c.pos[c.count].y = y;
-            //     c.sizes[c.count] = size;
-            //     c.colors[c.count] = color;
-            //     c.is_active_flags[c.count] = is_active;
-            //     c.count++;
-            // },
-            "set_quad_at",
-            [](QuadGridComponent& c,
-                int index,
-                float x,
-                float y,
-                float size,
-                uint32_t color,
-                bool is_active)
-            {
-                assert(index >= 0 && index < c.count);
-                c.pos[index].x = x;
-                c.pos[index].y = y;
-                c.sizes[index] = size;
-                c.colors[index] = color;
-                // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
-                c.is_active_flags[index] = is_active;
-            },
-            "set_active_flag_all", [](QuadGridComponent& c, bool is_active) {
-                for (int i = 0; i < c.count; i++)
-                    c.is_active_flags[i] = is_active;
-                c.is_active = is_active;
-            },
-            "get_pos_at", [](QuadGridComponent& c, int index) {
-                //if (index < 0 || index >= c.count) throw std::out_of_range("Index out of range");
-                assert(index >= 0 && index < c.count);
-                return std::make_tuple(c.pos[index].x, c.pos[index].y);
-            },
-            // "set_pos", [](QuadGridComponent& c, int index, float x, float y) {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     c.pos[index].x = x;
-            //     c.pos[index].y = y;
-            // },
-            "get_size_at", [](QuadGridComponent& c, int index) -> float {
-                //if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-                assert(index >= 0 && index < c.count);
-                return c.sizes[index];
-            },
-            // "set_size", [](QuadGridComponent& c, int index, float value) {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     c.sizes[index] = value;
-            // },
-            "get_color_at", [](QuadGridComponent& c, int index) -> uint32_t {
-                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-                assert(index >= 0 && index < c.count);
-                return c.colors[index];
-            },
-            "set_color_at", [](QuadGridComponent& c, int index, uint32_t color) {
-                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-                assert(index >= 0 && index < c.count);
-                c.colors[index] = color;
-            },
-            "set_color_all", [](QuadGridComponent& c, uint32_t color) {
-                for (int i = 0; i < c.count; i++)
-                    c.colors[i] = color;
-            },
-            // "get_is_active_flag", [](QuadGridComponent& c, int index) -> float {
-            //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-            //     return c.is_active_flags[index];
-            // },
-            "set_active_flag_at", [](QuadGridComponent& c, int index, bool is_active) {
-                // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
-                assert(index >= 0 && index < c.count);
-                c.is_active_flags[index] = is_active;
-            },
-            "get_element_count", [](QuadGridComponent& c) {
-                return c.count;
-            },
-            //"count",
-            //&QuadGridComponent::count,
-            "is_active",
-            &QuadGridComponent::is_active,
-            sol::meta_function::to_string,
-            &QuadGridComponent::to_string
-        );
-    }
-
-    void registeDataGridComponent(sol::state& lua)
-    {
-        lua.new_usertype<DataGridComponent>("DataGridComponent",
-            "type_id",
-            &entt::type_hash<DataGridComponent>::value,
-
-            sol::call_constructor,
-            sol::factories([](
-                int width,
-                int height)
-                {
-                    assert(width * height <= GridSize);
-                    return DataGridComponent{
-                        .count = width * height,
-                        .width = width };
-                }),
-            "set_slot1_at",
-            [](DataGridComponent& c,
-                int index,
-                float value)
-            {
-                assert(index >= 0 && index < c.count);
-                c.slot1[index] = value;
-            },
-            "set_slot2_at",
-            [](DataGridComponent& c,
-                int index,
-                float value)
-            {
-                assert(index >= 0 && index < c.count);
-                c.slot2[index] = value;
-            },
-            "get_slot1_at",
-            [](DataGridComponent& c, int index)
-            {
-                assert(index >= 0 && index < c.count);
-                return c.slot1[index];
-            },
-            "get_slot2_at",
-            [](DataGridComponent& c, int index)
-            {
-                assert(index >= 0 && index < c.count);
-                return c.slot2[index];
-            }
-            //sol::meta_function::to_string,
-            //&CircleColliderGridComponent::to_string
-        );
-    }
+    // void registeDataGridComponent(sol::state& lua)
+    // {
+        
+    // }
 
     void registerQuadComponent(sol::state& lua)
     {
@@ -459,23 +213,23 @@ namespace {
         );
     }
 
-    void registerScriptedBehaviorComponent(sol::state& lua)
-    {
-        lua.new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
-            "type_id",
-            &entt::type_hash<ScriptedBehaviorComponent>::value,
-            sol::call_constructor,
-            sol::factories([]() {
-                return ScriptedBehaviorComponent{ };
-                }),
-            // "scripts",
-            // &ScriptedBehaviorComponent::scripts,
-            // "get_script_by_id",
-            // &ScriptedBehaviorComponent::get_script_by_id,
-            sol::meta_function::to_string,
-            &ScriptedBehaviorComponent::to_string
-        );
-    }
+    // void registerScriptedBehaviorComponent(sol::state& lua)
+    // {
+    //     lua.new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
+    //         "type_id",
+    //         &entt::type_hash<ScriptedBehaviorComponent>::value,
+    //         sol::call_constructor,
+    //         sol::factories([]() {
+    //             return ScriptedBehaviorComponent{ };
+    //             }),
+    //         // "scripts",
+    //         // &ScriptedBehaviorComponent::scripts,
+    //         // "get_script_by_id",
+    //         // &ScriptedBehaviorComponent::get_script_by_id,
+    //         sol::meta_function::to_string,
+    //         &ScriptedBehaviorComponent::to_string
+    //     );
+    // }
 
     // void init_script(entt::registry& registry, entt::entity entity)
     // {
@@ -1225,18 +979,23 @@ bool Scene::init(const v2i& windowSize)
         // register_transform(lua);
         register_meta<Transform>(lua);
         register_meta<HeaderComponent>(lua);
+        register_meta<CircleColliderGridComponent>(lua);
+        register_meta<IslandFinderComponent>(lua);
+        register_meta<QuadGridComponent>(lua);
+        register_meta<DataGridComponent>(lua);
+        register_meta<ScriptedBehaviorComponent>(lua);
         //
-        registerQuadComponent(lua); // remove
-        registerCircleColliderComponent(lua); // remove
-        registerScriptedBehaviorComponent(lua);
+        registerQuadComponent(lua); // not used
+        registerCircleColliderComponent(lua); // not used
+        // registerScriptedBehaviorComponent(lua);
         //
-        registerCircleColliderGridComponent(lua);
-        registerQuadGridComponent(lua);
-        registerIslandFinderComponent(lua);
-        registeDataGridComponent(lua);
+        // registerCircleColliderGridComponent(lua);
+        // registerQuadGridComponent(lua);
+        // registerIslandFinderComponent(lua);
+        // registeDataGridComponent(lua);
         //
         // HeaderComponent_metaregister(lua); // entt::meta (registry stuff added separately) + sol meta
-        ScriptedBehaviorComponent_metaregister(lua);
+        // ScriptedBehaviorComponent_metaregister(lua);
 
         // ImGui -> Lua
         lua.set_function("ImGui_Text", &ImGui_Text);

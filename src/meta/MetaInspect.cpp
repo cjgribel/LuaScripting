@@ -183,8 +183,9 @@ namespace Editor {
                 {
                     std::string key_name = meta_data_name(id, meta_data);
 
+                    // if (inspector.is_disabled())
+                        ImGui::SetNextItemOpen(true);
 
-                    ImGui::SetNextItemOpen(true); // Probably don't have this
                     if (inspector.begin_node(key_name.c_str()))
                     {
                         entt::meta_any data_any = meta_data.get(any);
