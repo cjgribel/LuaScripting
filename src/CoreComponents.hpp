@@ -27,21 +27,6 @@
 using linalg::v2f;
 #define GridSize 64
 
-// === HeaderComponent ========================================================
-
-// GET ME HOME
-struct HeaderComponent
-{
-    std::string name;
-};
-
-
-
-// void HeaderComponent_metaregister(sol::state& lua); // REMOVE
-
-template<>
-void register_meta<HeaderComponent>(sol::state& lua);
-
 // === Transform ==============================================================
 
 struct Transform
@@ -73,10 +58,22 @@ struct Transform
     }
 };
 
-template<>
-void register_meta<Transform>(sol::state& lua);
 
-// void register_transform(sol::state& lua);
+// === HeaderComponent ========================================================
+
+struct HeaderComponent
+{
+    std::string name;
+
+    std::string to_string() const
+    {
+        std::stringstream ss;
+        ss << "HeaderComponent { name = " << name << " }";
+        return  ss.str();
+    }
+};
+
+
 
 // === CircleColliderGridComponent ============================================
 
@@ -254,5 +251,13 @@ struct LuaEvent {
     LuaEvent(const sol::table& data, const std::string& event_name)
         : data(data), event_name(event_name) {}
 };
+
+// === Meta registration ======================================================
+
+template<>
+void register_meta<Transform>(sol::state& lua);
+
+template<>
+void register_meta<HeaderComponent>(sol::state& lua);
 
 #endif // CoreComponents_hpp

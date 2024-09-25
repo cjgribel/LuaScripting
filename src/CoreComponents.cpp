@@ -65,11 +65,12 @@ void register_meta<Transform>(sol::state& lua)
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
 
-        // .data<&Transform::x_global>("x_global"_hs).prop(display_name_hs, "x_global")
-        // .data<&Transform::y_global>("y_global"_hs).prop(display_name_hs, "y_global")
-        // .data<&Transform::rot_global>("rot_global"_hs).prop(display_name_hs, "angle_global")
+        .data<&Transform::x_global>("x_global"_hs).prop(display_name_hs, "x_global").prop(readonly_hs, true)
+        .data<&Transform::y_global>("y_global"_hs).prop(display_name_hs, "y_global").prop(readonly_hs, true)
+        .data<&Transform::rot_global>("rot_global"_hs).prop(display_name_hs, "angle_global").prop(readonly_hs, true)
 
-        // .func<&inspect_Transform>(inspect_hs) // OPTIONAL
+        // Inspection function (optional)
+        // .func<&inspect_Transform>(inspect_hs)
 
         //.func<&vec3_to_json>(to_json_hs)
         //.func < [](nlohmann::json& j, const void* ptr) { to_json(j, *static_cast<const vec3*>(ptr)); }, entt::as_void_t > (to_json_hs)
@@ -126,9 +127,9 @@ void register_meta<HeaderComponent>(sol::state& lua)
                     .name = name
                 };
                 }),
-            "name", &HeaderComponent::name
+            "name", &HeaderComponent::name,
 
-            //sol::meta_function::to_string, &Transform::to_string
+            sol::meta_function::to_string, &HeaderComponent::to_string
             );
 }
 
@@ -170,7 +171,7 @@ namespace Editor {
 
         for (auto& [key, value] : tbl)
         {
-            std::string key_str = sol_object_to_string(lua, key);
+            std::string key_str = sol_object_to_string(lua, key); // + " (" + get_lua_type_name(lua, value) + ")";
             std::string key_str_label = "##" + key_str;
 
             // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
@@ -196,12 +197,16 @@ namespace Editor {
 
                     // Check if the userdata has an `__index` metamethod that acts like a table
                     sol::optional<sol::table> metatable = ud[sol::metatable_key];
-                    if (metatable && metatable->get<sol::object>("__index").is<sol::table>()) {
+                    if (metatable && metatable->get<sol::object>("__index").is<sol::table>()) 
+                    {
                         sol::table index_table = metatable->get<sol::table>("__index");
                         Editor::inspect_type(index_table, inspector);
                     }
-                    else {
+                    else 
+                    {
+                        inspector.begin_leaf("");
                         ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
+                        inspector.end_leaf();
                     }
                     inspector.end_node();
                 }
