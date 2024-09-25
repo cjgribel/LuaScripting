@@ -219,10 +219,8 @@ namespace Editor {
             for (auto&& v : view)
             {
                 inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
-                //ImGui::PushID(count++);
-                ImGui::SetNextItemWidth(-FLT_MIN);
+                // ImGui::SetNextItemWidth(-FLT_MIN);
                 inspect_any(v, inspector);
-                //ImGui::PopID();
                 inspector.end_leaf();
             }
         }
@@ -235,14 +233,37 @@ namespace Editor {
             int count = 0;
             for (auto&& [key_any, mapped_any] : view)
             {
-                inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
-                inspect_any(key_any, inspector);
-                if (view.mapped_type())
+                // inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
+                // inspect_any(key_any, inspector);
+                // if (view.mapped_type())
+                // {
+                //     ImGui::SetNextItemWidth(-FLT_MIN);
+                //     inspect_any(mapped_any, inspector);
+                // }
+                // inspector.end_leaf();
+                ImGui::SetNextItemOpen(true);
+                if (inspector.begin_node((std::string("#") + std::to_string(count++)).c_str()))
                 {
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    inspect_any(mapped_any, inspector);
+                    ImGui::SetNextItemOpen(true);
+                    if (inspector.begin_node("[key]"))
+                    {
+                        inspector.begin_disabled();
+                        inspect_any(key_any, inspector);
+                        inspector.end_disabled();
+                        inspector.end_node();
+                    }
+                    if (view.mapped_type())
+                    {
+                        ImGui::SetNextItemOpen(true);
+                        if (inspector.begin_node("[value]"))
+                        {
+                            ImGui::SetNextItemWidth(-FLT_MIN);
+                            inspect_any(mapped_any, inspector);
+                            inspector.end_node();
+                        }
+                    }
+                    inspector.end_node();
                 }
-                inspector.end_leaf();
             }
         }
 

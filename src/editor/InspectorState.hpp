@@ -140,16 +140,17 @@ namespace Editor {
             row();
             //ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
             //ImGui::TreeNodeEx()
-            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | /*ImGuiTreeNodeFlags_Bullet | */ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth /*| ImGuiTreeNodeFlags_Selected*/);
+            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | /*ImGuiTreeNodeFlags_Bullet | */ImGuiTreeNodeFlags_NoTreePushOnOpen*0 | ImGuiTreeNodeFlags_SpanFullWidth /*| ImGuiTreeNodeFlags_Selected*/);
             next_column();
             // push_id();
-            ImGui::PushID(label);
+            // ImGui::PushID(label);
             ImGui::SetNextItemWidth(-FLT_MIN);
         }
         void end_leaf()
         {
+            ImGui::TreePop(); // if no ImGuiTreeNodeFlags_NoTreePushOnOpen
             // pop_id();
-            ImGui::PopID();
+            // ImGui::PopID();
         }
         bool begin_node(const char* label)
         {

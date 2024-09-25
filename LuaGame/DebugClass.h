@@ -94,10 +94,27 @@ struct ElementType
         return oss.str();
     }
 
+    // For debugging
     bool operator==(const ElementType& other) const {
         return m == other.m;
     }
+
+    // For std::map
+    bool operator<(const ElementType& other) const {
+        return m < other.m;
+    }
 };
+
+// For unordered_map
+namespace std {
+    template <>
+    struct hash<ElementType> {
+        std::size_t operator()(const ElementType& e) const {
+            // Hash the float 'm' member. You can combine this with more fields if needed.
+            return std::hash<float>()(e.m);
+        }
+    };
+}
 
 // CORE COMPONENT TYPES ========================================================
 
@@ -113,6 +130,7 @@ struct DebugClass
     std::vector<ElementType> vector2 = { {4.0f}, {5.0f}, {6.0f} };
     std::map<int, float> map1 = { {7, 7.5f}, {8, 8.5f} };
     std::map<int, ElementType> map2 = { {9, {9.5f}}, {10, {10.5f}} };
+    std::map<ElementType, int> map3 = { {{9.5f}, 9}, {{10.5f}, 10} };
     std::set<int> set1 = { 11, 12 };
     //    enum class AnEnum: int { A = 1, B = 2 } anEnum;
     AnEnum anEnum = AnEnum::Hello;
@@ -219,6 +237,7 @@ inline void registerDebugClass()
         .data<&DebugClass::vector2>("vector2"_hs).prop(display_name_hs, "vector2")
         .data<&DebugClass::map1>("map1"_hs).prop(display_name_hs, "map1")
         .data<&DebugClass::map2>("map2"_hs).prop(display_name_hs, "map2")
+        .data<&DebugClass::map3>("map3"_hs).prop(display_name_hs, "map3")
         .data<&DebugClass::set1>("set1"_hs).prop(display_name_hs, "set1")
         .data<&DebugClass::anEnum>("anEnum"_hs).prop(display_name_hs, "anEnum")
         // to_string, member version
