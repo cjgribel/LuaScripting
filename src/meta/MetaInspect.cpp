@@ -241,6 +241,8 @@ namespace Editor {
                 //     inspect_any(mapped_any, inspector);
                 // }
                 // inspector.end_leaf();
+
+                // Displaying key, value and the element itself as expandable nodes
                 ImGui::SetNextItemOpen(true);
                 if (inspector.begin_node((std::string("#") + std::to_string(count++)).c_str()))
                 {
@@ -257,7 +259,6 @@ namespace Editor {
                         ImGui::SetNextItemOpen(true);
                         if (inspector.begin_node("[value]"))
                         {
-                            ImGui::SetNextItemWidth(-FLT_MIN);
                             inspect_any(mapped_any, inspector);
                             inspector.end_node();
                         }
