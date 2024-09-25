@@ -15,6 +15,8 @@ local node = {
         next_blink_time = 0.0,
         flag = false
     }
+    --header = HeaderComponent("Hello"),
+    --transform = Transform(0.0, 0.0, 0.0)
 }
 
 function node:update_blink(time)
