@@ -133,10 +133,15 @@ struct IslandFinderComponent
 
 struct QuadGridComponent
 {
-    v2f pos[GridSize];
-    float sizes[GridSize];
-    uint32_t colors[GridSize];
-    bool is_active_flags[GridSize] = { false };
+    std::array<v2f, GridSize> pos;
+    std::array<float, GridSize> sizes;
+    std::array<uint32_t, GridSize> colors;
+    std::array<bool, GridSize> is_active_flags = { false };
+
+    // v2f pos[GridSize];
+    // float sizes[GridSize];
+    // uint32_t colors[GridSize];
+    // bool is_active_flags[GridSize] = { false };
 
     int count = 0, width = 0;
     bool is_active = true;
@@ -159,9 +164,14 @@ struct QuadGridComponent
 
 struct DataGridComponent
 {
-    float slot1[GridSize] = { 0.0f };
-    float slot2[GridSize] = { 0.0f };
+    std::array<float, GridSize> slot1 = { 0.0f };
+    std::array<float, GridSize> slot2 = { 0.0f };
     int count = 0, width = 0;
+
+        std::string to_string() const
+    {
+        return "DataGridComponent { ... }";
+    }
 };
 
 // === NOT USED ===============================================================

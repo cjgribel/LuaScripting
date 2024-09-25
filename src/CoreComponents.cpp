@@ -330,7 +330,11 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         .data<&QuadGridComponent::width>("width"_hs).prop(display_name_hs, "width").prop(readonly_hs, true)
         .data<&QuadGridComponent::is_active>("is_active"_hs).prop(display_name_hs, "is_active")
 
-        // .data<&QuadGridComponent::pos>("pos"_hs).prop(display_name_hs, "positions") // ???
+        // Todo: custom inspect for this type to visualize arrays more efficently
+        .data<&QuadGridComponent::pos>("pos"_hs).prop(display_name_hs, "positions")
+        .data<&QuadGridComponent::sizes>("sizes"_hs).prop(display_name_hs, "sizes")
+        .data<&QuadGridComponent::colors>("colors"_hs).prop(display_name_hs, "colors")
+        .data<&QuadGridComponent::is_active_flags>("is_active_flags"_hs).prop(display_name_hs, "is_active_flags")
         ;
 
     lua.new_usertype<QuadGridComponent>("QuadGridComponent",
@@ -445,9 +449,10 @@ void register_meta<DataGridComponent>(sol::state& lua)
 
         .data<&DataGridComponent::count>("count"_hs).prop(display_name_hs, "count").prop(readonly_hs, true)
         .data<&DataGridComponent::width>("width"_hs).prop(display_name_hs, "width").prop(readonly_hs, true)
-
-        // .data<&DataGridComponent::slot1>("slot1"_hs).prop(display_name_hs, "slot1") // ???
-        // .data<&DataGridComponent::slot2>("slot2"_hs).prop(display_name_hs, "slot2") // ???
+        
+        // Todo: custom inspect for this type to visualize arrays more efficently
+        .data<&DataGridComponent::slot1>("slot1"_hs).prop(display_name_hs, "slot1")
+        .data<&DataGridComponent::slot2>("slot2"_hs).prop(display_name_hs, "slot2")
         ;
 
     lua.new_usertype<DataGridComponent>("DataGridComponent",
@@ -491,9 +496,10 @@ void register_meta<DataGridComponent>(sol::state& lua)
         {
             assert(index >= 0 && index < c.count);
             return c.slot2[index];
-        }
-        //sol::meta_function::to_string,
-        //&CircleColliderGridComponent::to_string
+        },
+
+        sol::meta_function::to_string,
+        &DataGridComponent::to_string
     );
 }
 
