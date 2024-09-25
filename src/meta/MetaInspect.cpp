@@ -249,6 +249,13 @@ namespace Editor {
                     ImGui::SetNextItemOpen(true);
                     if (inspector.begin_node("[key]"))
                     {
+                        // Note: keys are read-only, and primitive key types
+                        // will cast to const (and display as disabled if a 
+                        // const specialization is defined). When meta types 
+                        // are used as keys however, this does not seem to work
+                        // the same way (they cast to non-const - but cannot be
+                        // modified).
+                        // Workaround: disable all key inspections explicitly
                         inspector.begin_disabled();
                         inspect_any(key_any, inspector);
                         inspector.end_disabled();
