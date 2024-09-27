@@ -10,6 +10,8 @@
 
 #include "MetaInspect.hpp"
 #include "MetaClone.hpp"
+// #include "MetaSerialize.hpp"
+#include <nlohmann/json.hpp> // Prefer <nlohmann/json_fwd.hpp>
 
 #include "Scene.hpp"
 
@@ -1348,6 +1350,21 @@ void Scene::renderUI()
     ImGui::Checkbox("Debug render", &debug_render);
 
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
+
+    if (ImGui::Button("Serialize"))
+    {
+                // Serialize
+        // std::cout << "\nSerialization" << std::endl;
+        // nlohmann::json jser = serialize_registry(registry);
+        
+        // std::cout << "\nJSON dump" << std::endl;
+        // std::cout << jser.dump(4) << std::endl;
+    
+        // Deserialize
+        // std::cout << "\nDeserialization" << std::endl;
+        // registry.clear();
+        // deserialize_registry(jser, registry);
+    }
 
     Inspector::inspect_registry(registry, lua);
 

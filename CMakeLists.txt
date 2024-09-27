@@ -205,6 +205,17 @@ include_directories(${sol2_SOURCE_DIR}/include)
 message(STATUS "sol2 include dir: ${sol2_SOURCE_DIR}")
 
 #
+# nlohmann
+#
+# Fetch nlohmann/json library
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
+#
 # Targets
 #
 
@@ -247,7 +258,8 @@ target_link_libraries(
     ${OPENGL_LIBRARIES} 
     ${LUA_LIBRARIES} 
     sol2::sol2
-    EnTT::EnTT)
+    EnTT::EnTT
+    nlohmann_json::nlohmann_json)
 #target_include_directories(Module1 PRIVATE ${imgui_SOURCE_DIR})
 #target_include_directories(Module1 PRIVATE ${imgui_SOURCE_DIR}/backends)
 
