@@ -33,8 +33,11 @@ namespace Editor {
         entt::meta_any& any, 
         InspectorState& inspector);
 
+    void inspect_entity(
+        entt::entity entity,
+        InspectorState& inspector);
+
     void inspect_registry(
-        entt::registry& registry, 
         entt::meta_type comp_with_name, 
         InspectorState& inspector);
 

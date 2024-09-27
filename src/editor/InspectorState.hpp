@@ -107,8 +107,10 @@ namespace Editor {
     struct InspectorState
     {
         sol::state* lua;
+        entt::registry* registry;
+
         bool imgui_disabled = false;
-        //entt::entity primary_entity;
+        entt::entity selected_entity = entt::null;
 
         // int id = 0;
         // void push_id()
@@ -140,12 +142,12 @@ namespace Editor {
 
         bool is_disabled() const { return imgui_disabled; }
 
-        void begin_leaf(const char* label)
+        void begin_leaf(const char* label, bool selected = false)
         {
             row();
             //ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
             //ImGui::TreeNodeEx()
-            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | /*ImGuiTreeNodeFlags_Bullet | */ImGuiTreeNodeFlags_NoTreePushOnOpen*0 | ImGuiTreeNodeFlags_SpanFullWidth /*| ImGuiTreeNodeFlags_Selected*/);
+            ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf | /*ImGuiTreeNodeFlags_Bullet | */ImGuiTreeNodeFlags_NoTreePushOnOpen * 0 | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_Selected * selected);
             next_column();
             // push_id();
             // ImGui::PushID(label);

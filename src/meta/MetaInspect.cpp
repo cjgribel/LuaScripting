@@ -135,7 +135,7 @@ namespace Editor {
                     std::string key_name = meta_data_name(id, meta_data);
 
                     // if (inspector.is_disabled())
-                        ImGui::SetNextItemOpen(true);
+                    ImGui::SetNextItemOpen(true);
 
                     if (inspector.begin_node(key_name.c_str()))
                     {
@@ -239,14 +239,50 @@ namespace Editor {
         }
     }
 
+
+    void inspect_entity(
+        entt::entity entity,
+        InspectorState& inspector)
+    {
+        auto& registry = *inspector.registry;
+        assert(entity != entt::null);
+        assert(registry.valid(entity));
+
+        for (auto&& [id, type] : registry.storage())
+        {
+            if (!type.contains(entity)) continue;
+
+            if (entt::meta_type meta_type = entt::resolve(id); meta_type)
+            {
+                auto type_name = meta_type_name(meta_type);
+
+                if (inspector.begin_node(type_name.c_str()))
+                {
+                    auto comp_any = meta_type.from_void(type.value(entity));
+                    inspect_any(comp_any, inspector);
+                    inspector.end_node();
+                }
+            }
+            else
+            {
+                //All types exposed to Lua are going to have a meta type
+                assert(false && "Meta-type required");
+            }
+        }
+    }
+
     void inspect_registry(
-        entt::registry& registry,
         entt::meta_type name_comp_type,
         InspectorState& inspector)
     {
+        auto& registry = *inspector.registry;
+
         auto view = registry.view<entt::entity>();
         for (auto entity : view)
         {
+#if 0
+            inspect_entity(entity, inspector);
+#else
             auto entity_name = get_entity_name(registry, entity, name_comp_type);
             if (!inspector.begin_node(entity_name.c_str()))
                 continue;
@@ -273,6 +309,7 @@ namespace Editor {
                 }
             }
             inspector.end_node();
+#endif
         }
     }
 

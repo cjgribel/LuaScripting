@@ -662,10 +662,11 @@ void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
 
 namespace Inspector
 {
-    void inspect_scene_graph_node(SceneGraph& scenegraph, entt::registry& registry, size_t index = 0)
+    void inspect_scene_graph_node(SceneGraph& scenegraph, Editor::InspectorState& inspector, size_t index = 0)
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
+        auto& registry = *inspector.registry;
         auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
@@ -674,15 +675,19 @@ namespace Inspector
 
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
         if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf;
+        if (inspector.selected_entity == entity) flags |= ImGuiTreeNodeFlags_Selected;
 
         ImGui::SetNextItemOpen(true);
-        if (ImGui::TreeNodeEx(label.c_str(), flags)) {
+        if (ImGui::TreeNodeEx(label.c_str(), flags))
+        {
+            if (ImGui::IsItemClicked())
+                inspector.selected_entity = entity;
 
             // Recursively display each child node
             int child_index = index + 1;
             for (int i = 0; i < nbr_children; ++i)
             {
-                inspect_scene_graph_node(scenegraph, registry, child_index);
+                inspect_scene_graph_node(scenegraph, inspector, child_index);
 
                 auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(child_index);
                 child_index += branch_stride; //scenegraph.tree[current_index].;
@@ -692,8 +697,9 @@ namespace Inspector
         }
     }
 
-    void inspect_scenegraph(SceneGraph& scenegraph, entt::registry& registry)
+    void inspect_scenegraph(SceneGraph& scenegraph, Editor::InspectorState& inspector)
     {
+        auto& registry = *inspector.registry;
         static bool open = true;
         bool* p_open = &open;
 
@@ -703,6 +709,27 @@ namespace Inspector
         {
             ImGui::End();
             return;
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Shallow copy"))
+        {
+            bool selected_entity_valid =
+                inspector.selected_entity != entt::null &&
+                registry.valid(inspector.selected_entity);
+            if (selected_entity_valid)
+            {
+                auto entity_clone = registry.create();
+                scenegraph.create_node(entity_clone);
+
+                auto entity_src = inspector.selected_entity; // entt::entity{ 109 };
+                Editor::clone_entity(registry, entity_src, entity_clone);
+
+                // Deep-copy entire entity
+                //Copier copier{ *scene };
+                //active_entity = copier.CopyPrimaryEntity(active_entity, components);
+                //scene->issue_reload_render_entities();
+            }
         }
 
         // Explicit traverse button
@@ -719,7 +746,7 @@ namespace Inspector
             size_t i = 0;
             while (i < scenegraph.tree.size())
             {
-                inspect_scene_graph_node(scenegraph, registry, i);
+                inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
             }
         }
@@ -727,14 +754,14 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_registry(entt::registry& registry, /* */ sol::state& lua)
+    void inspect_registry(Editor::InspectorState& inspector)
     {
-        static Editor::InspectorState inspector{};
+        auto& registry = *inspector.registry;
         static bool open = true;
         bool* p_open = &open;
-
-        // ...
-        inspector.lua = &lua;
+        bool selected_entity_valid =
+            inspector.selected_entity != entt::null &&
+            registry.valid(inspector.selected_entity);
 
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (!ImGui::Begin("Inspector", p_open))
@@ -743,21 +770,8 @@ namespace Inspector
             return;
         }
 
-        ImGui::SameLine();
-        if (ImGui::Button("Clone entity"))
-        {
-            auto entity_clone = registry.create();
-            auto entity_src = entt::entity{ 109 };
-            Editor::clone_entity(registry, entity_src, entity_clone);
-
-            // Deep-copy entire entity
-            //Copier copier{ *scene };
-            //active_entity = copier.CopyPrimaryEntity(active_entity, components);
-            //scene->issue_reload_render_entities();
-        }
-
         ImGui::SetNextItemOpen(true);
-        if (ImGui::TreeNode("Entities"))
+        if (ImGui::TreeNode("Components"))
         {
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
             const ImGuiTableFlags flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
@@ -768,7 +782,13 @@ namespace Inspector
                 // entt::id_type of HeaderComponent, to obtain names for entities with those
                 auto header_meta = entt::resolve<HeaderComponent>();
 
-                Editor::inspect_registry(registry, header_meta, inspector);
+                if (selected_entity_valid)
+                    Editor::inspect_entity(inspector.selected_entity, inspector);
+                else
+                    ImGui::Text("Selected entity is null or invalid");
+
+                //Editor::inspect_registry(header_meta, inspector);
+
                 // if (inspector_widget.begin_node("comp name"))
                 // {
                 //     // type_widget(*t, w, scene);
@@ -1103,9 +1123,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1340,7 +1360,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-    } // anon
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1378,9 +1398,13 @@ void Scene::renderUI()
         // deserialize_registry(jser, registry);
     }
 
-    Inspector::inspect_registry(registry, lua);
+    static Editor::InspectorState inspector{};
+    inspector.registry = &registry;
+    inspector.lua = &lua;
 
-    Inspector::inspect_scenegraph(scenegraph, registry);
+    Inspector::inspect_registry(inspector);
+
+    Inspector::inspect_scenegraph(scenegraph, inspector);
 
     // float available_width = ImGui::GetContentRegionAvail().x;
     // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
@@ -1548,7 +1572,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
