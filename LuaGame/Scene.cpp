@@ -10,8 +10,7 @@
 
 #include "MetaInspect.hpp"
 #include "MetaClone.hpp"
-// #include "MetaSerialize.hpp"
-#include <nlohmann/json.hpp> // Prefer <nlohmann/json_fwd.hpp>
+#include "MetaSerialize.hpp"
 
 #include "Scene.hpp"
 
@@ -1355,10 +1354,9 @@ void Scene::renderUI()
     {
                 // Serialize
         // std::cout << "\nSerialization" << std::endl;
-        // nlohmann::json jser = serialize_registry(registry);
-        
-        // std::cout << "\nJSON dump" << std::endl;
-        // std::cout << jser.dump(4) << std::endl;
+        nlohmann::json jser = Meta::serialize_registry(registry);
+        // Dump JSON
+        std::cout << "JSON dump" << std::endl << jser.dump(4) << std::endl;
     
         // Deserialize
         // std::cout << "\nDeserialization" << std::endl;

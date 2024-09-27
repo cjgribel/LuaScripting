@@ -234,6 +234,7 @@ add_executable(LuaGame
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaInspect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaClone.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaSerialize.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLDebugMessageCallback.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ShapeRenderer.cpp

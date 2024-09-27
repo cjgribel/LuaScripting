@@ -1,6 +1,5 @@
 //
-//  MetaClone.hpp
-//  engine_core_2024
+//  MetaSerialize.hpp
 //
 //  Created by Carl Johan Gribel on 2024-08-08.
 //  Copyright © 2024 Carl Johan Gribel. All rights reserved.
@@ -10,14 +9,19 @@
 #define MetaSerialize_hpp
 
 #include <entt/entt.hpp>
-#include <nlohmann/json.hpp> // Prefer <nlohmann/json_fwd.hpp>
+// #include <nlohmann/json_fwd.hpp> // Use nlohmann::json& as references instead
+#include <nlohmann/json.hpp>
 
-nlohmann::json serialize_any(const entt::meta_any& meta_any);
+namespace Meta {
 
-nlohmann::json serialize_registry(entt::registry& registry);
+    nlohmann::json serialize_any(entt::meta_any& meta_any);
 
-void deserialize_any(const nlohmann::json& object_json, entt::meta_any& meta_any);
+    nlohmann::json serialize_registry(entt::registry& registry);
 
-void deserialize_registry(const nlohmann::json& json, entt::registry& registry);
+    void deserialize_any(const nlohmann::json& object_json, entt::meta_any& meta_any);
+
+    void deserialize_registry(const nlohmann::json& json, entt::registry& registry);
+
+} // namespace Meta
 
 #endif /* MetaSerialize_hpp */
