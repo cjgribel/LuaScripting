@@ -15,7 +15,7 @@
 
 namespace Meta {
 
-    nlohmann::json serialize_any(entt::meta_any& any)
+    nlohmann::json serialize_any(const entt::meta_any& any)
     {
         assert(any);
         nlohmann::json json;
@@ -154,9 +154,9 @@ namespace Meta {
                     auto key_name = std::string{ meta_type.info().name() }; // Better for serialization?
                     // auto type_name = meta_type_name(meta_type); // Inspector-friendly version
 
-                    entt::meta_any comp_any = meta_type.from_void(type.value(entity));
-                    entity_json["components"][key_name] = serialize_any(comp_any);
-                    // entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
+                    //entt::meta_any comp_any = meta_type.from_void(type.value(entity));
+                    //entity_json["components"][key_name] = serialize_any(comp_any);
+                    entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
                 }
                 else
                 {

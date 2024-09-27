@@ -53,26 +53,40 @@ namespace {
     template<class T>
     void register_basic_type()
     {
+        const auto to_json = [](nlohmann::json& j, const void* ptr)
+            {
+                j = *static_cast<const T*>(ptr);
+            };
+        const auto from_json = [](const nlohmann::json& j, void* ptr)
+            {
+                *static_cast<T*>(ptr) = j;
+            };
+        const auto inspect = [](void* ptr, Editor::InspectorState& inspector) -> bool
+            {
+                return Editor::inspect_type(*static_cast<T*>(ptr), inspector);
+            };
+
         entt::meta<T>()
-            .type(entt::type_hash<T>::value()) //.prop(display_name_hs, "int")
-            //            .template func < [](nlohmann::json& j, const void* ptr) { j = *static_cast<const T*>(ptr); }, entt::as_void_t > (to_json_hs)
-            //            .template func < [](const nlohmann::json& j, void* ptr) { *static_cast<T*>(ptr) = j; }, entt::as_void_t > (from_json_hs)
+            .type(entt::type_hash<T>::value())
 
-            .template func < [](void* ptr, Editor::InspectorState& inspector) -> bool {
-            return Editor::inspect_type(*static_cast<T*>(ptr), inspector);
-            } > (inspect_hs)
-                ;
+            // To/from JSON
+            .template func<to_json, entt::as_void_t>(to_json_hs)
+            .template func<from_json, entt::as_void_t >(from_json_hs)
 
-            if constexpr (std::is_same_v<T, std::string>)
-            {
-                entt::meta<T>()
-                    .template func < [](const void* ptr) -> std::string { return *static_cast<const T*>(ptr); } > (to_string_hs);
-            }
-            else
-            {
-                entt::meta<T>()
-                    .template func < [](const void* ptr) -> std::string { return std::to_string(*static_cast<const T*>(ptr)); } > (to_string_hs);
-            }
+            // Inspection
+            .template func<inspect>(inspect_hs);
+
+        // To string
+        if constexpr (std::is_same_v<T, std::string>)
+        {
+            entt::meta<T>()
+                .template func < [](const void* ptr) -> std::string { return *static_cast<const T*>(ptr); } > (to_string_hs);
+        }
+        else
+        {
+            entt::meta<T>()
+                .template func < [](const void* ptr) -> std::string { return std::to_string(*static_cast<const T*>(ptr)); } > (to_string_hs);
+        }
     }
 
     void bindAudioManager(sol::state& lua)
@@ -168,12 +182,12 @@ namespace {
 
     // void registerQuadGridComponent(sol::state& lua)
     // {
-        
+
     // }
 
     // void registeDataGridComponent(sol::state& lua)
     // {
-        
+
     // }
 
     void registerQuadComponent(sol::state& lua)
@@ -1352,12 +1366,12 @@ void Scene::renderUI()
 
     if (ImGui::Button("Serialize"))
     {
-                // Serialize
-        // std::cout << "\nSerialization" << std::endl;
+        // Serialize
+// std::cout << "\nSerialization" << std::endl;
         nlohmann::json jser = Meta::serialize_registry(registry);
         // Dump JSON
         std::cout << "JSON dump" << std::endl << jser.dump(4) << std::endl;
-    
+
         // Deserialize
         // std::cout << "\nDeserialization" << std::endl;
         // registry.clear();

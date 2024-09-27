@@ -14,7 +14,7 @@
 
 namespace Meta {
 
-    nlohmann::json serialize_any(entt::meta_any& meta_any);
+    nlohmann::json serialize_any(const entt::meta_any& meta_any);
 
     nlohmann::json serialize_registry(entt::registry& registry);
 
