@@ -28,7 +28,7 @@ function phase4:update(dt)
 
     self.timer = self.timer + dt
 
-    ImGui_SetNextWindowWorldPos(5, 6.5)
+    ImGui_SetNextWindowWorldPos(2, 6.5)
     ImGui_Begin("Phase4Text")
     ImGui_Text("You won!")
     ImGui_End()

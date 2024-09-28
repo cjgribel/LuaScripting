@@ -50,7 +50,7 @@ function behavior:update(dt)
         end
     end
 
-    ImGui_SetNextWindowWorldPos(5, 7)
+    ImGui_SetNextWindowWorldPos(2, 7)
     ImGui_Begin("PhaseName")
     if self.current_phase then
         ImGui_Text(self.current_phase.name)

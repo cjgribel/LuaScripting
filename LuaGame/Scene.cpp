@@ -712,7 +712,7 @@ namespace Inspector
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Shallow copy"))
+        if (ImGui::Button("Copy Selected"))
         {
             bool selected_entity_valid =
                 inspector.selected_entity != entt::null &&

@@ -661,7 +661,7 @@ void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
 
     // ScriptedBehaviorComponent
     entt::meta<ScriptedBehaviorComponent>()
-        .type("ScriptedBehaviorComponent"_hs).prop(display_name_hs, "ScriptedBehaviorComponent")
+        .type("ScriptedBehaviorComponent"_hs).prop(display_name_hs, "ScriptedBehavior")
         .data<&ScriptedBehaviorComponent::scripts>("scripts"_hs).prop(display_name_hs, "scripts")
 
         // Optional meta functions

@@ -29,7 +29,7 @@ function phase2:update(dt)
 
     self.timer = self.timer + dt
 
-    ImGui_SetNextWindowWorldPos(5, 6.5)
+    ImGui_SetNextWindowWorldPos(2, 6.5)
     ImGui_Begin("Phase2Text")
     --ImGui_Text('Time ' .. tostring(self.timer) .. "/" .. tostring(self.dur))
     ImGui_Text("Kill all enemies")
