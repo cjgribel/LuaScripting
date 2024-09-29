@@ -316,6 +316,7 @@ namespace {
     /// https://github.com/skypjack/entt/issues/772#issuecomment-907814984
     void script_system_update(entt::registry& registry, float delta_time)
     {
+        std::cout << "update" << std::endl;
         auto view = registry.view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
@@ -326,6 +327,7 @@ namespace {
             for (auto& script : script_comp.scripts)
             {
                 assert(script.self.valid());
+                // std::cout << script.identifier << std::endl;
                 script.update(script.self, delta_time);
             }
         }

@@ -449,7 +449,7 @@ void register_meta<DataGridComponent>(sol::state& lua)
 
         .data<&DataGridComponent::count>("count"_hs).prop(display_name_hs, "count").prop(readonly_hs, true)
         .data<&DataGridComponent::width>("width"_hs).prop(display_name_hs, "width").prop(readonly_hs, true)
-        
+
         // Todo: custom inspect for this type to visualize arrays more efficently
         .data<&DataGridComponent::slot1>("slot1"_hs).prop(display_name_hs, "slot1")
         .data<&DataGridComponent::slot2>("slot2"_hs).prop(display_name_hs, "slot2")
@@ -537,7 +537,7 @@ namespace Editor {
 
         for (auto& [key, value] : tbl)
         {
-            std::string key_str = sol_object_to_string(lua, key); // + " (" + get_lua_type_name(lua, value) + ")";
+            std::string key_str = sol_object_to_string(lua, key) + " (" + get_lua_type_name(lua, value) + ")";
             std::string key_str_label = "##" + key_str;
 
             // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
@@ -570,6 +570,7 @@ namespace Editor {
                     }
                     else
                     {
+                        // Usertypes seem to go here
                         inspector.begin_leaf("");
                         ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
                         inspector.end_leaf();
@@ -637,17 +638,89 @@ namespace Editor {
 
 }
 
+//
+namespace {
+    sol::table deep_copy_table(sol::state_view lua, const sol::table& original) {
+        sol::table copy = lua.create_table();
+        for (const auto& pair : original) {
+            sol::object key = pair.first;
+            sol::object value = pair.second;
+
+            if (value.get_type() == sol::type::userdata) {
+                // Retrieve the underlying type information
+                sol::optional<entt::registry*> maybe_registry = value.as<sol::optional<entt::registry*>>();
+
+                if (maybe_registry) {
+                    // If it's a registry, assign it directly as a usertype
+                    entt::registry* registry = *maybe_registry;
+                    copy[key] = std::ref(*registry);
+                }
+                else {
+                    // For other userdata, copy as-is
+                    copy[key] = value;
+                }
+            }
+            else if (value.is<sol::table>()) {
+                copy[key] = deep_copy_table(lua, value.as<sol::table>());
+            }
+            else {
+                copy[key] = value;
+            }
+        }
+        return copy;
+    }
+
+    ScriptedBehaviorComponent copy_ScriptedBehaviorComponent(void* ptr, entt::entity dst_entity)
+    {
+        auto comp_ptr = static_cast<ScriptedBehaviorComponent*>(ptr);
+        std::cout << "COPY ScriptedBehaviorComponent" << std::endl;
+
+        ScriptedBehaviorComponent cpy = *comp_ptr;
+
+        // Deep copy self
+        // functions?
+        for (int i = 0; i < comp_ptr->scripts.size(); i++)
+        {
+            cpy.scripts[i].self = deep_copy_table(comp_ptr->scripts[i].self.lua_state(), comp_ptr->scripts[i].self);
+
+            // Not needed probably functions are references inside table
+            cpy.scripts[i].update = cpy.scripts[i].self["update"];
+            cpy.scripts[i].on_collision = cpy.scripts[i].self["on_collision"];
+
+            // -> entityID?
+            cpy.scripts[i].self["id"] = sol::readonly_property([dst_entity] { return dst_entity; });
+            // -> registry?
+            // cpy.scripts[i].self["owner"] = comp_ptr->scripts[i].self["owner"]; // std::ref(registry);
+        }
+
+        return cpy;
+    };
+}
+
 template<>
 void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
 {
+    // const auto copy_table = [](void* ptr) -> sol::table
+    //     {
+    //         auto copy = static_cast<sol::table*>(ptr);
+    //         std::cout << "COPY sol::table" << std::endl;
+    //         return *copy;
+    //     };
+
+
     // TODO: Where should meta for sol stuff be placed (table, function etc)?
     // sol::table
     entt::meta<sol::table>()
         .type("sol::table"_hs).prop(display_name_hs, "sol::table")
+
         // inspect
         //.func<&soltable_inspect>(inspect_hs)
         // inspect v2
         .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
+
+        // clone
+        // Note: Let ScriptedBehaviorComponent do the copying
+        //.func <copy_table>(clone_hs)
         ;
 
     // sol::function
@@ -672,8 +745,9 @@ void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
 //        .func < [](const void* ptr) { return static_cast<const HeaderComponent*>(ptr)->name; } > (to_string_hs)
             // inspect
                 // .func<&inspect_Transform>(inspect_hs)
+
             // clone
-                //.func<&cloneDebugClass>(clone_hs)
+        .func<&copy_ScriptedBehaviorComponent>(clone_hs)
         ;
 
     entt::meta<ScriptedBehaviorComponent::BehaviorScript>()

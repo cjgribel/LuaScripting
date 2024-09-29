@@ -2,7 +2,9 @@ local node = {
     --MIN_BOUND = -5.0,
     --MAX_BOUND = 5.0,
     VELOCITY_MIN = -5.0,
-    VELOCITY_MAX = 5.0
+    VELOCITY_MAX = 5.0,
+    STRING = "STRING",
+    header = HeaderComponent("Hello")
 }
 
 function node:init()
@@ -17,6 +19,8 @@ end
 
 function node:update(dt)
 
+    print(self.id(), self.owner)
+
     local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
     if not collidergrid.is_active then
         return
@@ -25,6 +29,8 @@ function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
     --local quad = self.owner:get(self.id(), QuadComponent)
     local radius = 0.5 --quad.w / 2
+
+    print(self.id(), transform.x, transform.y)
 
     -- Apply velocity
     transform.x = transform.x + self.velocity.x * dt

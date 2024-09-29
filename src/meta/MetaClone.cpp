@@ -31,7 +31,7 @@ void clone_entity(entt::registry &registry, entt::entity src_entity, entt::entit
             {
                 std::cout << "Invoking clone() for " << type.type().name() << std::endl;
                 
-                auto copy_any = meta_func.invoke({}, src_ptr);
+                auto copy_any = meta_func.invoke({}, src_ptr, dst_entity);
                 assert(copy_any && "Failed to invoke clone() for type ");
                 
                 type.push(dst_entity, copy_any.data());
