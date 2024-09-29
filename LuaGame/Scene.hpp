@@ -16,7 +16,7 @@
 
 class Scene : public eeng::SceneBase
 {
-// protected:
+    // protected:
     sol::state lua{};
 
     entt::registry registry{};
@@ -30,10 +30,12 @@ class Scene : public eeng::SceneBase
     m4f VP, P, V;
 
     // entt::entity root_entity = entt::entity  {0};
-    SceneGraph scenegraph {};
+    SceneGraph scenegraph{};
 
     ConditionalObserver observer;
     ParticleBuffer particleBuffer{};
+
+    entt::entity create_entity_and_attach_to_scenegraph(entt::entity parent_entity = entt::null);
 
     void destroy_pending_entities();
 

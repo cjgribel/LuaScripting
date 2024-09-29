@@ -11,7 +11,7 @@
 #include <cassert>
 #include "imgui.h"
 #include "MetaInspect.hpp"
-#include "InspectorState.hpp"
+#include "InspectType.hpp"
 #include "meta_literals.h"
 #include "meta_aux.h"
 

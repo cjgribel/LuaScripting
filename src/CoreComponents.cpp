@@ -9,7 +9,7 @@
 #include "meta_literals.h" // for entt literals
 
 #include "CoreComponents.hpp"
-#include "InspectorState.hpp" // for inspect()
+#include "InspectType.hpp"
 
 //#include <iostream>
 

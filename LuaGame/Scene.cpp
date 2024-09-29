@@ -21,7 +21,7 @@
 #include "CoreComponents.hpp"
 #include "DebugClass.h"
 
-#include "InspectorState.hpp" // for MetaInspect
+#include "InspectType.hpp"
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
@@ -817,6 +817,21 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
     // When this function exits, Lua will exhibit default behavior and abort()
 }
 
+entt::entity Scene::create_entity_and_attach_to_scenegraph(entt::entity parent_entity)
+{
+    auto entity = registry.create();
+    if (parent_entity == entt::null)
+    {
+        scenegraph.create_node(entity);
+    }
+    else
+    {
+        assert(scenegraph.tree.contains(parent_entity));
+        scenegraph.create_node(entity, parent_entity);
+    }
+    return entity;
+}
+
 void Scene::destroy_pending_entities()
 {
     int count = 0;
@@ -894,17 +909,7 @@ bool Scene::init(const v2i& windowSize)
         // Create entity
         //
         lua["engine"]["create_entity"] = [&](entt::entity parent_entity) {
-            auto entity = registry.create();
-            if (parent_entity == entt::null)
-            {
-                scenegraph.create_node(entity);
-            }
-            else
-            {
-                assert(scenegraph.tree.contains(parent_entity));
-                scenegraph.create_node(entity, parent_entity);
-            }
-            return entity;
+            return create_entity_and_attach_to_scenegraph(parent_entity);
             };
 
         // Destroy entity
@@ -1066,7 +1071,7 @@ bool Scene::init(const v2i& windowSize)
         dump_lua_state(lua, lua["game"], "    ");
 
         // Debugging inspection
-        auto debug_entity = registry.create();
+        auto debug_entity = create_entity_and_attach_to_scenegraph();// registry.create();
         registry.emplace<DebugClass>(debug_entity);
 
 #if 0
@@ -1123,9 +1128,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1360,7 +1365,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-} // anon
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1572,7 +1577,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
