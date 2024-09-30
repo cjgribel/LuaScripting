@@ -127,8 +127,20 @@ void register_meta<HeaderComponent>(sol::state& lua)
                 };
                 }),
             "name", &HeaderComponent::name,
+            // "name2", &HeaderComponent::name2,
+            // "name3", &HeaderComponent::name3,
 
             sol::meta_function::to_string, &HeaderComponent::to_string
+        );
+
+        // TEST
+        struct ABC { int x; };
+
+        lua.new_usertype<ABC>("ABC",
+            sol::meta_function::construct,
+            sol::factories([] { return ABC{}; }),
+
+            "x", &ABC::x
         );
 }
 
@@ -520,7 +532,35 @@ namespace
 
 namespace Editor {
 
-    /// Inspect sol::function
+    // void inspect_usertype(sol::object usertype_obj) {
+    //     if (!usertype_obj.valid()) {
+    //         std::cout << "Invalid usertype object.\n";
+    //         return;
+    //     }
+
+    //     // Retrieve the metatable of the usertype object using sol::get_metatable()
+    //     sol::table metatable = sol::get_metatable(usertype_obj);
+    //     if (!metatable.valid()) {
+    //         std::cout << "No metatable found for this usertype object.\n";
+    //         return;
+    //     }
+
+    //     std::cout << "Members of the usertype:\n";
+    //     sol::object index = metatable["__index"];
+    //     if (index.valid() && index.get_type() == sol::type::table) {
+    //         sol::table index_table = index.as<sol::table>();
+    //         for (auto& [key, value] : index_table) {
+    //             std::cout << "  " << key.as<std::string>() << std::endl;
+    //         }
+    //     } else {
+    //         // If no __index, inspect the metatable directly
+    //         for (auto& [key, value] : metatable) {
+    //             std::cout << "  " << key.as<std::string>() << std::endl;
+    //         }
+    //     }
+    // }
+
+        /// Inspect sol::function
     template<>
     bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
     {
@@ -559,29 +599,53 @@ namespace Editor {
             {
                 if (inspector.begin_node(key_str.c_str()))
                 {
-                    sol::userdata ud = value.as<sol::userdata>();
+                    sol::userdata testTable = value.as<sol::userdata>(); // lua["testTable"];
+                    sol::table metaTable = testTable[sol::metatable_key];
+                    assert(metaTable.valid());
+                    mod |= Editor::inspect_type(metaTable, inspector);
+                    // for (const auto& pair : metaTable)
+                    // {
+                    //     const std::string key_str = pair.first.as<std::string>();
+                    //     std::cout << key_str << std::endl;
+                    //     // if (!startsWith(key, metaPrefix))
+                    //     // {
+                    //     //     keys.push_back(key);
+                    //     //     std::cout << key << ", ";
 
-                    // Check if the userdata has an `__index` metamethod that acts like a table
-                    sol::optional<sol::table> metatable = ud[sol::metatable_key];
-                    if (metatable && metatable->get<sol::object>("__index").is<sol::table>())
-                    {
-                        sol::table index_table = metatable->get<sol::table>("__index");
-                        Editor::inspect_type(index_table, inspector);
-                    }
-                    else
-                    {
-                        // TODO ???
-                        // To expose userdata fields -
-                        // for userdata that is not table-like (if above),
-                        // might need have an inspect function added to the usertype -
-                        // similar to entt::meta.
-                        // Usertypes seem to go here
+                    //     //     if (key != "new")
+                    //     //     {
+                    //     //         values.push_back(testTable[key]);
+                    //     //     }
+                    //     // }
+                    //     // else
+                    //     // {
+                    //     //     // The Meta Methods and stuff here
+                    //     // }
+                    // }
 
-                        inspector.begin_leaf("");
-                        ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
-                        std::cout << sol_object_to_string(lua, value) << std::endl;
-                        inspector.end_leaf();
-                    }
+                    // sol::userdata ud = value.as<sol::userdata>();
+
+                    // // Check if the userdata has an `__index` metamethod that acts like a table
+                    // sol::optional<sol::table> metatable = ud[sol::metatable_key];
+                    // if (metatable && metatable->get<sol::object>("__index").is<sol::table>())
+                    // {
+                    //     sol::table index_table = metatable->get<sol::table>("__index");
+                    //     Editor::inspect_type(index_table, inspector);
+                    // }
+                    // else
+                    // {
+                    //     // TODO ???
+                    //     // To expose userdata fields -
+                    //     // for userdata that is not table-like (if above),
+                    //     // might need have an inspect function added to the usertype -
+                    //     // similar to entt::meta.
+                    //     // Usertypes seem to go here
+
+                    //     inspector.begin_leaf("");
+                    //     ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
+                    //     std::cout << sol_object_to_string(lua, value) << std::endl;
+                    //     inspector.end_leaf();
+                    // }
                     inspector.end_node();
                 }
             }
@@ -657,21 +721,6 @@ namespace {
                 copy[key] = value.as<sol::userdata>();
             }
             else
-                // if (value.get_type() == sol::type::userdata) {
-                //     // Retrieve the underlying type information
-                //     sol::optional<entt::registry*> maybe_registry = value.as<sol::optional<entt::registry*>>();
-
-                //     if (maybe_registry) {
-                //         // If it's a registry, assign it directly as a usertype
-                //         entt::registry* registry = *maybe_registry;
-                //         copy[key] = std::ref(*registry);
-                //     }
-                //     else {
-                //         // For other userdata, copy as-is
-                //         copy[key] = value;
-                //     }
-                // }
-                // else 
                 if (value.is<sol::table>()) {
                     copy[key] = deep_copy_table(lua, value.as<sol::table>());
                 }
@@ -706,7 +755,7 @@ namespace {
             // cpy.scripts[i].self["owner"] = comp_ptr->scripts[i].self["owner"]; // std::ref(registry);
 
             // Changes copy AND original - must be some kind of reference
-            cpy.scripts[i].self["header"]["name"] = "BYE";
+            // cpy.scripts[i].self["HEADER"]["name"] = "BYE";
         }
 
         return cpy;

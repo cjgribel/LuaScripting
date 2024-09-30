@@ -6,10 +6,20 @@ local node = {
     STRING = "STRING",
     BOOL = true,
     NUMBER = 123.123,
-    header = HeaderComponent("Hello")
+    HEADER = HeaderComponent("Hello"),
+    TRANSFORM = Transform(1.0, 2.0, 0.0),
+    QUADGRID = QuadGridComponent(1,1,false)
 }
 
 function node:init()
+
+    -- Inspect an instance of usertype HeaderComponent
+    --local component = HeaderComponent("test_component")
+    --print("Inspecting HeaderComponent metatable:")
+    --for k, v in pairs(getmetatable(component)) do
+    --    print("Key:", k, "Type:", type(v))
+    --end
+
     self.velocity = {
         x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
         y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
@@ -21,8 +31,6 @@ end
 
 function node:update(dt)
 
-    print(self.id(), self.owner)
-
     local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
     if not collidergrid.is_active then
         return
@@ -31,8 +39,6 @@ function node:update(dt)
 	local transform = self.owner:get(self.id(), Transform)
     --local quad = self.owner:get(self.id(), QuadComponent)
     local radius = 0.5 --quad.w / 2
-
-    print(self.id(), transform.x, transform.y)
 
     -- Apply velocity
     transform.x = transform.x + self.velocity.x * dt

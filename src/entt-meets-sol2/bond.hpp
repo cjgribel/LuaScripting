@@ -92,20 +92,24 @@ sol::table open_registry(sol::this_state s)
     using namespace entt::literals;
 
     entt_module.new_usertype<entt::registry>("registry",
+
         sol::meta_function::construct,
         sol::factories([] { return entt::registry{}; }),
 
         "size", [](const entt::registry& self) {
             return self.storage<entt::entity>()->size();
         },
+
         "alive", [](const entt::registry& self) {
             return self.storage<entt::entity>()->in_use();
         },
 
         "valid", &entt::registry::valid,
+
         "current", &entt::registry::current,
 
         "create", [](entt::registry& self) { return self.create(); },
+
         "destroy",
         [](entt::registry& self, entt::entity entity) {
             return self.destroy(entity);
@@ -119,18 +123,21 @@ sol::table open_registry(sol::this_state s)
                     &self, entity, comp, s);
                 return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
         },
+
         "remove",
         [](entt::registry& self, entt::entity entity, const sol::object& type_or_id) {
             const auto maybe_any =
                 invoke_meta_func(deduce_type(type_or_id), "remove"_hs, &self, entity);
             return maybe_any ? maybe_any.cast<size_t>() : 0;
         },
+
         "has",
         [](entt::registry& self, entt::entity entity, const sol::object& type_or_id) {
             const auto maybe_any =
                 invoke_meta_func(deduce_type(type_or_id), "has"_hs, &self, entity);
             return maybe_any ? maybe_any.cast<bool>() : false;
         },
+
         "any_of",
         [](const sol::table& self,
             entt::entity entity,
@@ -142,6 +149,7 @@ sol::table open_registry(sol::this_state s)
                 [&](auto type_id) { return has(self, entity, type_id).template get<bool>(); }
             );
         },
+
         "get",
         [](entt::registry& self,
             entt::entity entity,
@@ -155,6 +163,7 @@ sol::table open_registry(sol::this_state s)
                 s);
             return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
         },
+
         "clear",
         sol::overload(
             &entt::registry::clear<>,
