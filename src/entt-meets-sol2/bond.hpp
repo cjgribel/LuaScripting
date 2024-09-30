@@ -180,7 +180,6 @@ sol::table open_registry(sol::this_state s)
             return view;
         }
     );
-    // clang-format on
 
     return entt_module;
 }

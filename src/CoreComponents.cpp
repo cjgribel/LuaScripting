@@ -570,9 +570,16 @@ namespace Editor {
                     }
                     else
                     {
+                        // TODO ???
+                        // To expose userdata fields -
+                        // for userdata that is not table-like (if above),
+                        // might need have an inspect function added to the usertype -
+                        // similar to entt::meta.
                         // Usertypes seem to go here
+
                         inspector.begin_leaf("");
                         ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
+                        std::cout << sol_object_to_string(lua, value) << std::endl;
                         inspector.end_leaf();
                     }
                     inspector.end_node();
@@ -647,25 +654,31 @@ namespace {
             sol::object value = pair.second;
 
             if (value.get_type() == sol::type::userdata) {
-                // Retrieve the underlying type information
-                sol::optional<entt::registry*> maybe_registry = value.as<sol::optional<entt::registry*>>();
+                copy[key] = value.as<sol::userdata>();
+            }
+            else
+                // if (value.get_type() == sol::type::userdata) {
+                //     // Retrieve the underlying type information
+                //     sol::optional<entt::registry*> maybe_registry = value.as<sol::optional<entt::registry*>>();
 
-                if (maybe_registry) {
-                    // If it's a registry, assign it directly as a usertype
-                    entt::registry* registry = *maybe_registry;
-                    copy[key] = std::ref(*registry);
+                //     if (maybe_registry) {
+                //         // If it's a registry, assign it directly as a usertype
+                //         entt::registry* registry = *maybe_registry;
+                //         copy[key] = std::ref(*registry);
+                //     }
+                //     else {
+                //         // For other userdata, copy as-is
+                //         copy[key] = value;
+                //     }
+                // }
+                // else 
+                if (value.is<sol::table>()) {
+                    copy[key] = deep_copy_table(lua, value.as<sol::table>());
                 }
                 else {
-                    // For other userdata, copy as-is
                     copy[key] = value;
+                    // copy[key] = original[key];
                 }
-            }
-            else if (value.is<sol::table>()) {
-                copy[key] = deep_copy_table(lua, value.as<sol::table>());
-            }
-            else {
-                copy[key] = value;
-            }
         }
         return copy;
     }
@@ -691,6 +704,9 @@ namespace {
             cpy.scripts[i].self["id"] = sol::readonly_property([dst_entity] { return dst_entity; });
             // -> registry?
             // cpy.scripts[i].self["owner"] = comp_ptr->scripts[i].self["owner"]; // std::ref(registry);
+
+            // Changes copy AND original - must be some kind of reference
+            cpy.scripts[i].self["header"]["name"] = "BYE";
         }
 
         return cpy;

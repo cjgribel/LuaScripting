@@ -372,7 +372,7 @@ namespace {
         // -> entityID?
         script.self["id"] = sol::readonly_property([entity] { return entity; });
         // -> registry?
-        script.self["owner"] = std::ref(registry);
+        script.self["owner"] = std::ref(registry); // &registry also seems to work
 
         if (auto&& f = script.self["init"]; f.valid())
             f(script.self);

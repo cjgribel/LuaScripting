@@ -4,6 +4,8 @@ local node = {
     VELOCITY_MIN = -5.0,
     VELOCITY_MAX = 5.0,
     STRING = "STRING",
+    BOOL = true,
+    NUMBER = 123.123,
     header = HeaderComponent("Hello")
 }
 
