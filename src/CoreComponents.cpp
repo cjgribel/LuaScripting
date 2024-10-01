@@ -600,7 +600,56 @@ namespace Editor {
     template<>
     bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
     {
-        
+        bool mod = false;
+
+        auto type_id = userdata["type_id"];
+        assert(type_id.get_type() == sol::type::function && "type_id could be missing from sol usertype");
+        entt::id_type id = type_id.call();
+
+        // Get entt meta type for this type id
+        auto meta_type = entt::resolve(id);
+        assert(meta_type);
+
+        // List type fields via entt::meta
+        for (auto&& [id, meta_data] : meta_type.data())
+        {
+            std::string key_name = meta_data_name(id, meta_data);
+            const auto key_name_cstr = key_name.c_str();
+
+            bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
+            if (readonly) inspector.begin_disabled();
+
+            sol::object value = userdata[key_name_cstr];
+
+            if (!value)
+            {
+                // entt meta data was not found in sol usertype
+                inspector.begin_leaf(key_name_cstr);
+                ImGui::TextDisabled("[Not in usertype]");
+                inspector.end_leaf();
+            }
+            // userdata, table ???
+            else if (value.get_type() == sol::type::string) {
+                std::string str = value.as<std::string>();
+                inspector.begin_leaf(key_name_cstr);
+                if (inspect_type(str, inspector)) { userdata[key_name_cstr] = str; mod = true; }
+                inspector.end_leaf();
+            }
+            else if (value.get_type() == sol::type::number) {
+                double nbr = value.as<double>();
+                inspector.begin_leaf(key_name_cstr);
+                if (inspect_type(nbr, inspector)) { userdata[key_name_cstr] = nbr; mod = true; }
+                inspector.end_leaf();
+            }
+            else if (value.get_type() == sol::type::boolean) {
+                bool bl = value.as<bool>();
+                inspector.begin_leaf(key_name_cstr);
+                if (inspect_type(bl, inspector)) { userdata[key_name_cstr] = bl; mod = true; }
+                inspector.end_leaf();
+            }
+            if (readonly) inspector.end_disabled();
+        }
+        return mod;
     }
 
     /// Inspect sol::table
@@ -612,7 +661,7 @@ namespace Editor {
 
         for (auto& [key, value] : tbl)
         {
-            std::string key_str = sol_object_to_string(lua, key) + " (" + get_lua_type_name(lua, value) + ")";
+            std::string key_str = sol_object_to_string(lua, key) + " [" + get_lua_type_name(lua, value) + "]";
             std::string key_str_label = "##" + key_str;
 
             // Note: value.is<sol::table>() is true also for sol::type::userdata and possibly other lua types
@@ -644,48 +693,7 @@ namespace Editor {
                     // // "type_id", &entt::type_hash<HeaderComponent>::value,
                     // entt::id_type id = f.call();
                     // or
-                    auto type_id = userdata["type_id"];
-                    // assert(type_id);
-                    assert(type_id.get_type() == sol::type::function);
-                    entt::id_type id = type_id.call();
-                    //
-                    // entt::id_type hcid = entt::type_hash<HeaderComponent>::value();
-                    //std::cout << id << " (" << hcid << ")" << std::endl;
-                    //
-                        // List fields of HeaderComponent via entt::meta
-                    auto hc_meta_type = entt::resolve(id); // <- id
-                    assert(hc_meta_type);
-                    for (auto&& [id, meta_data] : hc_meta_type.data()) {
-                        std::string key_name = meta_data_name(id, meta_data);
-                        const auto key_name_cstr = key_name.c_str();
-                        //std::cout << key_name << ", ";
-
-                        bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
-                        if (readonly) inspector.begin_disabled();
-
-                        sol::object value = userdata[key_name_cstr];
-
-                        // userdata, table ???
-                        if (value.get_type() == sol::type::string) {
-                            std::string str = value.as<std::string>();
-                            inspector.begin_leaf(key_name_cstr);
-                            if (inspect_type(str, inspector)) { userdata[key_name_cstr] = str; mod = true; }
-                            inspector.end_leaf();
-                        }
-                        else if (value.get_type() == sol::type::number) {
-                            double nbr = value.as<double>();
-                            inspector.begin_leaf(key_name_cstr);
-                            if (inspect_type(nbr, inspector)) { userdata[key_name_cstr] = nbr; mod = true; }
-                            inspector.end_leaf();
-                        }
-                        else if (value.get_type() == sol::type::boolean) {
-                            bool bl = value.as<bool>();
-                            inspector.begin_leaf(key_name_cstr);
-                            if (inspect_type(bl, inspector)) { userdata[key_name_cstr] = bl; mod = true; }
-                            inspector.end_leaf();
-                        }
-                        if (readonly) inspector.end_disabled();
-                    }
+                    mod |= inspect_type(userdata, inspector);
                     //std::cout << std::endl;
 
                     // if (id == hcid) // is HeaderComponent
