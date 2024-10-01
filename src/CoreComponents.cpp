@@ -599,17 +599,39 @@ namespace Editor {
     template<>
     bool inspect_type<sol::object>(sol::object& userdata, InspectorState& inspector)
     {
-        
+        return false;
     }
+
+    template<>
+    bool inspect_type<sol::table>(sol::table&, InspectorState&);
 
     /// Inspect sol::userdata
     template<>
     bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
     {
+        auto& lua = *inspector.lua;
         bool mod = false;
 
+        // Fetch type id of the inspected usertype
         auto type_id = userdata["type_id"];
-        assert(type_id.get_type() == sol::type::function && "type_id could be missing from sol usertype");
+
+        // Non-component types typically don't have a "type_id" field
+        // We could ignore this case, but let's see if the usertype's metatable
+        // has an index property that acts as a table, and if so traverse it
+        if (type_id.get_type() != sol::type::function)
+        {
+            // Check if the userdata has an `__index` metamethod that acts like a table
+            sol::optional<sol::table> metatable = userdata[sol::metatable_key];
+            if (metatable && metatable->get<sol::object>("__index").is<sol::table>())
+            {
+                sol::table index_table = metatable->get<sol::table>("__index");
+                mod |= Editor::inspect_type(index_table, inspector);
+            }
+            else
+                ImGui::TextDisabled("[Unvailable]");
+            return mod;
+        }
+
         entt::id_type id = type_id.call();
 
         // Get entt meta type for this type id
@@ -619,12 +641,15 @@ namespace Editor {
         // List type fields via entt::meta
         for (auto&& [id, meta_data] : meta_type.data())
         {
+            // entt field name
             std::string key_name = meta_data_name(id, meta_data);
             const auto key_name_cstr = key_name.c_str();
 
             bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
             if (readonly) inspector.begin_disabled();
 
+            // Fetch usertype field with this field name
+            // Note: requires fields to be registered with the EXACT same name ...
             sol::object value = userdata[key_name_cstr];
 
             if (!value)
@@ -653,6 +678,8 @@ namespace Editor {
                 if (inspect_type(bl, inspector)) { userdata[key_name_cstr] = bl; mod = true; }
                 inspector.end_leaf();
             }
+            else
+                ImGui::TextDisabled("%s", sol_object_to_string(lua, value).c_str());
             if (readonly) inspector.end_disabled();
         }
         return mod;
@@ -674,7 +701,6 @@ namespace Editor {
             // This form,
             //      value.get_type() == sol::type::table
             // seems more precise when detecting types, even though it isn't type-safe
-
             if (value.get_type() == sol::type::table)
             {
                 if (inspector.begin_node(key_str.c_str()))
@@ -756,14 +782,14 @@ namespace Editor {
 
 //
 namespace {
-    sol::table deep_copy_table(sol::state_view lua, const sol::table& original) 
+    sol::table deep_copy_table(sol::state_view lua, const sol::table& original)
     {
         sol::table copy = lua.create_table();
         for (const auto& pair : original) {
             sol::object key = pair.first;
             sol::object value = pair.second;
 
-            if (value.get_type() == sol::type::userdata) 
+            if (value.get_type() == sol::type::userdata)
             {
                 // TODO: DEEP COPY!
                 copy[key] = value.as<sol::userdata>();
