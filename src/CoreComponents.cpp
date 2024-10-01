@@ -596,6 +596,12 @@ namespace Editor {
         return false;
     }
 
+    template<>
+    bool inspect_type<sol::object>(sol::object& userdata, InspectorState& inspector)
+    {
+        
+    }
+
     /// Inspect sol::userdata
     template<>
     bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
@@ -683,82 +689,8 @@ namespace Editor {
             {
                 if (inspector.begin_node(key_str.c_str()))
                 {
-                    sol::userdata userdata = value.as<sol::userdata>(); // lua["testTable"];
-                    sol::table metatable = userdata[sol::metatable_key];
-                    assert(metatable.valid());
-                    //mod |= Editor::inspect_type(metatable, inspector);
-
-                    // auto f = metatable["type_id"];
-                    // assert(f.get_type() == sol::type::function);
-                    // // "type_id", &entt::type_hash<HeaderComponent>::value,
-                    // entt::id_type id = f.call();
-                    // or
+                    sol::userdata userdata = value.as<sol::userdata>();
                     mod |= inspect_type(userdata, inspector);
-                    //std::cout << std::endl;
-
-                    // if (id == hcid) // is HeaderComponent
-                    // {
-                        //auto ff = metatable["name"];
-                        //assert(ff.get_type() == sol::type::function);
-
-
-                        // std::string name_value = userdata["name"];
-                        // std::cout << name_value << std::endl;
-
-                        // sol::object result = ff.call();
-                        // // Check if the result is a string and retrieve the value
-                        // if (result.is<std::string>()) {
-                        //     std::string name_value = result.as<std::string>();
-                        //     std::cout << "The value of 'name' is: " << name_value << std::endl;
-                        // }
-
-                        //std::string str = ff. call();
-                        //std::cout << str << std::endl;
-                    // }
-
-                    // for (const auto& pair : metaTable)
-                    // {
-                    //     const std::string key_str = pair.first.as<std::string>();
-                    //     std::cout << key_str << std::endl;
-                    //     // if (!startsWith(key, metaPrefix))
-                    //     // {
-                    //     //     keys.push_back(key);
-                    //     //     std::cout << key << ", ";
-
-                    //     //     if (key != "new")
-                    //     //     {
-                    //     //         values.push_back(testTable[key]);
-                    //     //     }
-                    //     // }
-                    //     // else
-                    //     // {
-                    //     //     // The Meta Methods and stuff here
-                    //     // }
-                    // }
-
-                    // sol::userdata ud = value.as<sol::userdata>();
-
-                    // // Check if the userdata has an `__index` metamethod that acts like a table
-                    // sol::optional<sol::table> metatable = ud[sol::metatable_key];
-                    // if (metatable && metatable->get<sol::object>("__index").is<sol::table>())
-                    // {
-                    //     sol::table index_table = metatable->get<sol::table>("__index");
-                    //     Editor::inspect_type(index_table, inspector);
-                    // }
-                    // else
-                    // {
-                    //     // TODO ???
-                    //     // To expose userdata fields -
-                    //     // for userdata that is not table-like (if above),
-                    //     // might need have an inspect function added to the usertype -
-                    //     // similar to entt::meta.
-                    //     // Usertypes seem to go here
-
-                    //     inspector.begin_leaf("");
-                    //     ImGui::TextDisabled("[tostring] %s", sol_object_to_string(lua, value).c_str());
-                    //     std::cout << sol_object_to_string(lua, value) << std::endl;
-                    //     inspector.end_leaf();
-                    // }
                     inspector.end_node();
                 }
             }
@@ -824,13 +756,16 @@ namespace Editor {
 
 //
 namespace {
-    sol::table deep_copy_table(sol::state_view lua, const sol::table& original) {
+    sol::table deep_copy_table(sol::state_view lua, const sol::table& original) 
+    {
         sol::table copy = lua.create_table();
         for (const auto& pair : original) {
             sol::object key = pair.first;
             sol::object value = pair.second;
 
-            if (value.get_type() == sol::type::userdata) {
+            if (value.get_type() == sol::type::userdata) 
+            {
+                // TODO: DEEP COPY!
                 copy[key] = value.as<sol::userdata>();
             }
             else
