@@ -354,8 +354,10 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         ;
 
     lua.new_usertype<QuadGridComponent>("QuadGridComponent",
+
         "type_id",
         &entt::type_hash<QuadGridComponent>::value,
+
         sol::call_constructor,
         sol::factories([](
             int width,
@@ -369,6 +371,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
                     .is_active = is_active
                 };
             }),
+
         // "add_quad", [](QuadGridComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
         //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
         //     c.pos[c.count].x = x;
@@ -378,6 +381,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         //     c.is_active_flags[c.count] = is_active;
         //     c.count++;
         // },
+
         "set_quad_at",
         [](QuadGridComponent& c,
             int index,
@@ -395,11 +399,13 @@ void register_meta<QuadGridComponent>(sol::state& lua)
             // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
             c.is_active_flags[index] = is_active;
         },
+
         "set_active_flag_all", [](QuadGridComponent& c, bool is_active) {
             for (int i = 0; i < c.count; i++)
                 c.is_active_flags[i] = is_active;
             c.is_active = is_active;
         },
+
         "get_pos_at", [](QuadGridComponent& c, int index) {
             //if (index < 0 || index >= c.count) throw std::out_of_range("Index out of range");
             assert(index >= 0 && index < c.count);
@@ -410,6 +416,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         //     c.pos[index].x = x;
         //     c.pos[index].y = y;
         // },
+
         "get_size_at", [](QuadGridComponent& c, int index) -> float {
             //if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             assert(index >= 0 && index < c.count);
@@ -419,20 +426,24 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
         //     c.sizes[index] = value;
         // },
+
         "get_color_at", [](QuadGridComponent& c, int index) -> uint32_t {
             // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             assert(index >= 0 && index < c.count);
             return c.colors[index];
         },
+
         "set_color_at", [](QuadGridComponent& c, int index, uint32_t color) {
             // if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
             assert(index >= 0 && index < c.count);
             c.colors[index] = color;
         },
+
         "set_color_all", [](QuadGridComponent& c, uint32_t color) {
             for (int i = 0; i < c.count; i++)
                 c.colors[i] = color;
         },
+
         // "get_is_active_flag", [](QuadGridComponent& c, int index) -> float {
         //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
         //     return c.is_active_flags[index];
@@ -442,13 +453,26 @@ void register_meta<QuadGridComponent>(sol::state& lua)
             assert(index >= 0 && index < c.count);
             c.is_active_flags[index] = is_active;
         },
+
         "get_element_count", [](QuadGridComponent& c) {
             return c.count;
         },
+
         //"count",
         //&QuadGridComponent::count,
+
+        "count",
+        &QuadGridComponent::count,
+
+        "width",
+        &QuadGridComponent::width,
+
         "is_active",
         &QuadGridComponent::is_active,
+
+        //         .data<&QuadGridComponent::count>("count"_hs).prop(display_name_hs, "count").prop(readonly_hs, true)
+        // .data<&QuadGridComponent::width>("width"_hs).prop(display_name_hs, "width").prop(readonly_hs, true)
+        // .data<&QuadGridComponent::is_active>("is_active"_hs).prop(display_name_hs, "is_active")
 
         sol::meta_function::to_string,
         &QuadGridComponent::to_string
@@ -572,6 +596,13 @@ namespace Editor {
         return false;
     }
 
+    /// Inspect sol::userdata
+    template<>
+    bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
+    {
+        
+    }
+
     /// Inspect sol::table
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
@@ -606,38 +637,62 @@ namespace Editor {
                     sol::userdata userdata = value.as<sol::userdata>(); // lua["testTable"];
                     sol::table metatable = userdata[sol::metatable_key];
                     assert(metatable.valid());
-                    mod |= Editor::inspect_type(metatable, inspector);
+                    //mod |= Editor::inspect_type(metatable, inspector);
 
-                    auto f = metatable["type_id"];
-                    assert(f.get_type() == sol::type::function);
-                    // "type_id", &entt::type_hash<HeaderComponent>::value,
-                    entt::id_type id = f.call();
+                    // auto f = metatable["type_id"];
+                    // assert(f.get_type() == sol::type::function);
+                    // // "type_id", &entt::type_hash<HeaderComponent>::value,
+                    // entt::id_type id = f.call();
                     // or
-                    sol::object type_id = userdata["type_id"];
-                    assert(type_id);
+                    auto type_id = userdata["type_id"];
+                    // assert(type_id);
                     assert(type_id.get_type() == sol::type::function);
+                    entt::id_type id = type_id.call();
                     //
-                    entt::id_type hcid = entt::type_hash<HeaderComponent>::value();
-                    std::cout << id << " (" << hcid << ")" << std::endl;
+                    // entt::id_type hcid = entt::type_hash<HeaderComponent>::value();
+                    //std::cout << id << " (" << hcid << ")" << std::endl;
                     //
-                    if (id == hcid) // is HeaderComponent
-                    {
+                        // List fields of HeaderComponent via entt::meta
+                    auto hc_meta_type = entt::resolve(id); // <- id
+                    assert(hc_meta_type);
+                    for (auto&& [id, meta_data] : hc_meta_type.data()) {
+                        std::string key_name = meta_data_name(id, meta_data);
+                        const auto key_name_cstr = key_name.c_str();
+                        //std::cout << key_name << ", ";
+
+                        bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
+                        if (readonly) inspector.begin_disabled();
+
+                        sol::object value = userdata[key_name_cstr];
+
+                        // userdata, table ???
+                        if (value.get_type() == sol::type::string) {
+                            std::string str = value.as<std::string>();
+                            inspector.begin_leaf(key_name_cstr);
+                            if (inspect_type(str, inspector)) { userdata[key_name_cstr] = str; mod = true; }
+                            inspector.end_leaf();
+                        }
+                        else if (value.get_type() == sol::type::number) {
+                            double nbr = value.as<double>();
+                            inspector.begin_leaf(key_name_cstr);
+                            if (inspect_type(nbr, inspector)) { userdata[key_name_cstr] = nbr; mod = true; }
+                            inspector.end_leaf();
+                        }
+                        else if (value.get_type() == sol::type::boolean) {
+                            bool bl = value.as<bool>();
+                            inspector.begin_leaf(key_name_cstr);
+                            if (inspect_type(bl, inspector)) { userdata[key_name_cstr] = bl; mod = true; }
+                            inspector.end_leaf();
+                        }
+                        if (readonly) inspector.end_disabled();
+                    }
+                    //std::cout << std::endl;
+
+                    // if (id == hcid) // is HeaderComponent
+                    // {
                         //auto ff = metatable["name"];
                         //assert(ff.get_type() == sol::type::function);
 
-                        sol::object name_value = userdata["name"];
-                        if (name_value.get_type() == sol::type::string) {
-                            std::string str = name_value.as<std::string>();
-                            inspector.begin_leaf("name");
-                            if (inspect_type(str, inspector)) userdata["name"] = str;
-                            inspector.end_leaf();
-                        }
-                        // List fields of HeaderComponent via entt::meta
-                        auto hc_meta_type = entt::resolve<HeaderComponent>(); // <- id
-                        for (auto&& [id, meta_data] : hc_meta_type.data()) {
-                            std::string key_name = meta_data_name(id, meta_data);
-                            std::cout << key_name << ", ";
-                        } std::cout << std::endl;
 
                         // std::string name_value = userdata["name"];
                         // std::cout << name_value << std::endl;
@@ -651,7 +706,7 @@ namespace Editor {
 
                         //std::string str = ff. call();
                         //std::cout << str << std::endl;
-                    }
+                    // }
 
                     // for (const auto& pair : metaTable)
                     // {
