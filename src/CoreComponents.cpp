@@ -7,6 +7,7 @@
 #include "imgui.h" // If GUI code is here
 
 #include "meta_literals.h" // for entt literals
+#include "meta_aux.h"
 
 #include "CoreComponents.hpp"
 #include "InspectType.hpp"
@@ -113,6 +114,9 @@ void register_meta<HeaderComponent>(sol::state& lua)
                 // .func<&inspect_Transform>(inspect_hs)
             // clone
                 //.func<&cloneDebugClass>(clone_hs)
+
+        // sol getter & setter
+        // [](sol::function f) { return f.call<> }
             ;
 
         // Register to sol
@@ -599,10 +603,56 @@ namespace Editor {
             {
                 if (inspector.begin_node(key_str.c_str()))
                 {
-                    sol::userdata testTable = value.as<sol::userdata>(); // lua["testTable"];
-                    sol::table metaTable = testTable[sol::metatable_key];
-                    assert(metaTable.valid());
-                    mod |= Editor::inspect_type(metaTable, inspector);
+                    sol::userdata userdata = value.as<sol::userdata>(); // lua["testTable"];
+                    sol::table metatable = userdata[sol::metatable_key];
+                    assert(metatable.valid());
+                    mod |= Editor::inspect_type(metatable, inspector);
+
+                    auto f = metatable["type_id"];
+                    assert(f.get_type() == sol::type::function);
+                    // "type_id", &entt::type_hash<HeaderComponent>::value,
+                    entt::id_type id = f.call();
+                    // or
+                    sol::object type_id = userdata["type_id"];
+                    assert(type_id);
+                    assert(type_id.get_type() == sol::type::function);
+                    //
+                    entt::id_type hcid = entt::type_hash<HeaderComponent>::value();
+                    std::cout << id << " (" << hcid << ")" << std::endl;
+                    //
+                    if (id == hcid) // is HeaderComponent
+                    {
+                        //auto ff = metatable["name"];
+                        //assert(ff.get_type() == sol::type::function);
+
+                        sol::object name_value = userdata["name"];
+                        if (name_value.get_type() == sol::type::string) {
+                            std::string str = name_value.as<std::string>();
+                            inspector.begin_leaf("name");
+                            if (inspect_type(str, inspector)) userdata["name"] = str;
+                            inspector.end_leaf();
+                        }
+                        // List fields of HeaderComponent via entt::meta
+                        auto hc_meta_type = entt::resolve<HeaderComponent>(); // <- id
+                        for (auto&& [id, meta_data] : hc_meta_type.data()) {
+                            std::string key_name = meta_data_name(id, meta_data);
+                            std::cout << key_name << ", ";
+                        } std::cout << std::endl;
+
+                        // std::string name_value = userdata["name"];
+                        // std::cout << name_value << std::endl;
+
+                        // sol::object result = ff.call();
+                        // // Check if the result is a string and retrieve the value
+                        // if (result.is<std::string>()) {
+                        //     std::string name_value = result.as<std::string>();
+                        //     std::cout << "The value of 'name' is: " << name_value << std::endl;
+                        // }
+
+                        //std::string str = ff. call();
+                        //std::cout << str << std::endl;
+                    }
+
                     // for (const auto& pair : metaTable)
                     // {
                     //     const std::string key_str = pair.first.as<std::string>();
