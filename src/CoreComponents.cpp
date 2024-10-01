@@ -616,10 +616,13 @@ namespace Editor {
         auto type_id = userdata["type_id"];
 
         // Non-component types typically don't have a "type_id" field
-        // We could ignore this case, but let's see if the usertype's metatable
-        // has an index property that acts as a table, and if so traverse it
-        if (type_id.get_type() != sol::type::function)
+        if (!type_id.valid())
         {
+#if 1
+            // No inspection
+            ImGui::TextDisabled("[Unvailable]");
+            return mod;
+#else
             // Check if the userdata has an `__index` metamethod that acts like a table
             sol::optional<sol::table> metatable = userdata[sol::metatable_key];
             if (metatable && metatable->get<sol::object>("__index").is<sol::table>())
@@ -630,8 +633,10 @@ namespace Editor {
             else
                 ImGui::TextDisabled("[Unvailable]");
             return mod;
+#endif
         }
 
+        assert(type_id.get_type() == sol::type::function);
         entt::id_type id = type_id.call();
 
         // Get entt meta type for this type id
