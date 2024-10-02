@@ -41,7 +41,6 @@ template<>
 void register_meta<Transform>(sol::state& lua)
 {
     lua.new_usertype<Transform>("Transform",
-        "type_id", &entt::type_hash<Transform>::value,
 
         sol::call_constructor,
         sol::factories([](float x, float y, float rot) {
@@ -49,8 +48,19 @@ void register_meta<Transform>(sol::state& lua)
                 .x = x, .y = y, .rot = rot
             };
             }),
+
+        // type_id is required for component types, copying and inspection
+        "type_id", &entt::type_hash<Transform>::value,
+
+        // Default construction
+        // Needed for copying (sol constructors are not exposed in userdata)
+        "construct",
+        []() { return Transform{}; },
+
         "x", &Transform::x,
+
         "y", &Transform::y,
+
         "rot", &Transform::rot,
 
         sol::meta_function::to_string, &Transform::to_string
@@ -119,14 +129,24 @@ void register_meta<HeaderComponent>(sol::state& lua)
         // Register to sol
 
         lua.new_usertype<HeaderComponent>("HeaderComponent",
-            "type_id", &entt::type_hash<HeaderComponent>::value,
+            //sol::constructors<HeaderComponent(), HeaderComponent(const std::string&)>(),
+
+            // If the type has defined ctors
+            //sol::constructors<HeaderComponent(), HeaderComponent(const std::string&)>(),
 
             sol::call_constructor,
-            sol::factories([](const std::string& name) {
-                return HeaderComponent{
-                    .name = name
-                };
+            sol::factories(
+                []() -> HeaderComponent {  // Default constructor
+                    return HeaderComponent{};
+                },
+                [](const std::string& name) {
+                    return HeaderComponent{
+                        .name = name
+                    };
                 }),
+
+            "type_id", &entt::type_hash<HeaderComponent>::value,
+
             "name", &HeaderComponent::name,
             // "name2", &HeaderComponent::name2,
             // "name3", &HeaderComponent::name3,
@@ -136,8 +156,12 @@ void register_meta<HeaderComponent>(sol::state& lua)
             [](sol::userdata userdata)
             {
                 // TODO: check fields
-                return HeaderComponent{userdata.get<std::string>("name")};
+                return HeaderComponent{ userdata.get<std::string>("name") };
             },
+
+            // Needed for copying (sol constructors are not exposed in userdata)
+            "construct",
+            []() { return HeaderComponent{}; },
 
             sol::meta_function::to_string, &HeaderComponent::to_string
         );
@@ -587,6 +611,11 @@ namespace Editor {
         // Fetch type id of the inspected usertype
         auto type_id = userdata["type_id"];
 
+        // (Inspect the metatable directly; usertype fields will appear as functions here)
+        // sol::table metatable = userdata[sol::metatable_key];
+        // mod |= inspect_type(metatable, inspector);
+        // return mod;
+
         // Non-component types typically don't have a "type_id" field
         if (!type_id.valid())
         {
@@ -759,14 +788,53 @@ namespace Editor {
 //
 namespace {
 
+    // Or,
+    // Skip "clone" in userdata def,
+    // + call default ctor from here via type
+
     sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& original)
     {
-        // Ensure the original userdata has a 'clone' function
-        sol::function copy_func = original["copy"];
-        if (!copy_func.valid()) {
-            return original; // Copy by reference
-            //throw std::runtime_error("Userdata does not have a 'clone' function for deep copying.");
+        sol::function construct = original["construct"];
+        if (!construct.valid())  return original; // Copy by reference
+        // Let userdata decide how to copy
+        sol::userdata userdata_copy = construct();
+
+        // Fetch entt meta type id
+        auto type_id = original["type_id"];
+        if (type_id.get_type() != sol::type::function) return original;
+        entt::id_type id = type_id.call();
+
+        // Fetch entt meta type, iterate its data and copy to userdata
+        entt::meta_type meta_type = entt::resolve(id);
+        assert(meta_type);
+        // entt::meta_any meta_any = meta_type.construct(); // cannot go any -> userdata
+        for (auto&& [id, meta_data] : meta_type.data())
+        {
+            // entt field name
+            std::string key_name = meta_data_name(id, meta_data);
+            const auto key_name_cstr = key_name.c_str();
+
+            userdata_copy[key_name_cstr] = original[key_name_cstr];
         }
+
+        return userdata_copy;
+
+        // auto new_instance = original["new"];
+        // assert(new_instance.get_type() == sol::type::function);
+        //sol::object id = new_instance.call();
+
+        //sol::object new_instance = original["new"]();
+
+        // // Check the new instance type and access its fields
+        // if (new_instance.is<HeaderComponent>()) {
+        //     HeaderComponent& instance = new_instance.as<HeaderComponent>();
+        //     std::cout << "Created instance with name: " << instance.name << std::endl;
+        // }
+
+
+            // Ensure the original userdata has a 'clone' function
+        sol::function copy_func = original["copy"];
+        if (!copy_func.valid())  return original; // Copy by reference
         // Let userdata decide how to copy
         return copy_func(original);
         // Call the clone function to create a new userdata instance
