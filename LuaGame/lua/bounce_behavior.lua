@@ -7,7 +7,7 @@ local node = {
     BOOL = true,
     NUMBER = 123.123,
     HEADER = HeaderComponent("Hello123"),
-    TRANSFORM = Transform(1.0, 2.0, 0.0),
+    TRANSFORM = Transform(1.0, 2.0, 3.0),
     QUADGRID = QuadGridComponent(1,1,false)
 }
 

@@ -114,9 +114,6 @@ void register_meta<HeaderComponent>(sol::state& lua)
                 // .func<&inspect_Transform>(inspect_hs)
             // clone
                 //.func<&cloneDebugClass>(clone_hs)
-
-        // sol getter & setter
-        // [](sol::function f) { return f.call<> }
             ;
 
         // Register to sol
@@ -134,18 +131,26 @@ void register_meta<HeaderComponent>(sol::state& lua)
             // "name2", &HeaderComponent::name2,
             // "name3", &HeaderComponent::name3,
 
+            // clone
+            "copy",
+            [](sol::userdata userdata)
+            {
+                // TODO: check fields
+                return HeaderComponent{userdata.get<std::string>("name")};
+            },
+
             sol::meta_function::to_string, &HeaderComponent::to_string
         );
 
         // TEST
-        struct ABC { int x; };
+        // struct ABC { int x; };
 
-        lua.new_usertype<ABC>("ABC",
-            sol::meta_function::construct,
-            sol::factories([] { return ABC{}; }),
+        // lua.new_usertype<ABC>("ABC",
+        //     sol::meta_function::construct,
+        //     sol::factories([] { return ABC{}; }),
 
-            "x", &ABC::x
-        );
+        //     "x", &ABC::x
+        // );
 }
 
 // === CircleColliderGridComponent ============================================
@@ -560,35 +565,7 @@ namespace
 
 namespace Editor {
 
-    // void inspect_usertype(sol::object usertype_obj) {
-    //     if (!usertype_obj.valid()) {
-    //         std::cout << "Invalid usertype object.\n";
-    //         return;
-    //     }
-
-    //     // Retrieve the metatable of the usertype object using sol::get_metatable()
-    //     sol::table metatable = sol::get_metatable(usertype_obj);
-    //     if (!metatable.valid()) {
-    //         std::cout << "No metatable found for this usertype object.\n";
-    //         return;
-    //     }
-
-    //     std::cout << "Members of the usertype:\n";
-    //     sol::object index = metatable["__index"];
-    //     if (index.valid() && index.get_type() == sol::type::table) {
-    //         sol::table index_table = index.as<sol::table>();
-    //         for (auto& [key, value] : index_table) {
-    //             std::cout << "  " << key.as<std::string>() << std::endl;
-    //         }
-    //     } else {
-    //         // If no __index, inspect the metatable directly
-    //         for (auto& [key, value] : metatable) {
-    //             std::cout << "  " << key.as<std::string>() << std::endl;
-    //         }
-    //     }
-    // }
-
-        /// Inspect sol::function
+    /// Inspect sol::function
     template<>
     bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
     {
@@ -596,12 +573,7 @@ namespace Editor {
         return false;
     }
 
-    template<>
-    bool inspect_type<sol::object>(sol::object& userdata, InspectorState& inspector)
-    {
-        return false;
-    }
-
+    /// Inspect sol::table
     template<>
     bool inspect_type<sol::table>(sol::table&, InspectorState&);
 
@@ -690,7 +662,6 @@ namespace Editor {
         return mod;
     }
 
-    /// Inspect sol::table
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
     {
@@ -787,26 +758,45 @@ namespace Editor {
 
 //
 namespace {
+
+    sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& original)
+    {
+        // Ensure the original userdata has a 'clone' function
+        sol::function copy_func = original["copy"];
+        if (!copy_func.valid()) {
+            return original; // Copy by reference
+            //throw std::runtime_error("Userdata does not have a 'clone' function for deep copying.");
+        }
+        // Let userdata decide how to copy
+        return copy_func(original);
+        // Call the clone function to create a new userdata instance
+        // sol::userdata new_userdata = copy_func(original);
+
+        // return new_userdata;
+    }
+
     sol::table deep_copy_table(sol::state_view lua, const sol::table& original)
     {
         sol::table copy = lua.create_table();
-        for (const auto& pair : original) {
-            sol::object key = pair.first;
-            sol::object value = pair.second;
 
+        for (const auto& [key, value] : original)
+        {
             if (value.get_type() == sol::type::userdata)
             {
                 // TODO: DEEP COPY!
-                copy[key] = value.as<sol::userdata>();
+                // copy[key] = value.as<sol::userdata>();
+
+                copy[key] = deep_copy_userdata(lua, value.as<sol::userdata>());
+            }
+            else if (value.is<sol::table>())
+            {
+                copy[key] = deep_copy_table(lua, value.as<sol::table>());
             }
             else
-                if (value.is<sol::table>()) {
-                    copy[key] = deep_copy_table(lua, value.as<sol::table>());
-                }
-                else {
-                    copy[key] = value;
-                    // copy[key] = original[key];
-                }
+            {
+                copy[key] = value;
+                // copy[key] = original[key];
+            }
         }
         return copy;
     }
