@@ -31,7 +31,7 @@ bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
     inspector.end_leaf();
 
     inspector.begin_leaf("angle");
-    mod |= Editor::inspect_type(t->rot, inspector);
+    mod |= Editor::inspect_type(t->angle, inspector);
     inspector.end_leaf();
 
     return mod;
@@ -43,9 +43,9 @@ void register_meta<Transform>(sol::state& lua)
     lua.new_usertype<Transform>("Transform",
 
         sol::call_constructor,
-        sol::factories([](float x, float y, float rot) {
+        sol::factories([](float x, float y, float angle) {
             return Transform{
-                .x = x, .y = y, .rot = rot
+                .x = x, .y = y, .angle = angle
             };
             }),
 
@@ -53,7 +53,7 @@ void register_meta<Transform>(sol::state& lua)
         "type_id", &entt::type_hash<Transform>::value,
 
         // Default construction
-        // Needed for copying (sol constructors are not exposed in userdata)
+        // Needed to copy userdata
         "construct",
         []() { return Transform{}; },
 
@@ -61,7 +61,7 @@ void register_meta<Transform>(sol::state& lua)
 
         "y", &Transform::y,
 
-        "rot", &Transform::rot,
+        "angle", &Transform::angle,
 
         sol::meta_function::to_string, &Transform::to_string
     );
@@ -72,11 +72,11 @@ void register_meta<Transform>(sol::state& lua)
 
         .data<&Transform::x>("x"_hs).prop(display_name_hs, "x")
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
-        .data<&Transform::rot>("rot"_hs).prop(display_name_hs, "angle")
+        .data<&Transform::angle>("angle"_hs).prop(display_name_hs, "angle")
 
         .data<&Transform::x_global>("x_global"_hs).prop(display_name_hs, "x_global").prop(readonly_hs, true)
         .data<&Transform::y_global>("y_global"_hs).prop(display_name_hs, "y_global").prop(readonly_hs, true)
-        .data<&Transform::rot_global>("rot_global"_hs).prop(display_name_hs, "angle_global").prop(readonly_hs, true)
+        .data<&Transform::angle_global>("angle_global"_hs).prop(display_name_hs, "angle_global").prop(readonly_hs, true)
 
         // Inspection function (optional)
         // Sign: bool(void* ptr, Editor::InspectorState& inspector)
@@ -814,7 +814,13 @@ namespace {
             std::string key_name = meta_data_name(id, meta_data);
             const auto key_name_cstr = key_name.c_str();
 
-            userdata_copy[key_name_cstr] = original[key_name_cstr];
+            sol::object value = original[key_name_cstr];
+            if (!value) 
+            {
+                std::cout << "Copy userdata warning: " << key_name << " not found in userdata" << std::endl;
+                continue;
+            }
+            userdata_copy[key_name_cstr] = value; //original[key_name_cstr];
         }
 
         return userdata_copy;

@@ -43,7 +43,7 @@ function node:update(dt)
     -- Apply velocity
     transform.x = transform.x + self.velocity.x * dt
     transform.y = transform.y + self.velocity.y * dt
-    transform.rot = transform.rot + self.velocity.angle * dt
+    transform.angle = transform.angle + self.velocity.angle * dt
 
     -- Bounce at bounds
     if transform.x - radius <= game.config.bounds.left or transform.x + radius >= game.config.bounds.right then
@@ -120,10 +120,10 @@ function node:hit_element(element_index, vel_x, vel_y)
     
     -- Emit particles in the (vel_x, vel_y) direction
     local x, y = quadgrid:get_pos_at(element_index)
-    xrot, yrot = rotate(x, y, transform.rot)
+    x_angle, y_angle = rotate(x, y, transform.angle)
     engine.emit_explosion(
-        transform.x + xrot, 
-        transform.y + yrot, 
+        transform.x + x_angle, 
+        transform.y + y_angle, 
         vel_x, 
         vel_y, 
         20, 

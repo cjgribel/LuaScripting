@@ -1228,7 +1228,7 @@ void Scene::update(float time_s, float deltaTime_s)
             const auto& collider1 = view.get<CircleColliderGridComponent>(entity1);
             if (!collider1.is_active) continue;
 
-            const auto R1 = m2f::rotation(transform1.rot_global);
+            const auto R1 = m2f::rotation(transform1.angle_global);
             for (auto it2 = it1; ++it2 != view.end(); )
             {
                 auto entity2 = *it2;
@@ -1239,7 +1239,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 // LAYER CHECK
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
 
-                const auto R2 = m2f::rotation(transform2.rot_global);
+                const auto R2 = m2f::rotation(transform2.angle_global);
                 // for (auto i = 0; i < collider1.count; i++)
                 for (int di = 0; di < collider1.active_indices.get_dense_count(); di++)
                 {
@@ -1503,7 +1503,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
                 v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
-                transform_comp.rot_global, v3f_001,
+                transform_comp.angle_global, v3f_001,
                 v3f_111
             );
 
@@ -1536,7 +1536,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             auto& transform_comp = registry.get<Transform>(entity);
             const auto G = m4f::TRS(
                 v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
-                transform_comp.rot_global, v3f_001,
+                transform_comp.angle_global, v3f_001,
                 v3f_111
             );
 

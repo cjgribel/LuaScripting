@@ -31,15 +31,15 @@ void SceneGraph::traverse(entt::registry& registry)
             auto& tfm_parent = registry.get<Transform>(*entity_parent_ptr);
             tfm_node.x_parent = tfm_parent.x_global;
             tfm_node.y_parent = tfm_parent.y_global;
-            tfm_node.rot_parent = tfm_parent.rot_global;
+            tfm_node.angle_parent = tfm_parent.angle_global;
         }
 
         // // opt sin/cos
         // tfm_node.x_global = tfm_node.x;
         // tfm_node.y_global = tfm_node.y;
-        // tfm_node.rot_global = tfm_node.rot;
-        tfm_node.x_global = tfm_node.x * cos(tfm_node.rot_parent) - tfm_node.y * sin(tfm_node.rot_parent) + tfm_node.x_parent;
-        tfm_node.y_global = tfm_node.x * sin(tfm_node.rot_parent) + tfm_node.y * cos(tfm_node.rot_parent) + tfm_node.y_parent;
-        tfm_node.rot_global = tfm_node.rot + tfm_node.rot_parent;
+        // tfm_node.angle_global = tfm_node.angle;
+        tfm_node.x_global = tfm_node.x * cos(tfm_node.angle_parent) - tfm_node.y * sin(tfm_node.angle_parent) + tfm_node.x_parent;
+        tfm_node.y_global = tfm_node.x * sin(tfm_node.angle_parent) + tfm_node.y * cos(tfm_node.angle_parent) + tfm_node.y_parent;
+        tfm_node.angle_global = tfm_node.angle + tfm_node.angle_parent;
         });
 }
