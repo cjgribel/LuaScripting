@@ -228,21 +228,6 @@ struct ScriptedBehaviorComponent
 
     std::vector<BehaviorScript> scripts;
 
-    // sol::table get_script_by_id(const std::string& identifier)
-    // {
-    //     for (auto& script : scripts)
-    //     {
-    //         if (script.identifier == identifier)
-    //         {
-    //             return script.self;
-    //         }
-    //     }
-    //     return sol::lua_nil;
-    // }
-
-    // TODO: add_script
-    // TODO: add_script_from_file?
-
     [[nodiscard]] std::string to_string() const {
         std::stringstream ss;
         ss << "{ scripts = ";

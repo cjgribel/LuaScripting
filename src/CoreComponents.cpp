@@ -40,32 +40,6 @@ bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 template<>
 void register_meta<Transform>(sol::state& lua)
 {
-    lua.new_usertype<Transform>("Transform",
-
-        sol::call_constructor,
-        sol::factories([](float x, float y, float angle) {
-            return Transform{
-                .x = x, .y = y, .angle = angle
-            };
-            }),
-
-        // type_id is required for component types, copying and inspection
-        "type_id", &entt::type_hash<Transform>::value,
-
-        // Default construction
-        // Needed to copy userdata
-        "construct",
-        []() { return Transform{}; },
-
-        "x", &Transform::x,
-
-        "y", &Transform::y,
-
-        "angle", &Transform::angle,
-
-        sol::meta_function::to_string, &Transform::to_string
-    );
-
     // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
     entt::meta<Transform>()
         .type("Transform"_hs).prop(display_name_hs, "Transform")
@@ -73,7 +47,6 @@ void register_meta<Transform>(sol::state& lua)
         .data<&Transform::x>("x"_hs).prop(display_name_hs, "x")
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
         .data<&Transform::angle>("angle"_hs).prop(display_name_hs, "angle")
-
         .data<&Transform::x_global>("x_global"_hs).prop(display_name_hs, "x_global").prop(readonly_hs, true)
         .data<&Transform::y_global>("y_global"_hs).prop(display_name_hs, "y_global").prop(readonly_hs, true)
         .data<&Transform::angle_global>("angle_global"_hs).prop(display_name_hs, "angle_global").prop(readonly_hs, true)
@@ -92,6 +65,33 @@ void register_meta<Transform>(sol::state& lua)
         //        .func<&vec3::to_string>(to_string_hs)
         //.func<&vec3_to_string>(to_string_hs)
         ;
+
+    lua.new_usertype<Transform>("Transform",
+
+        sol::call_constructor,
+        sol::factories([](float x, float y, float angle) {
+            return Transform{
+                .x = x, .y = y, .angle = angle
+            };
+            }),
+
+        // type_id is required for component types, copying and inspection
+        "type_id", &entt::type_hash<Transform>::value,
+
+        // Default construction
+        // Needed to copy userdata
+        "construct",
+        []() { return Transform{}; },
+
+        "x", &Transform::x,
+        "y", &Transform::y,
+        "angle", &Transform::angle,
+        "x_global", &Transform::x_global,
+        "y_global", &Transform::y_global,
+        "angle_global", &Transform::angle_global,
+
+        sol::meta_function::to_string, &Transform::to_string
+    );
 }
 
 // === HeaderComponent ========================================================
@@ -611,10 +611,12 @@ namespace Editor {
         // Fetch type id of the inspected usertype
         auto type_id = userdata["type_id"];
 
-        // (Inspect the metatable directly; usertype fields will appear as functions here)
-        // sol::table metatable = userdata[sol::metatable_key];
-        // mod |= inspect_type(metatable, inspector);
-        // return mod;
+#if 0
+        // Inspect the raw metatable directly
+        sol::table metatable = userdata[sol::metatable_key];
+        mod |= inspect_type(metatable, inspector);
+        return mod;
+#endif
 
         // Non-component types typically don't have a "type_id" field
         if (!type_id.valid())
@@ -792,6 +794,8 @@ namespace {
     // Skip "clone" in userdata def,
     // + call default ctor from here via type
 
+    sol::table deep_copy_table(sol::state_view lua, const sol::table& original);
+
     sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& original)
     {
         sol::function construct = original["construct"];
@@ -799,28 +803,42 @@ namespace {
         // Let userdata decide how to copy
         sol::userdata userdata_copy = construct();
 
-        // Fetch entt meta type id
+        // Fetch type id
         auto type_id = original["type_id"];
         if (type_id.get_type() != sol::type::function) return original;
-        entt::id_type id = type_id.call();
 
         // Fetch entt meta type, iterate its data and copy to userdata
+        entt::id_type id = type_id.call();
         entt::meta_type meta_type = entt::resolve(id);
         assert(meta_type);
         // entt::meta_any meta_any = meta_type.construct(); // cannot go any -> userdata
         for (auto&& [id, meta_data] : meta_type.data())
         {
             // entt field name
-            std::string key_name = meta_data_name(id, meta_data);
+            std::string key_name = meta_data_name(id, meta_data); // Don't use displayname
             const auto key_name_cstr = key_name.c_str();
 
             sol::object value = original[key_name_cstr];
-            if (!value) 
+
+            if (!value.valid())
             {
-                std::cout << "Copy userdata warning: " << key_name << " not found in userdata" << std::endl;
+                std::cout << "Copy userdata warning: meta data '" << key_name
+                    << "' was not found in userdata" << std::endl;
+                assert(0);
                 continue;
             }
-            userdata_copy[key_name_cstr] = value; //original[key_name_cstr];
+            else if (value.get_type() == sol::type::table)
+            {
+                userdata_copy[key_name_cstr] = deep_copy_table(lua, value.as<sol::table>());
+            }
+            else if (value.get_type() == sol::type::userdata)
+            {
+                userdata_copy[key_name_cstr] = deep_copy_userdata(lua, value.as<sol::userdata>());
+            }
+            else
+            {
+                userdata_copy[key_name_cstr] = value;
+            }
         }
 
         return userdata_copy;
@@ -855,21 +873,17 @@ namespace {
 
         for (const auto& [key, value] : original)
         {
-            if (value.get_type() == sol::type::userdata)
-            {
-                // TODO: DEEP COPY!
-                // copy[key] = value.as<sol::userdata>();
-
-                copy[key] = deep_copy_userdata(lua, value.as<sol::userdata>());
-            }
-            else if (value.is<sol::table>())
+            if (value.get_type() == sol::type::table)
             {
                 copy[key] = deep_copy_table(lua, value.as<sol::table>());
+            }
+            else if (value.get_type() == sol::type::userdata)
+            {
+                copy[key] = deep_copy_userdata(lua, value.as<sol::userdata>());
             }
             else
             {
                 copy[key] = value;
-                // copy[key] = original[key];
             }
         }
         return copy;
