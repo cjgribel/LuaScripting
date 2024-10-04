@@ -159,7 +159,7 @@ void register_meta<HeaderComponent>(sol::state& lua)
                 return HeaderComponent{ userdata.get<std::string>("name") };
             },
 
-            // Needed for copying (sol constructors are not exposed in userdata)
+            // Needed for value-copying
             "construct",
             []() { return HeaderComponent{}; },
 
@@ -401,15 +401,21 @@ void register_meta<QuadGridComponent>(sol::state& lua)
                 };
             }),
 
-        // "add_quad", [](QuadGridComponent& c, float x, float y, float size, uint32_t color, bool is_active) {
-        //     if (c.count >= GridSize) throw std::out_of_range("Index out of range");
-        //     c.pos[c.count].x = x;
-        //     c.pos[c.count].y = y;
-        //     c.sizes[c.count] = size;
-        //     c.colors[c.count] = color;
-        //     c.is_active_flags[c.count] = is_active;
-        //     c.count++;
-        // },
+        "count", &QuadGridComponent::count,
+        "width", &QuadGridComponent::width,
+        "is_active", &QuadGridComponent::is_active,
+
+        // "positions", &QuadGridComponent::pos,
+        // "sizes", &QuadGridComponent::sizes,
+        // "colors", &QuadGridComponent::colors,
+        // "is_active_flags", &QuadGridComponent::is_active_flags,
+
+        // Needed for value-copying
+        "construct",
+        []() { return QuadGridComponent{}; },
+
+        sol::meta_function::to_string,
+        &QuadGridComponent::to_string,
 
         "set_quad_at",
         [](QuadGridComponent& c,
@@ -485,26 +491,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
 
         "get_element_count", [](QuadGridComponent& c) {
             return c.count;
-        },
-
-        //"count",
-        //&QuadGridComponent::count,
-
-        "count",
-        &QuadGridComponent::count,
-
-        "width",
-        &QuadGridComponent::width,
-
-        "is_active",
-        &QuadGridComponent::is_active,
-
-        //         .data<&QuadGridComponent::count>("count"_hs).prop(display_name_hs, "count").prop(readonly_hs, true)
-        // .data<&QuadGridComponent::width>("width"_hs).prop(display_name_hs, "width").prop(readonly_hs, true)
-        // .data<&QuadGridComponent::is_active>("is_active"_hs).prop(display_name_hs, "is_active")
-
-        sol::meta_function::to_string,
-        &QuadGridComponent::to_string
+        }
     );
 }
 
@@ -691,7 +678,7 @@ namespace Editor {
             if (readonly) inspector.end_disabled();
         }
         return mod;
-    }
+        }
 
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
@@ -785,7 +772,7 @@ namespace Editor {
         return mod;
     }
 
-}
+    }
 
 //
 namespace {
@@ -796,16 +783,16 @@ namespace {
 
     sol::table deep_copy_table(sol::state_view lua, const sol::table& original);
 
-    sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& original)
+    sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& userdata)
     {
-        sol::function construct = original["construct"];
-        if (!construct.valid())  return original; // Copy by reference
+        sol::function construct = userdata["construct"];
+        if (!construct.valid())  return userdata; // Copy by reference
         // Let userdata decide how to copy
-        sol::userdata userdata_copy = construct();
+        sol::userdata userdata_cpy = construct();
 
         // Fetch type id
-        auto type_id = original["type_id"];
-        if (type_id.get_type() != sol::type::function) return original;
+        auto type_id = userdata["type_id"];
+        if (type_id.get_type() != sol::type::function) return userdata;
 
         // Fetch entt meta type, iterate its data and copy to userdata
         entt::id_type id = type_id.call();
@@ -818,7 +805,7 @@ namespace {
             std::string key_name = meta_data_name(id, meta_data); // Don't use displayname
             const auto key_name_cstr = key_name.c_str();
 
-            sol::object value = original[key_name_cstr];
+            sol::object value = userdata[key_name_cstr];
 
             if (!value.valid())
             {
@@ -829,42 +816,19 @@ namespace {
             }
             else if (value.get_type() == sol::type::table)
             {
-                userdata_copy[key_name_cstr] = deep_copy_table(lua, value.as<sol::table>());
+                userdata_cpy[key_name_cstr] = deep_copy_table(lua, value.as<sol::table>());
             }
             else if (value.get_type() == sol::type::userdata)
             {
-                userdata_copy[key_name_cstr] = deep_copy_userdata(lua, value.as<sol::userdata>());
+                userdata_cpy[key_name_cstr] = deep_copy_userdata(lua, value.as<sol::userdata>());
             }
             else
             {
-                userdata_copy[key_name_cstr] = value;
+                userdata_cpy[key_name_cstr] = value;
             }
         }
 
-        return userdata_copy;
-
-        // auto new_instance = original["new"];
-        // assert(new_instance.get_type() == sol::type::function);
-        //sol::object id = new_instance.call();
-
-        //sol::object new_instance = original["new"]();
-
-        // // Check the new instance type and access its fields
-        // if (new_instance.is<HeaderComponent>()) {
-        //     HeaderComponent& instance = new_instance.as<HeaderComponent>();
-        //     std::cout << "Created instance with name: " << instance.name << std::endl;
-        // }
-
-
-            // Ensure the original userdata has a 'clone' function
-        sol::function copy_func = original["copy"];
-        if (!copy_func.valid())  return original; // Copy by reference
-        // Let userdata decide how to copy
-        return copy_func(original);
-        // Call the clone function to create a new userdata instance
-        // sol::userdata new_userdata = copy_func(original);
-
-        // return new_userdata;
+        return userdata_cpy;
     }
 
     sol::table deep_copy_table(sol::state_view lua, const sol::table& original)
