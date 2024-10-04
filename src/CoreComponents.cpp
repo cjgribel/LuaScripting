@@ -376,7 +376,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         .data<&QuadGridComponent::is_active>("is_active"_hs).prop(display_name_hs, "is_active")
 
         // Todo: custom inspect for this type to visualize arrays more efficently
-        .data<&QuadGridComponent::pos>("pos"_hs).prop(display_name_hs, "positions")
+        .data<&QuadGridComponent::positions>("positions"_hs).prop(display_name_hs, "positions")
         .data<&QuadGridComponent::sizes>("sizes"_hs).prop(display_name_hs, "sizes")
         .data<&QuadGridComponent::colors>("colors"_hs).prop(display_name_hs, "colors")
         .data<&QuadGridComponent::is_active_flags>("is_active_flags"_hs).prop(display_name_hs, "is_active_flags")
@@ -401,18 +401,20 @@ void register_meta<QuadGridComponent>(sol::state& lua)
                 };
             }),
 
+        // Needed for value-copying
+        // Skip - has containers I cannot copy
+        // "construct",
+        // []() { return QuadGridComponent{}; },
+
         "count", &QuadGridComponent::count,
         "width", &QuadGridComponent::width,
         "is_active", &QuadGridComponent::is_active,
 
-        // "positions", &QuadGridComponent::pos,
+        // Containers become userdata - not sure how to clone/inspect/serialize when type-erased
+        // "positions", &QuadGridComponent::positions,
         // "sizes", &QuadGridComponent::sizes,
         // "colors", &QuadGridComponent::colors,
         // "is_active_flags", &QuadGridComponent::is_active_flags,
-
-        // Needed for value-copying
-        "construct",
-        []() { return QuadGridComponent{}; },
 
         sol::meta_function::to_string,
         &QuadGridComponent::to_string,
@@ -427,8 +429,8 @@ void register_meta<QuadGridComponent>(sol::state& lua)
             bool is_active)
         {
             assert(index >= 0 && index < c.count);
-            c.pos[index].x = x;
-            c.pos[index].y = y;
+            c.positions[index].x = x;
+            c.positions[index].y = y;
             c.sizes[index] = size;
             c.colors[index] = color;
             // if (is_active && !c.is_active_flags[index]) c.active_indices[c.nbr_active++] = index;
@@ -444,7 +446,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         "get_pos_at", [](QuadGridComponent& c, int index) {
             //if (index < 0 || index >= c.count) throw std::out_of_range("Index out of range");
             assert(index >= 0 && index < c.count);
-            return std::make_tuple(c.pos[index].x, c.pos[index].y);
+            return std::make_tuple(c.positions[index].x, c.positions[index].y);
         },
         // "set_pos", [](QuadGridComponent& c, int index, float x, float y) {
         //     if (index < 0 || index >= GridSize) throw std::out_of_range("Index out of range");
@@ -655,30 +657,37 @@ namespace Editor {
                 inspector.end_leaf();
             }
             // userdata, table ???
-            else if (value.get_type() == sol::type::string) {
+            else if (value.get_type() == sol::type::string)
+            {
                 std::string str = value.as<std::string>();
                 inspector.begin_leaf(key_name_cstr);
                 if (inspect_type(str, inspector)) { userdata[key_name_cstr] = str; mod = true; }
                 inspector.end_leaf();
             }
-            else if (value.get_type() == sol::type::number) {
+            else if (value.get_type() == sol::type::number)
+            {
                 double nbr = value.as<double>();
                 inspector.begin_leaf(key_name_cstr);
                 if (inspect_type(nbr, inspector)) { userdata[key_name_cstr] = nbr; mod = true; }
                 inspector.end_leaf();
             }
-            else if (value.get_type() == sol::type::boolean) {
+            else if (value.get_type() == sol::type::boolean)
+            {
                 bool bl = value.as<bool>();
                 inspector.begin_leaf(key_name_cstr);
                 if (inspect_type(bl, inspector)) { userdata[key_name_cstr] = bl; mod = true; }
                 inspector.end_leaf();
             }
             else
-                ImGui::TextDisabled("%s", sol_object_to_string(lua, value).c_str());
+            {
+                inspector.begin_leaf(key_name_cstr);
+                ImGui::TextDisabled("[to_string] %s", sol_object_to_string(lua, value).c_str());
+                inspector.end_leaf();
+            }
             if (readonly) inspector.end_disabled();
         }
         return mod;
-        }
+    }
 
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
@@ -772,7 +781,7 @@ namespace Editor {
         return mod;
     }
 
-    }
+}
 
 //
 namespace {

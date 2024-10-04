@@ -1511,7 +1511,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
             {
                 if (!quadgrid.is_active_flags[i]) continue;
 
-                const auto& pos = xy0(quadgrid.pos[i]);
+                const auto& pos = xy0(quadgrid.positions[i]);
                 const auto& size = quadgrid.sizes[i];
                 const auto& color = quadgrid.colors[i];
                 const auto M = set_translation(m4f::scaling(size, size, 1.0f), pos);

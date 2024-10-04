@@ -135,7 +135,7 @@ struct IslandFinderComponent
 
 struct QuadGridComponent
 {
-    std::array<v2f, GridSize> pos;
+    std::array<v2f, GridSize> positions;
     std::array<float, GridSize> sizes;
     std::array<uint32_t, GridSize> colors;
     std::array<bool, GridSize> is_active_flags = { false };
