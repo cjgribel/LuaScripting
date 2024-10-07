@@ -18,6 +18,7 @@ class Scene : public eeng::SceneBase
 {
     // protected:
     sol::state lua{};
+    const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 
     entt::registry registry{};
     std::vector<entt::entity> entities_pending_destruction;

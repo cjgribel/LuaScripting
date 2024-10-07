@@ -220,7 +220,7 @@ struct ScriptedBehaviorComponent
         sol::function update;
         sol::function on_collision;
         std::string identifier;
-        // std::string src_file;
+        std::string path;
 
         // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;

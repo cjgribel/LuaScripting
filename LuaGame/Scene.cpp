@@ -353,9 +353,10 @@ namespace {
         entt::registry& registry,
         entt::entity entity,
         const sol::table& script_table,
-        const std::string& identifier)
+        const std::string& identifier,
+        const std::string& script_path)
     {
-        std::cout << "add_script " << (uint32_t)entity << std::endl;
+        std::cout << "add_script " << identifier << " entity " << (uint32_t)entity << std::endl;
         //return;
         assert(script_table.valid());
 
@@ -404,17 +405,21 @@ namespace {
         return script.self;
     }
 
-    void add_script_from_file(
+    sol::table add_script_from_file(
         entt::registry& registry,
         entt::entity entity,
         sol::state& lua,
-        const std::string& script_file,
-        const std::string& identifier)
+        const std::string& script_dir,
+        const std::string& script_name
+        )
     {
-        sol::load_result behavior_script = lua.load_file(script_file);
+        const std::string script_path = script_dir + script_name + ".lua";
+        // sol::load_result behavior_script = lua.load_file(script_file);
+        sol::load_result behavior_script = lua.load_file(script_path);
+
         assert(behavior_script.valid());
         sol::protected_function script_function = behavior_script;
-        add_script(registry, entity, script_function(), identifier);
+        return add_script(registry, entity, script_function(), script_name, script_path);
     }
 
     sol::table get_script(entt::registry& registry, entt::entity entity, const std::string& identifier)
@@ -924,7 +929,19 @@ bool Scene::init(const v2i& windowSize)
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
-        lua["engine"]["add_script"] = &add_script;
+        //lua["engine"]["add_script"] = &add_script;
+        //         entt::registry& registry,
+        // entt::entity entity,
+        // sol::state& lua,
+        // const std::string& script_file,
+        // const std::string& identifier)
+        lua["engine"]["add_script"] = [&](
+            entt::registry& registry,
+            entt::entity entity,
+            const std::string& script_name) {
+                return add_script_from_file(registry, entity, lua, script_dir, script_name);
+            };
+
         lua["engine"]["get_script"] = &get_script;
 
         // // Try to reserve entity root ...
@@ -1057,7 +1074,7 @@ bool Scene::init(const v2i& windowSize)
         bind_conditional_observer(lua, observer);
 
         // Load & execute init script
-        lua.safe_script_file("../../LuaGame/lua/init.lua"); // TODO: working directory
+        lua.safe_script_file(script_dir + "init.lua");
 
         // Init the game itself
         assert(lua["game"].valid());
