@@ -360,7 +360,9 @@ namespace {
         //return;
         assert(script_table.valid());
 
-        ScriptedBehaviorComponent::BehaviorScript script{ script_table };
+        ScriptedBehaviorComponent::BehaviorScript script;
+        
+        script.self = script_table;
 
         script.update = script.self["update"];
         assert(script.update.valid());
@@ -369,6 +371,7 @@ namespace {
         assert(script.on_collision.valid());
 
         script.identifier = identifier;
+        script.path = script_path;
 
         // -> entityID?
         script.self["id"] = sol::readonly_property([entity] { return entity; });
@@ -376,9 +379,11 @@ namespace {
         script.self["owner"] = std::ref(registry); // &registry also seems to work
 
         // Run script init()
-        if (auto&& f = script.self["init"]; f.valid())
-            f(script.self);
+        // if (auto&& f = script.self["init"]; f.valid())
+        //     f(script.self);
         // inspect_script(script);
+        assert(script.self["init"].valid());
+        script.self["init"](script.self);
 
         // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
@@ -929,19 +934,12 @@ bool Scene::init(const v2i& windowSize)
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
-        //lua["engine"]["add_script"] = &add_script;
-        //         entt::registry& registry,
-        // entt::entity entity,
-        // sol::state& lua,
-        // const std::string& script_file,
-        // const std::string& identifier)
         lua["engine"]["add_script"] = [&](
             entt::registry& registry,
             entt::entity entity,
             const std::string& script_name) {
                 return add_script_from_file(registry, entity, lua, script_dir, script_name);
             };
-
         lua["engine"]["get_script"] = &get_script;
 
         // // Try to reserve entity root ...
