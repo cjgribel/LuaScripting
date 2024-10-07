@@ -786,10 +786,6 @@ namespace Editor {
 //
 namespace {
 
-    // Or,
-    // Skip "clone" in userdata def,
-    // + call default ctor from here via type
-
     sol::table deep_copy_table(sol::state_view lua, const sol::table& original);
 
     sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& userdata)
@@ -867,6 +863,9 @@ namespace {
         auto comp_ptr = static_cast<ScriptedBehaviorComponent*>(ptr);
         std::cout << "COPY ScriptedBehaviorComponent" << std::endl;
 
+        // Will suffice if ScriptedBehaviorComponent has a copy constructor
+        // (Except updating the id() function)
+        // Can entity be sent to script's update() ??
         ScriptedBehaviorComponent cpy = *comp_ptr;
 
         // Deep copy self
@@ -895,14 +894,6 @@ namespace {
 template<>
 void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
 {
-    // const auto copy_table = [](void* ptr) -> sol::table
-    //     {
-    //         auto copy = static_cast<sol::table*>(ptr);
-    //         std::cout << "COPY sol::table" << std::endl;
-    //         return *copy;
-    //     };
-
-
     // TODO: Where should meta for sol stuff be placed (table, function etc)?
     // sol::table
     entt::meta<sol::table>()

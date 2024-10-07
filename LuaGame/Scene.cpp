@@ -374,10 +374,12 @@ namespace {
         // -> registry?
         script.self["owner"] = std::ref(registry); // &registry also seems to work
 
+        // Run script init()
         if (auto&& f = script.self["init"]; f.valid())
             f(script.self);
         // inspect_script(script);
 
+        // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
         script_comp.scripts.push_back({ script /*, script["update"]*/ });
 
@@ -410,8 +412,8 @@ namespace {
         const std::string& identifier)
     {
         sol::load_result behavior_script = lua.load_file(script_file);
-        sol::protected_function script_function = behavior_script;
         assert(behavior_script.valid());
+        sol::protected_function script_function = behavior_script;
         add_script(registry, entity, script_function(), identifier);
     }
 
