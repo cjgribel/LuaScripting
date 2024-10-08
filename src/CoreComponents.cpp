@@ -576,6 +576,7 @@ namespace
     }
 }
 
+// sol inspection
 namespace Editor {
 
     /// Inspect sol::function
@@ -783,7 +784,7 @@ namespace Editor {
 
 }
 
-//
+// sol copying
 namespace {
 
     sol::table deep_copy_table(sol::state_view lua, const sol::table& original);
@@ -889,6 +890,26 @@ namespace {
 
         return cpy;
     };
+
+    // v2
+    ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
+    {
+        // -- Need to either 1) send in a object to clone, or 2) use Command
+        // registry is needed
+        // lua is needed (can dig it out from self table in ptr)
+        // In other cloning siutations, stuff like Scene, resources ... might be needed
+        //      for complex objects such as meshes, node hierarchies ...
+
+        // 1. Use script paths (ptr) to call add_script for dst_entity
+        // 2. Copy "serializable fields" of sol::table from ptr to dst_entity
+
+        // sol::table add_script(
+        // entt::registry& registry,
+        // entt::entity entity,
+        // const sol::table& script_table,
+        // const std::string& identifier,
+        // const std::string& script_path)
+    }
 }
 
 template<>
