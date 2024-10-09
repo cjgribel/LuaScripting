@@ -107,6 +107,8 @@ inline auto meta_type_name(const entt::meta_type meta_type)
 /// @return Name provided as a display name property, or string generated from id
 inline auto meta_data_name(const entt::id_type& id, const entt::meta_data& data)
 {
+    // Note: data.type().info().name() gives type name, not the field name
+
     if (auto display_name_prop = data.prop(display_name_hs); display_name_prop)
     {
         auto name_ptr = display_name_prop.value().try_cast<const char*>();

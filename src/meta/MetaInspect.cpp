@@ -17,6 +17,31 @@
 
 namespace Editor {
 
+    // // meta command -->
+    struct MetaEntry
+    {
+        enum class Type : int { Data, Index, Key } type;
+
+        entt::id_type data_id;  // enter data field
+        size_t index;           // enter seq. container index
+        entt::meta_any key_any; // enter assoc. container key
+
+        std::string name = "(no name)";
+    };
+
+    struct MetaCommandDescriptor
+    {
+        entt::entity entity;
+        entt::meta_type componentType;
+        //std::string propertyName; // path
+        std::vector<MetaEntry> meta_path;
+        entt::meta_any new_value;
+        bool is_used = false;
+    };
+    static inline MetaCommandDescriptor meta_command{};
+    static inline std::vector<MetaCommandDescriptor> issued_commands{};
+    // <--
+
     std::string get_entity_name(
         entt::registry& registry,
         entt::entity entity,
@@ -139,6 +164,11 @@ namespace Editor {
 
                     if (inspector.begin_node(key_name.c_str()))
                     {
+                        // Push meta command
+                        MetaEntry meta_entry{};
+                        meta_entry.type = MetaEntry::Type::Data; meta_entry.data_id = id; meta_entry.name = key_name;
+                        meta_command.meta_path.push_back(meta_entry);
+
                         entt::meta_any data_any = meta_data.get(any);
 
                         // Check & set readonly
@@ -151,6 +181,9 @@ namespace Editor {
 
                         // Unset readonly
                         if (readonly) inspector.end_disabled();
+
+                        // Pop meta command if no change registered
+                        meta_command.meta_path.pop_back();
                     }
                 }
             }
@@ -231,8 +264,21 @@ namespace Editor {
         {
             // Try casting the meta_any to a primitive type.
             //
-            bool res = try_apply(any, [&inspector](auto& value) {
-                Editor::inspect_type(value, inspector);
+            bool res = try_apply(any, [&inspector, &any](auto& value) {
+                // Editor::inspect_type(value, inspector);
+
+                // meta command
+                if (Editor::inspect_type(value, inspector))
+                {
+                    // Maybe check if already used = inspection done in multiple places at once (!)
+                    meta_command.new_value = any;
+                    meta_command.is_used = true;
+                    issued_commands.push_back(meta_command);
+                }
+                // else
+                // No - POP the path
+                    // meta_command.meta_path.pop_back(); // Leaf reached - reset path
+
                 });
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
@@ -244,6 +290,9 @@ namespace Editor {
         entt::entity entity,
         InspectorState& inspector)
     {
+        // meta command: clear issued
+        issued_commands.clear();
+
         auto& registry = *inspector.registry;
         assert(entity != entt::null);
         assert(registry.valid(entity));
@@ -258,6 +307,10 @@ namespace Editor {
 
                 if (inspector.begin_node(type_name.c_str()))
                 {
+                    // Reset meta command for each component type
+                    meta_command = MetaCommandDescriptor{};
+                    meta_command.componentType = meta_type;
+
                     auto comp_any = meta_type.from_void(type.value(entity));
                     inspect_any(comp_any, inspector);
                     inspector.end_node();
@@ -268,6 +321,32 @@ namespace Editor {
                 //All types exposed to Lua are going to have a meta type
                 assert(false && "Meta-type required");
             }
+        }
+
+        // meta command
+        for (auto& c : issued_commands)
+        {
+            if (c.is_used)
+            {
+                std::cout << "meta_command.is_used, entity " << entt::to_integral(entity) << std::endl;
+                for (auto& e : c.meta_path)
+                {
+                    std::cout << "\t";
+                    if (e.type == MetaEntry::Type::Data) std::cout << "DATA";
+                    if (e.type == MetaEntry::Type::Index) std::cout << "INDEX";
+                    if (e.type == MetaEntry::Type::Key) std::cout << "KEY";
+                    std::cout << ", " << e.name << ", (field) data_id " << e.data_id;
+                    // std::cout << " (id_type for float " << entt::type_hash<float>::value() << ")";
+                    auto xhs = "x"_hs; std::cout << " (id_type for 'x'_hs " << xhs.value() << ")";
+                    std::cout << std::endl;
+                }
+                std::cout << "new_value " << (bool)c.new_value;
+                std::cout << "try_cast to float ";
+                auto fltptr = c.new_value.try_cast<float>();
+                if (fltptr) std::cout << *fltptr;
+                std::cout << std::endl;
+            }
+            else std::cout << "Command not used" << std::endl;
         }
     }
 
