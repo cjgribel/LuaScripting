@@ -32,7 +32,7 @@ namespace Editor {
     struct MetaCommandDescriptor
     {
         entt::entity entity;
-        entt::meta_type componentType;
+        entt::meta_type component_meta_type;
         //std::string propertyName; // path
         std::vector<MetaEntry> meta_path;
         entt::meta_any new_value;
@@ -121,7 +121,9 @@ namespace Editor {
         // Update current enum if needed
         if (selected_entry != cur_entry)
         {
-            assert(any.assign(selected_entry->second));
+            // assert(any.assign(selected_entry->second));
+            bool ret = any.assign(selected_entry->second);
+            assert(ret);
             return true;
         }
         return false;
@@ -268,10 +270,11 @@ namespace Editor {
                 // Editor::inspect_type(value, inspector);
 
                 // meta command
-                if (Editor::inspect_type(value, inspector))
+                auto copy = value; //entt::meta_any copy_any = any;
+                if (Editor::inspect_type(copy, inspector))
                 {
                     // Maybe check if already used = inspection done in multiple places at once (!)
-                    meta_command.new_value = any;
+                    meta_command.new_value = copy; //any;
                     meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
                 }
@@ -309,7 +312,7 @@ namespace Editor {
                 {
                     // Reset meta command for each component type
                     meta_command = MetaCommandDescriptor{};
-                    meta_command.componentType = meta_type;
+                    meta_command.entity = entity; meta_command.component_meta_type = meta_type;
 
                     auto comp_any = meta_type.from_void(type.value(entity));
                     inspect_any(comp_any, inspector);
@@ -323,30 +326,85 @@ namespace Editor {
             }
         }
 
-        // meta command
+        // check issued command (typically one?)
         for (auto& c : issued_commands)
         {
-            if (c.is_used)
+            if (!c.is_used)
             {
-                std::cout << "meta_command.is_used, entity " << entt::to_integral(entity) << std::endl;
-                for (auto& e : c.meta_path)
-                {
-                    std::cout << "\t";
-                    if (e.type == MetaEntry::Type::Data) std::cout << "DATA";
-                    if (e.type == MetaEntry::Type::Index) std::cout << "INDEX";
-                    if (e.type == MetaEntry::Type::Key) std::cout << "KEY";
-                    std::cout << ", " << e.name << ", (field) data_id " << e.data_id;
-                    // std::cout << " (id_type for float " << entt::type_hash<float>::value() << ")";
-                    auto xhs = "x"_hs; std::cout << " (id_type for 'x'_hs " << xhs.value() << ")";
-                    std::cout << std::endl;
-                }
-                std::cout << "new_value " << (bool)c.new_value;
-                std::cout << "try_cast to float ";
-                auto fltptr = c.new_value.try_cast<float>();
-                if (fltptr) std::cout << *fltptr;
+                std::cout << "Command not used" << std::endl;
+                continue;
+            }
+
+            std::cout << "meta_command.is_used, entity " << entt::to_integral(c.entity) << std::endl;
+            for (auto& e : c.meta_path)
+            {
+                std::cout << "\t";
+                if (e.type == MetaEntry::Type::Data) std::cout << "DATA";
+                if (e.type == MetaEntry::Type::Index) std::cout << "INDEX";
+                if (e.type == MetaEntry::Type::Key) std::cout << "KEY";
+                std::cout << ", " << e.name << ", (field) data_id " << e.data_id;
+                // std::cout << " (id_type for float " << entt::type_hash<float>::value() << ")";
+                auto xhs = "x"_hs; std::cout << " (id_type for 'x'_hs " << xhs.value() << ")";
                 std::cout << std::endl;
             }
-            else std::cout << "Command not used" << std::endl;
+            std::cout << "new_value true " << (bool)c.new_value;
+            std::cout << " try_cast to float ";
+            auto fltptr = c.new_value.try_cast<float>();
+            if (fltptr) std::cout << *fltptr;
+            std::cout << std::endl;
+
+
+            // EXECUTE command ...
+            // new_value is actually old value ...
+            // enum class Type : int { Data, Index, Key } type;
+            // entt::id_type data_id;  // enter data field
+            // size_t index;           // enter seq. container index
+            // entt::meta_any key_any; // enter assoc. container key
+            // std::string name = "(no name)";
+
+            // auto type = registry.storage(e.data_id);
+
+            entt::meta_type meta_type = c.component_meta_type;
+            entt::meta_any meta_any;
+
+            // Component
+            auto type = registry.storage(meta_type.id());
+            assert(type->contains(c.entity));
+            meta_any = c.component_meta_type.from_void(type->value(entity));
+
+            entt::meta_data meta_data;
+
+            assert(c.meta_path.size()); // Must be at least one?
+            assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?
+            int i = 0;
+
+            for (auto& e : c.meta_path)
+            {
+                if (e.type == MetaEntry::Type::Data)
+                {
+                    meta_data = meta_type.data(e.data_id);
+
+                    meta_type = meta_data.type();
+                    
+                    //auto tmp_any = meta_data.get(meta_any);
+                    //meta_any = meta_data get(meta_any).as_ref();
+                    //meta_any.assign(tmp_any);
+                }
+                else if (e.type == MetaEntry::Type::Index) { assert(0); }
+                else if (e.type == MetaEntry::Type::Key) { assert(0); }
+                else { assert(0); }
+            }
+            // Path followed
+            // now use meta_type and meta_any to set data
+            // meta_any = c.new_value;
+            std::cout << "Before ";
+            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << "new " << *fltptr << std::endl; }
+            { auto fltptr = meta_any.try_cast<float>(); if (fltptr) std::cout << "any " << *fltptr << std::endl; }
+            //meta_any.assign(c.new_value);
+            meta_data.set(meta_any, c.new_value);
+            std::cout << "After ";
+            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << "new " << *fltptr << std::endl; }
+            { auto fltptr = meta_any.try_cast<float>(); if (fltptr) std::cout << "any " << *fltptr << std::endl; }
         }
     }
 
