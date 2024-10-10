@@ -32,14 +32,70 @@ namespace Editor {
     struct MetaCommandDescriptor
     {
         entt::entity entity;
-        entt::meta_type component_meta_type;
+        entt::id_type comp_id;
+        //entt::meta_type component_meta_type;
         //std::string propertyName; // path
-        std::vector<MetaEntry> meta_path;
+        std::deque<MetaEntry> meta_path;
         entt::meta_any new_value;
         bool is_used = false;
     };
     static inline MetaCommandDescriptor meta_command{};
     static inline std::vector<MetaCommandDescriptor> issued_commands{};
+
+    static void execute_impl(entt::meta_any& meta_any, entt::meta_data meta_data)
+    {
+        // entt::meta_data meta_data; // get
+
+        // //meta_data.set(meta_any, data_any);
+        // bool res = meta_data.set(meta_any, c.new_value); assert(res);
+    }
+
+    static void execute(entt::registry& registry, const MetaCommandDescriptor& cmd)
+    {
+#if 0
+        auto type = registry.storage(c.comp_id);
+        assert(type->contains(c.entity));
+        entt::meta_type meta_type = entt::resolve(c.comp_id);
+        entt::meta_any meta_any = meta_type.from_void(type->value(entity));
+
+        assert(c.meta_path.size()); // Must be at least one?
+        assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?            
+        auto& e = c.meta_path[0];
+        entt::meta_data meta_data = meta_type.data(e.data_id);
+
+        int i = 1;
+        for (;i < c.meta_path.size(); i++)
+        {
+            auto& e = c.meta_path[i];
+
+            // --> meta_any, meta_type
+            if (e.type == MetaEntry::Type::Data)
+            {
+                // auto meta_any_cpy = meta_any;
+                // meta_any = entt::meta_any {};
+                meta_any = meta_data.get(meta_any); assert(meta_any);
+                meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
+                meta_data = meta_type.data(e.data_id); assert(meta_data);
+
+                data_any = meta_data.get(meta_any);
+
+                // assert stuff
+
+                std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // debugvec3
+                std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //debugvec3
+                std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // float
+                std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // float
+
+                //auto tmp_any = meta_data.get(meta_any);
+                //meta_any.assign(tmp_any);
+            }
+            else if (e.type == MetaEntry::Type::Index) { assert(0); }
+            else if (e.type == MetaEntry::Type::Key) { assert(0); }
+            else { assert(0); }
+        }
+#endif
+    }
+
     // <--
 
     std::string get_entity_name(
@@ -288,7 +344,6 @@ namespace Editor {
         }
     }
 
-
     void inspect_entity(
         entt::entity entity,
         InspectorState& inspector)
@@ -312,7 +367,7 @@ namespace Editor {
                 {
                     // Reset meta command for each component type
                     meta_command = MetaCommandDescriptor{};
-                    meta_command.entity = entity; meta_command.component_meta_type = meta_type;
+                    meta_command.entity = entity; meta_command.comp_id = id;
 
                     auto comp_any = meta_type.from_void(type.value(entity));
                     inspect_any(comp_any, inspector);
@@ -353,7 +408,6 @@ namespace Editor {
             if (fltptr) std::cout << *fltptr;
             std::cout << std::endl;
 
-
             // EXECUTE command ...
             // new_value is actually old value ...
             // enum class Type : int { Data, Index, Key } type;
@@ -362,32 +416,99 @@ namespace Editor {
             // entt::meta_any key_any; // enter assoc. container key
             // std::string name = "(no name)";
 
+            execute(registry, c);
+
             // auto type = registry.storage(e.data_id);
 
-            entt::meta_type meta_type = c.component_meta_type;
-            entt::meta_any meta_any;
+            //entt::meta_type meta_type = c.component_meta_type;
+            //entt::meta_any meta_any;
 
             // Component
-            auto type = registry.storage(meta_type.id());
+            auto type = registry.storage(c.comp_id);
             assert(type->contains(c.entity));
-            meta_any = c.component_meta_type.from_void(type->value(entity));
-
-            entt::meta_data meta_data;
+            entt::meta_type meta_type = entt::resolve(c.comp_id);
+            entt::meta_any meta_any = meta_type.from_void(type->value(entity));
 
             assert(c.meta_path.size()); // Must be at least one?
-            assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?
-            int i = 0;
+            assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?            
+            auto& e = c.meta_path[0];
+            entt::meta_data meta_data = meta_type.data(e.data_id);
+            // 1st entry (Data)
+            // meta_any - component
+            // meta_type - component meta type
+            // meta_data - 1st data member
 
-            for (auto& e : c.meta_path)
+            // 2nd entry
+            // meta_any - any for meta_data^    meta_data.get(meta_any)
+            // meta_type - meta type of meta_any
+            // meta_data - 2nd data member
+
+            entt::meta_any data_any = meta_data.get(meta_any);
+
+            std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // DebugClass
+            std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //DebugClass
+            std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
+            std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // debugvec3
+
+            struct Property { entt::meta_any meta_any; entt::meta_data meta_data; /*entt::meta_any new_data_any;*/ };
+            std::stack<Property> prop_stack;
+            //prop_stack.push(Property{ meta_any, meta_data });
+            int i = 1;
+            entt::meta_any meta_any_ = meta_any;
+            entt::meta_data meta_data_ = meta_data;
+            for (;i < c.meta_path.size(); i++)
             {
+                auto& e = c.meta_path[i];
                 if (e.type == MetaEntry::Type::Data)
                 {
-                    meta_data = meta_type.data(e.data_id);
+                    meta_any_ = meta_data.get(meta_any_); assert(meta_any_);
+                    meta_type = entt::resolve(meta_any_.type().id());  assert(meta_type);
+                    meta_data_ = meta_type.data(e.data_id); assert(meta_data);
+                    prop_stack.push(Property{ meta_any_, meta_data_ });
+                } // else ...
+            }
+            entt::meta_any meta_any_rec = c.new_value;
+            while (!prop_stack.empty())
+            {
+                auto& prop = prop_stack.top();
+                std::cout << prop_stack.size() << " prop.meta_any " << prop.meta_any.type().info().name() << std::endl; // 
+                std::cout << prop_stack.size() << " meta_any_rec " << meta_any_rec.type().info().name() << std::endl; // 
+                assert(prop.meta_data.set(prop.meta_any, meta_any_rec));
+                /*if (prop_stack.size() > 1)*/ meta_any_rec = prop.meta_any;
+                prop_stack.pop();
+            }
+            std::cout << "DONE" << std::endl;
+            std::cout << "prop.meta_any " << meta_any.type().info().name() << std::endl; // 
+            std::cout << "meta_any_rec " << meta_any_rec.type().info().name() << std::endl; // 
+            { auto fltptr = meta_any_rec.try_cast<float>(); if (fltptr) std::cout << " meta_any_rec " << *fltptr; }
+            meta_data.set(meta_any, meta_any_rec);
+#if 0
+            // entt::meta_any meta_any2;
 
-                    meta_type = meta_data.type();
-                    
+            int i = 1;
+            for (;i < c.meta_path.size(); i++)
+            {
+                auto& e = c.meta_path[i];
+
+                // --> meta_any, meta_type
+                if (e.type == MetaEntry::Type::Data)
+                {
+                    // auto meta_any_cpy = meta_any;
+                    // meta_any = entt::meta_any {};
+                    meta_any = meta_data.get(meta_any); assert(meta_any);
+                    meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
+                    meta_data = meta_type.data(e.data_id); assert(meta_data);
+
+                    data_any = meta_data.get(meta_any);
+
+                    // assert stuff
+
+                    std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // debugvec3
+                    std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //debugvec3
+                    std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // float
+                    std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // float
+
                     //auto tmp_any = meta_data.get(meta_any);
-                    //meta_any = meta_data get(meta_any).as_ref();
                     //meta_any.assign(tmp_any);
                 }
                 else if (e.type == MetaEntry::Type::Index) { assert(0); }
@@ -398,13 +519,18 @@ namespace Editor {
             // now use meta_type and meta_any to set data
             // meta_any = c.new_value;
             std::cout << "Before ";
-            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << "new " << *fltptr << std::endl; }
-            { auto fltptr = meta_any.try_cast<float>(); if (fltptr) std::cout << "any " << *fltptr << std::endl; }
+            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << " new " << *fltptr; }
+            { auto fltptr = data_any.try_cast<float>(); if (fltptr) std::cout << " data_any " << *fltptr; }
+            std::cout << std::endl;
             //meta_any.assign(c.new_value);
-            meta_data.set(meta_any, c.new_value);
-            std::cout << "After ";
-            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << "new " << *fltptr << std::endl; }
-            { auto fltptr = meta_any.try_cast<float>(); if (fltptr) std::cout << "any " << *fltptr << std::endl; }
+            assert(meta_data.set(meta_any, c.new_value));
+            // meta_data.set(data_any, c.new_value);
+            data_any = meta_data.get(meta_any);
+            std::cout << "After  ";
+            { auto fltptr = c.new_value.try_cast<float>(); if (fltptr) std::cout << " new " << *fltptr; }
+            { auto fltptr = data_any.try_cast<float>(); if (fltptr) std::cout << " data_any " << *fltptr; }
+            std::cout << std::endl;
+#endif
         }
     }
 

@@ -122,7 +122,7 @@ enum class AnEnum : int { Hello = 5, Bye = 6, Hola = 8 };
 
 struct DebugClass
 {
-    int a = 1, b = 2, c = 3;
+    float a = 1; int b = 2, c = 3;
     bool flag = true;
     debugvec3 position;
     std::string somestring = "Hello";
