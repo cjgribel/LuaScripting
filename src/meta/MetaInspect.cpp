@@ -452,39 +452,43 @@ namespace Editor {
 
             struct Property { entt::meta_any meta_any; entt::meta_data meta_data; /*entt::meta_any new_data_any;*/ };
             std::stack<Property> prop_stack;
-            prop_stack.push(Property{ meta_any, meta_data });
+            Property last_prop { meta_any, meta_data };
+            prop_stack.push(last_prop);
             int i = 1;
-            entt::meta_any meta_any_ = meta_any;
-            entt::meta_data meta_data_ = meta_data;
+            //entt::meta_any meta_any_ = meta_any;
+            //entt::meta_data meta_data_ = meta_data;
             for (;i < c.meta_path.size(); i++)
             {
                 auto& e = c.meta_path[i];
                 if (e.type == MetaEntry::Type::Data)
                 {
-                    meta_any_ = meta_data_.get(meta_any_); assert(meta_any_);
+                    auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
+                    auto meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
+                    auto meta_data = meta_type.data(e.data_id); assert(meta_data);
 
-                    auto meta_type = entt::resolve(meta_any_.type().id());  assert(meta_type);
-                    meta_data_ = meta_type.data(e.data_id); assert(meta_data);
-
-                    prop_stack.push(Property{ meta_any_, meta_data_ });
+                    last_prop = Property { meta_any, meta_data };
+                    prop_stack.push(last_prop);
                 } // else ...
             }
-            entt::meta_any meta_any_rec = c.new_value;
+            entt::meta_any any_new = c.new_value; // float -> UVCoord -> debugvec3 -> DebugClass
             while (!prop_stack.empty())
             {
                 auto& prop = prop_stack.top();
                 std::cout << prop_stack.size() << " prop.meta_any " << prop.meta_any.type().info().name() << std::endl; // 
-                std::cout << prop_stack.size() << " meta_any_rec " << meta_any_rec.type().info().name() << std::endl; // 
-                assert(prop.meta_data.set(prop.meta_any, meta_any_rec));
-                /*if (prop_stack.size() > 1)*/ meta_any_rec = prop.meta_any;
+                std::cout << prop_stack.size() << " any_new " << any_new.type().info().name() << std::endl; // 
+                assert(prop.meta_data.set(prop.meta_any, any_new));
+                any_new = prop.meta_any;
                 prop_stack.pop();
             }
             std::cout << "DONE" << std::endl;
             std::cout << "prop.meta_any " << meta_any.type().info().name() << std::endl; // 
-            std::cout << "meta_any_rec " << meta_any_rec.type().info().name() << std::endl; // 
-            { auto fltptr = meta_any_rec.try_cast<float>(); if (fltptr) std::cout << " meta_any_rec " << *fltptr; }
+            std::cout << "meta_any_rec " << any_new.type().info().name() << std::endl; // 
+            { auto fltptr = any_new.try_cast<float>(); if (fltptr) std::cout << " meta_any_rec " << *fltptr; }
+            
             // meta_data.set(meta_any, meta_any_rec);
-            meta_any.assign(meta_any_rec);
+            // At this point, the type held by any_new is the component type
+            // any_new is an updated copy of the component - now assign ut to the actual component
+            meta_any.assign(any_new);
 #if 0
             // entt::meta_any meta_any2;
 
