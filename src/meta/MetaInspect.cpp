@@ -452,7 +452,7 @@ namespace Editor {
 
             struct Property { entt::meta_any meta_any; entt::meta_data meta_data; /*entt::meta_any new_data_any;*/ };
             std::stack<Property> prop_stack;
-            //prop_stack.push(Property{ meta_any, meta_data });
+            prop_stack.push(Property{ meta_any, meta_data });
             int i = 1;
             entt::meta_any meta_any_ = meta_any;
             entt::meta_data meta_data_ = meta_data;
@@ -461,9 +461,11 @@ namespace Editor {
                 auto& e = c.meta_path[i];
                 if (e.type == MetaEntry::Type::Data)
                 {
-                    meta_any_ = meta_data.get(meta_any_); assert(meta_any_);
-                    meta_type = entt::resolve(meta_any_.type().id());  assert(meta_type);
+                    meta_any_ = meta_data_.get(meta_any_); assert(meta_any_);
+
+                    auto meta_type = entt::resolve(meta_any_.type().id());  assert(meta_type);
                     meta_data_ = meta_type.data(e.data_id); assert(meta_data);
+
                     prop_stack.push(Property{ meta_any_, meta_data_ });
                 } // else ...
             }
@@ -481,7 +483,8 @@ namespace Editor {
             std::cout << "prop.meta_any " << meta_any.type().info().name() << std::endl; // 
             std::cout << "meta_any_rec " << meta_any_rec.type().info().name() << std::endl; // 
             { auto fltptr = meta_any_rec.try_cast<float>(); if (fltptr) std::cout << " meta_any_rec " << *fltptr; }
-            meta_data.set(meta_any, meta_any_rec);
+            // meta_data.set(meta_any, meta_any_rec);
+            meta_any.assign(meta_any_rec);
 #if 0
             // entt::meta_any meta_any2;
 
