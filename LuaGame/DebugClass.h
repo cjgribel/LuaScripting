@@ -24,11 +24,26 @@
 
 
 
+struct UVcoords
+{
+    float u, v;
 
+    bool operator==(const UVcoords& other) const {
+        return u == other.u && v == other.v;
+    }
+
+    std::string to_string() const 
+    {
+        std::ostringstream oss;
+        oss << "UVcoords(u = " << u << ", v = " << v << ")";
+        return oss.str();
+    }
+};
 
 struct debugvec3
 {
     float x = 1, y = 2, z = 3;
+    UVcoords uv_coords{ -1.0f, -2.0f };
 
     std::string to_string() const {
         std::ostringstream oss;
@@ -205,11 +220,20 @@ inline DebugClass cloneDebugClass(void* src)
 
 inline void registerDebugClass()
 {
+    entt::meta<UVcoords>()
+        .type("UVcoords"_hs).prop(display_name_hs, "UVcoords")
+        .data<&UVcoords::u>("u"_hs).prop(display_name_hs, "u")
+        .data<&UVcoords::v>("v"_hs).prop(display_name_hs, "v")
+
+        .func<&UVcoords::to_string>(to_string_hs)
+        ;
+
     entt::meta<debugvec3>()
         .type("debugvec3"_hs).prop(display_name_hs, "debugvec3")
         .data<&debugvec3::x>("x"_hs).prop(display_name_hs, "x")
         .data<&debugvec3::y>("y"_hs).prop(display_name_hs, "y")
         .data<&debugvec3::z>("z"_hs).prop(display_name_hs, "z")
+        .data<&debugvec3::uv_coords>("uv_coords"_hs).prop(display_name_hs, "uv_coords")
 #ifdef JSON
         //.func<&debugvec3_to_json>(to_json_hs)
         .func < [](nlohmann::json& j, const void* ptr) { to_json(j, *static_cast<const debugvec3*>(ptr)); }, entt::as_void_t > (to_json_hs)
