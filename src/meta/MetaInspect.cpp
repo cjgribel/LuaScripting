@@ -436,6 +436,12 @@ namespace Editor {
             //entt::meta_type meta_type = c.component_meta_type;
             //entt::meta_any meta_any;
 
+            const auto any_to_string = [](const entt::meta_any& any) -> std::string {
+                if (auto fltptr = any.try_cast<float>(); fltptr) return std::to_string(*fltptr);
+                if (auto intptr = any.try_cast<int>(); intptr) return std::to_string(*intptr);
+                return std::string("[any not cast]");
+                };
+
             // Component
             auto type = registry.storage(c.comp_id);
             assert(type->contains(c.entity));
@@ -475,10 +481,14 @@ namespace Editor {
                 auto& e = c.meta_path[i];
                 if (e.type == MetaEntry::Type::Data)
                 {
+                    entt::meta_any meta_any;
                     // If the previous entry was Index, meta_data will be empty
                     // Fetch meta_data from elem_any = the container?
-
-                    auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
+                    if (last_prop.entry.type == MetaEntry::Type::Index)
+                        meta_any = last_prop.meta_any.as_sequence_container()[last_prop.entry.index];
+                    else
+                        meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
+                    // auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
                     auto meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
                     auto meta_data = meta_type.data(e.data_id); assert(meta_data);
 
@@ -521,10 +531,12 @@ namespace Editor {
                     //bool res = prop.elem_any.assign(any_new); assert(res);
                     assert(prop.meta_any.type().is_sequence_container());
                     auto view = prop.meta_any.as_sequence_container();
-                    std::cout << "before val " << view[prop.entry.index].cast<int>() << any_new.cast<int>() << std::endl;
+                    std::cout << "before val=" << any_to_string(view[prop.entry.index]) 
+                    << " new=" << any_to_string(any_new) << std::endl;
                     view[prop.entry.index].assign(any_new); // WORKS
                     // view[prop.entry.index] = any_new; // DOES NOT WORK
-                    std::cout << "after  val " << view[prop.entry.index].cast<int>() << any_new.cast<int>() << std::endl;
+                    std::cout << "after val=" << any_to_string(view[prop.entry.index]) 
+                    << " new=" << any_to_string(any_new) << std::endl;
                     // int count = 0;
                     // for (auto&& v : view)
                     // {
@@ -532,7 +544,7 @@ namespace Editor {
                     // }
                     //bool res_ = prop.meta_data.set(prop.meta_any, prop.any_new); assert(res_);
                     std::cout << "view[prop.index] " << view[prop.entry.index].type().info().name() << std::endl; // 
-                    std::cout << "view[prop.index] value " << view[prop.entry.index].cast<int>() << std::endl; // 
+                    std::cout << "view[prop.index] value " << any_to_string(view[prop.entry.index]) << std::endl; // 
                 }
                 else if (prop.entry.type == MetaEntry::Type::Data)
                 {
@@ -546,7 +558,7 @@ namespace Editor {
             std::cout << "DONE" << std::endl;
             std::cout << "prop.meta_any " << meta_any.type().info().name() << std::endl; // 
             std::cout << "meta_any_rec " << any_new.type().info().name() << std::endl; // 
-            { auto fltptr = any_new.try_cast<float>(); if (fltptr) std::cout << " meta_any_rec " << *fltptr; }
+            std::cout << " meta_any_rec " << any_to_string(any_new) << std::endl;
 
             // meta_data.set(meta_any, meta_any_rec);
             // At this point, the type held by any_new is the component type
