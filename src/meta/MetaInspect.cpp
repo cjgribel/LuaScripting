@@ -298,7 +298,7 @@ namespace Editor {
 
                 // Displaying key, value and the element itself as expandable nodes
                 ImGui::SetNextItemOpen(true);
-                if (inspector.begin_node((std::string("#") + std::to_string(count++)).c_str()))
+                if (inspector.begin_node((std::string("#") + std::to_string(count)).c_str()))
                 {
                     ImGui::SetNextItemOpen(true);
                     if (inspector.begin_node("[key]"))
@@ -317,15 +317,26 @@ namespace Editor {
                     }
                     if (view.mapped_type())
                     {
+                        // Push command meta path
+                        MetaEntry meta_entry{};
+                        meta_entry.type = MetaEntry::Type::Key; meta_entry.key_any = key_any; meta_entry.name = std::to_string(count);
+                        meta_command.meta_path.push_back(meta_entry);
+
+                        // Inspect mapped value
                         ImGui::SetNextItemOpen(true);
                         if (inspector.begin_node("[value]"))
                         {
                             inspect_any(mapped_any, inspector);
                             inspector.end_node();
                         }
+
+                        // Pop meta command path
+                        meta_command.meta_path.pop_back();
                     }
+
                     inspector.end_node();
                 }
+                count++;
             }
         }
 
@@ -486,6 +497,8 @@ namespace Editor {
                     // Fetch meta_data from elem_any = the container?
                     if (last_prop.entry.type == MetaEntry::Type::Index)
                         meta_any = last_prop.meta_any.as_sequence_container()[last_prop.entry.index];
+                    else if (last_prop.entry.type == MetaEntry::Type::Key)
+                        meta_any = last_prop.meta_any.as_associative_container().find(last_prop.entry.key_any)->second;
                     else
                         meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
                     // auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
@@ -497,8 +510,8 @@ namespace Editor {
                 }
                 else if (e.type == MetaEntry::Type::Index)
                 {
-                    // Is a seq. container
-                    auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
+                    assert(last_prop.entry.type == MetaEntry::Type::Data);
+                    auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
                     ///* Should not exist */ auto meta_type = entt::resolve(meta_any.type().id());  assert(!meta_type);
                     //auto meta_data = meta_type.data(e.data_id); assert(meta_data);
 
@@ -510,7 +523,10 @@ namespace Editor {
                 }
                 else if (e.type == MetaEntry::Type::Key)
                 {
-
+                    assert(last_prop.entry.type == MetaEntry::Type::Data);
+                    auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
+                    last_prop = Property{ meta_any, entt::meta_data{}, e };
+                    prop_stack.push(last_prop);
                 }
                 else { assert(0); }
             }
@@ -521,9 +537,15 @@ namespace Editor {
                 std::cout << prop_stack.size() << " prop.meta_any " << prop.meta_any.type().info().name() << std::endl; // 
                 std::cout << prop_stack.size() << " any_new " << any_new.type().info().name() << std::endl; // 
 
-                // if (prop.elem_any)
-                if (prop.entry.type == MetaEntry::Type::Index)
+                if (prop.entry.type == MetaEntry::Type::Data)
                 {
+                    // Data
+                    bool res = prop.meta_data.set(prop.meta_any, any_new); assert(res);
+                }
+                else if (prop.entry.type == MetaEntry::Type::Index)
+                {
+                    // TODO: range check
+
                     // Container - meta_any IS the element?
                     std::cout << "prop.meta_any " << prop.meta_any.type().info().name() << std::endl; //                     
                     // std::cout << "prop.elem_any " << prop.elem_any.type().info().name() << std::endl; // 
@@ -531,12 +553,12 @@ namespace Editor {
                     //bool res = prop.elem_any.assign(any_new); assert(res);
                     assert(prop.meta_any.type().is_sequence_container());
                     auto view = prop.meta_any.as_sequence_container();
-                    std::cout << "before val=" << any_to_string(view[prop.entry.index]) 
-                    << " new=" << any_to_string(any_new) << std::endl;
+                    std::cout << "before val=" << any_to_string(view[prop.entry.index])
+                        << " new=" << any_to_string(any_new) << std::endl;
                     view[prop.entry.index].assign(any_new); // WORKS
                     // view[prop.entry.index] = any_new; // DOES NOT WORK
-                    std::cout << "after val=" << any_to_string(view[prop.entry.index]) 
-                    << " new=" << any_to_string(any_new) << std::endl;
+                    std::cout << "after val=" << any_to_string(view[prop.entry.index])
+                        << " new=" << any_to_string(any_new) << std::endl;
                     // int count = 0;
                     // for (auto&& v : view)
                     // {
@@ -546,11 +568,14 @@ namespace Editor {
                     std::cout << "view[prop.index] " << view[prop.entry.index].type().info().name() << std::endl; // 
                     std::cout << "view[prop.index] value " << any_to_string(view[prop.entry.index]) << std::endl; // 
                 }
-                else if (prop.entry.type == MetaEntry::Type::Data)
+                else if (prop.entry.type == MetaEntry::Type::Key)
                 {
-                    // Data
-                    bool res = prop.meta_data.set(prop.meta_any, any_new); assert(res);
+                    assert(prop.meta_any.type().is_associative_container());
+                    auto view = prop.meta_any.as_associative_container();
+                    view.find(prop.entry.key_any)->second.assign(any_new); // WORKS?
+                    // view[prop.entry.index] = any_new; // DOES NOT WORK?
                 }
+                else { assert(0); }
 
                 any_new = prop.meta_any;
                 prop_stack.pop();
