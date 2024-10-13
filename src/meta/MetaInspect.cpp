@@ -15,9 +15,11 @@
 #include "meta_literals.h"
 #include "meta_aux.h"
 
+#define USE_COMMANDS
+
 namespace Editor {
 
-    // // meta command -->
+#ifdef USE_COMMANDS
     struct MetaEntry
     {
         enum class Type : int { Data, Index, Key } type;
@@ -53,50 +55,10 @@ namespace Editor {
     static void execute(entt::registry& registry, const MetaCommandDescriptor& cmd)
     {
 #if 0
-        auto type = registry.storage(c.comp_id);
-        assert(type->contains(c.entity));
-        entt::meta_type meta_type = entt::resolve(c.comp_id);
-        entt::meta_any meta_any = meta_type.from_void(type->value(entity));
 
-        assert(c.meta_path.size()); // Must be at least one?
-        assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?            
-        auto& e = c.meta_path[0];
-        entt::meta_data meta_data = meta_type.data(e.data_id);
-
-        int i = 1;
-        for (;i < c.meta_path.size(); i++)
-        {
-            auto& e = c.meta_path[i];
-
-            // --> meta_any, meta_type
-            if (e.type == MetaEntry::Type::Data)
-            {
-                // auto meta_any_cpy = meta_any;
-                // meta_any = entt::meta_any {};
-                meta_any = meta_data.get(meta_any); assert(meta_any);
-                meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
-                meta_data = meta_type.data(e.data_id); assert(meta_data);
-
-                data_any = meta_data.get(meta_any);
-
-                // assert stuff
-
-                std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // debugvec3
-                std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //debugvec3
-                std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // float
-                std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // float
-
-                //auto tmp_any = meta_data.get(meta_any);
-                //meta_any.assign(tmp_any);
-            }
-            else if (e.type == MetaEntry::Type::Index) { assert(0); }
-            else if (e.type == MetaEntry::Type::Key) { assert(0); }
-            else { assert(0); }
-        }
 #endif
     }
-
-    // <--
+#endif
 
     std::string get_entity_name(
         entt::registry& registry,
@@ -200,13 +162,18 @@ namespace Editor {
                 // bool(void* ptr, Editor::InspectorState& inspector)
                 // bool(const void* ptr, Editor::InspectorState& inspector) ?
 
+                // NOTE
+                // meta function & enum cases are direct changes –
+                // copy & push command (no path entries)
+                // TODO: #ifdef for commands
+
                 auto res_any = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
                 assert(res_any && "Failed to invoke inspect meta function");
 
+#ifdef USE_COMMANDS
                 auto res_val = res_any.try_cast<bool>();
                 assert(res_val && "inspect meta function expected to return bool");
-
-                // std::cout << "inspect invoked: " << "..." << std::endl;
+#endif
             }
             else if (meta_type.is_enum())
             {
@@ -224,11 +191,12 @@ namespace Editor {
 
                     if (inspector.begin_node(key_name.c_str()))
                     {
+#ifdef USE_COMMANDS
                         // Push command meta path
                         MetaEntry meta_entry{};
                         meta_entry.type = MetaEntry::Type::Data; meta_entry.data_id = id; meta_entry.name = key_name;
                         meta_command.meta_path.push_back(meta_entry);
-
+#endif
                         // Obtain data value
                         entt::meta_any data_any = meta_data.get(any);
 
@@ -241,9 +209,10 @@ namespace Editor {
                         inspector.end_node();
                         // Unset readonly
                         if (readonly) inspector.end_disabled();
-
+#ifdef USE_COMMANDS
                         // Pop meta command path
                         meta_command.meta_path.pop_back();
+#endif
                     }
                 }
             }
@@ -265,16 +234,19 @@ namespace Editor {
             {
                 inspector.begin_leaf((std::string("#") + std::to_string(count)).c_str());
                 {
+#ifdef USE_COMMANDS
                     // Push command meta path
                     MetaEntry meta_entry{};
                     meta_entry.type = MetaEntry::Type::Index; meta_entry.index = count; meta_entry.name = std::to_string(count);
                     meta_command.meta_path.push_back(meta_entry);
+#endif
 
                     // ImGui::SetNextItemWidth(-FLT_MIN);
                     inspect_any(v, inspector);
-
+#ifdef USE_COMMANDS
                     // Pop meta command path
                     meta_command.meta_path.pop_back();
+#endif
                 }
                 inspector.end_leaf();
                 count++;
@@ -319,10 +291,12 @@ namespace Editor {
                     }
                     if (view.mapped_type())
                     {
+#ifdef USE_COMMANDS
                         // Push command meta path
                         MetaEntry meta_entry{};
                         meta_entry.type = MetaEntry::Type::Key; meta_entry.key_any = key_any; meta_entry.name = std::to_string(count);
                         meta_command.meta_path.push_back(meta_entry);
+#endif
 
                         // Inspect mapped value
                         ImGui::SetNextItemOpen(true);
@@ -331,9 +305,10 @@ namespace Editor {
                             inspect_any(mapped_any, inspector);
                             inspector.end_node();
                         }
-
+#ifdef USE_COMMANDS
                         // Pop meta command path
                         meta_command.meta_path.pop_back();
+#endif
                     }
 
                     inspector.end_node();
@@ -347,10 +322,8 @@ namespace Editor {
             // Try casting the meta_any to a primitive type.
             //
             bool res = try_apply(any, [&inspector](auto& value) {
-
-                // Editor::inspect_type(value, inspector);
-
-                // meta command
+#ifdef USE_COMMANDS
+                // Inspect copy and issue command
                 auto copy = value; //entt::meta_any copy_any = any;
                 if (Editor::inspect_type(copy, inspector))
                 {
@@ -359,10 +332,10 @@ namespace Editor {
                     meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
                 }
-                // else
-                // No - POP the path
-                    // meta_command.meta_path.pop_back(); // Leaf reached - reset path
-
+#else
+                // Inspect source type directly
+                Editor::inspect_type(value, inspector);
+#endif
                 });
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
@@ -374,7 +347,9 @@ namespace Editor {
         InspectorState& inspector)
     {
         // meta command: clear issued
+#ifdef USE_COMMANDS
         issued_commands.clear();
+#endif
 
         auto& registry = *inspector.registry;
         assert(entity != entt::null);
@@ -390,9 +365,11 @@ namespace Editor {
 
                 if (inspector.begin_node(type_name.c_str()))
                 {
+#ifdef USE_COMMANDS
                     // Reset meta command for each component type
                     meta_command = MetaCommandDescriptor{};
                     meta_command.entity = entity; meta_command.comp_id = id;
+#endif
 
                     auto comp_any = meta_type.from_void(type.value(entity));
                     inspect_any(comp_any, inspector);
@@ -406,6 +383,7 @@ namespace Editor {
             }
         }
 
+#ifdef USE_COMMANDS
         // check issued command (typically one?)
         for (auto& c : issued_commands)
         {
@@ -480,7 +458,7 @@ namespace Editor {
             std::stack<Property> prop_stack;
             Property last_prop{ meta_any, meta_data, entry0 };
             prop_stack.push(last_prop);
-            
+
             int i = 1;
             //entt::meta_any meta_any_ = meta_any;
             //entt::meta_data meta_data_ = meta_data;
@@ -498,7 +476,7 @@ namespace Editor {
                         meta_any = last_prop.meta_any.as_associative_container().find(last_prop.entry.key_any)->second;
                     else if (last_prop.entry.type == MetaEntry::Type::Data)
                         meta_any = last_prop.meta_data.get(last_prop.meta_any);
-                    else {assert(0);}
+                    else { assert(0); }
                     assert(meta_any);
                     // auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
                     auto meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
@@ -589,6 +567,7 @@ namespace Editor {
             // any_new is an updated copy of the component - now assign ut to the actual component
             meta_any.assign(any_new);
         }
+#endif
     }
 
     void inspect_registry(
