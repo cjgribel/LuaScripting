@@ -38,7 +38,7 @@ namespace Editor {
         //entt::meta_type component_meta_type;
         //std::string propertyName; // path
         std::deque<MetaEntry> meta_path;
-        entt::meta_any new_value;
+        entt::meta_any old_value, new_value;
         bool is_used = false;
     };
     static inline MetaCommandDescriptor meta_command{};
@@ -152,32 +152,57 @@ namespace Editor {
         InspectorState& inspector)
     {
         assert(any);
-        bool mod = false;
+        bool mod = false; // TODO: not used yet
 
         if (entt::meta_type meta_type = entt::resolve(any.type().id()); meta_type)
         {
             if (entt::meta_func meta_func = meta_type.func(inspect_hs); meta_func)
             {
-                // Function signatures 
-                // bool(void* ptr, Editor::InspectorState& inspector)
-                // bool(const void* ptr, Editor::InspectorState& inspector) ?
-
-                // NOTE
-                // meta function & enum cases are direct changes –
-                // copy & push command (no path entries)
-                // TODO: #ifdef for commands
-
-                auto res_any = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
-                assert(res_any && "Failed to invoke inspect meta function");
+                // Inspection meta function signatures:
+                //      bool(void* ptr, Editor::InspectorState& inspector)
+                //      bool(const void* ptr, Editor::InspectorState& inspector) ?
 
 #ifdef USE_COMMANDS
-                auto res_val = res_any.try_cast<bool>();
-                assert(res_val && "inspect meta function expected to return bool");
+                // Invoke inspection meta function on a copy of the object
+                auto copy_any = any;
+                auto res_any = meta_func.invoke({}, copy_any.data(), entt::forward_as_meta(inspector));
+                assert(res_any && "Failed to invoke inspect meta function");
+
+                // Issue command if a change is detected
+                auto res_ptr = res_any.try_cast<bool>();
+                assert(res_ptr && "inspect meta function is expected to return bool");
+                if (*res_ptr)
+                {
+                    meta_command.old_value = any;
+                    meta_command.new_value = copy_any;
+                    assert(!meta_command.is_used); meta_command.is_used = true;
+                    issued_commands.push_back(meta_command);
+                    mod = true;
+                }
+#else
+                // Invoke the inspection meta function on the object
+                auto res_any = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
+                assert(res_any && "Failed to invoke inspect meta function");
+                auto res_ptr = res_any.try_cast<bool>();
+                assert(res_ptr && "inspect meta function expected to return bool");
+                mod |= *res_ptr;
 #endif
             }
             else if (meta_type.is_enum())
             {
+#ifdef USE_COMMANDS
+                auto copy_any = any;
+                if (inspect_enum_any(copy_any, inspector))
+                {
+                    meta_command.old_value = any;
+                    meta_command.new_value = copy_any;
+                    assert(!meta_command.is_used); meta_command.is_used = true;
+                    issued_commands.push_back(meta_command);
+                    mod = true;
+                }
+#else
                 mod |= inspect_enum_any(any, inspector);
+#endif
             }
             else
             {
@@ -199,20 +224,19 @@ namespace Editor {
 #endif
                         // Obtain data value
                         entt::meta_any data_any = meta_data.get(any);
-
                         // Check & set readonly
                         bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
                         if (readonly) inspector.begin_disabled();
                         // Inspect
-                        inspect_any(data_any, inspector);
-                        meta_data.set(any, data_any);
-                        inspector.end_node();
+                        /* bool! */ inspect_any(data_any, inspector);
+                        meta_data.set(any, data_any); // Not needed with command - changes are intercepted
                         // Unset readonly
                         if (readonly) inspector.end_disabled();
 #ifdef USE_COMMANDS
                         // Pop meta command path
                         meta_command.meta_path.pop_back();
 #endif
+                        inspector.end_node();
                     }
                 }
             }
@@ -319,27 +343,29 @@ namespace Editor {
 
         else
         {
-            // Try casting the meta_any to a primitive type.
-            //
-            bool res = try_apply(any, [&inspector](auto& value) {
+            // Try casting the meta_any to a primitive type and perform the inspection
+            bool res = try_apply(any, [&any, &mod, &inspector](auto& value) {
 #ifdef USE_COMMANDS
-                // Inspect copy and issue command
-                auto copy = value; //entt::meta_any copy_any = any;
+                // Inspect a copy of the value and issue command if a change is detected
+                auto copy = value;
                 if (Editor::inspect_type(copy, inspector))
                 {
-                    // Maybe check if already used = inspection done in multiple places at once (!)
-                    meta_command.new_value = copy; //any;
-                    meta_command.is_used = true;
+                    meta_command.old_value = any;
+                    meta_command.new_value = copy;
+                    assert(!meta_command.is_used); meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
+                    mod = true;
                 }
 #else
-                // Inspect source type directly
+                // Inspect the value
                 Editor::inspect_type(value, inspector);
 #endif
                 });
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
+
+        // return mod;
     }
 
     void inspect_entity(
