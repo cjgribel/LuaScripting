@@ -797,7 +797,10 @@ namespace Inspector
                 auto header_meta = entt::resolve<HeaderComponent>();
 
                 if (selected_entity_valid)
-                    Editor::inspect_entity(inspector.selected_entity, inspector);
+                {
+                    bool res = Editor::inspect_entity(inspector.selected_entity, inspector);
+                    if (res) { /* Edit detected */ }
+                }
                 else
                     ImGui::Text("Selected entity is null or invalid");
 

@@ -147,7 +147,7 @@ namespace Editor {
         return false;
     }
 
-    void inspect_any(
+    bool inspect_any(
         entt::meta_any& any,
         InspectorState& inspector)
     {
@@ -222,14 +222,18 @@ namespace Editor {
                         meta_entry.type = MetaEntry::Type::Data; meta_entry.data_id = id; meta_entry.name = key_name;
                         meta_command.meta_path.push_back(meta_entry);
 #endif
-                        // Obtain data value
+                        // Obtain copy of data value
                         entt::meta_any data_any = meta_data.get(any);
                         // Check & set readonly
                         bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
                         if (readonly) inspector.begin_disabled();
+
                         // Inspect
-                        /* bool! */ inspect_any(data_any, inspector);
-                        meta_data.set(any, data_any); // Not needed with command - changes are intercepted
+                        mod |= inspect_any(data_any, inspector);
+#ifndef USE_COMMANDS
+                        // Update data of the current object
+                        meta_data.set(any, data_any);
+#endif
                         // Unset readonly
                         if (readonly) inspector.end_disabled();
 #ifdef USE_COMMANDS
@@ -240,19 +244,16 @@ namespace Editor {
                     }
                 }
             }
-            return;
+            return mod;
         }
 
         // any is not a meta type
 
         if (any.type().is_sequence_container())
         {
-            //ImGui::Text("[is_sequence_container]");
-
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
 
-            //auto json_array = nlohmann::json::array();
             int count = 0;
             for (auto&& v : view)
             {
@@ -263,13 +264,15 @@ namespace Editor {
                     MetaEntry meta_entry{};
                     meta_entry.type = MetaEntry::Type::Index; meta_entry.index = count; meta_entry.name = std::to_string(count);
                     meta_command.meta_path.push_back(meta_entry);
-#endif
 
                     // ImGui::SetNextItemWidth(-FLT_MIN);
-                    inspect_any(v, inspector);
-#ifdef USE_COMMANDS
+                    mod |= inspect_any(v, inspector);
+
                     // Pop meta command path
                     meta_command.meta_path.pop_back();
+#else
+                    // ImGui::SetNextItemWidth(-FLT_MIN);
+                    mod |= inspect_any(v, inspector); // Will change the actual element
 #endif
                 }
                 inspector.end_leaf();
@@ -309,7 +312,7 @@ namespace Editor {
                         // modified).
                         // Workaround: disable all key inspections explicitly
                         inspector.begin_disabled();
-                        inspect_any(key_any, inspector);
+                        inspect_any(key_any, inspector); // key_any holds a const object
                         inspector.end_disabled();
                         inspector.end_node();
                     }
@@ -326,7 +329,7 @@ namespace Editor {
                         ImGui::SetNextItemOpen(true);
                         if (inspector.begin_node("[value]"))
                         {
-                            inspect_any(mapped_any, inspector);
+                            mod |= inspect_any(mapped_any, inspector);
                             inspector.end_node();
                         }
 #ifdef USE_COMMANDS
@@ -365,15 +368,16 @@ namespace Editor {
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
 
-        // return mod;
+        return mod;
     }
 
-    void inspect_entity(
+    bool inspect_entity(
         entt::entity entity,
         InspectorState& inspector)
     {
-        // meta command: clear issued
+        bool mod = false;
 #ifdef USE_COMMANDS
+        // meta command: clear issued
         issued_commands.clear();
 #endif
 
@@ -398,7 +402,7 @@ namespace Editor {
 #endif
 
                     auto comp_any = meta_type.from_void(type.value(entity));
-                    inspect_any(comp_any, inspector);
+                    mod |= inspect_any(comp_any, inspector);
                     inspector.end_node();
                 }
             }
@@ -594,12 +598,14 @@ namespace Editor {
             meta_any.assign(any_new);
         }
 #endif
+        return mod;
     }
 
-    void inspect_registry(
+    bool inspect_registry(
         entt::meta_type name_comp_type,
         InspectorState& inspector)
     {
+        bool mod = false;
         auto& registry = *inspector.registry;
 
         auto view = registry.view<entt::entity>();
@@ -623,7 +629,7 @@ namespace Editor {
                     if (inspector.begin_node(type_name.c_str()))
                     {
                         auto comp_any = meta_type.from_void(type.value(entity));
-                        inspect_any(comp_any, inspector);
+                        mod |= inspect_any(comp_any, inspector);
                         inspector.end_node();
                     }
                 }
@@ -636,6 +642,7 @@ namespace Editor {
             inspector.end_node();
 #endif
         }
+        return mod;
     }
 
 } // namespace Editor
