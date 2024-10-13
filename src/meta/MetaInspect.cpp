@@ -197,12 +197,14 @@ namespace Editor {
             if (entt::meta_func meta_func = meta_type.func(inspect_hs); meta_func)
             {
                 // Function signatures 
-                // void* ptr, Editor::InspectorState& inspector
-                // const void* ptr, Editor::InspectorState& inspector (?)
+                // bool(void* ptr, Editor::InspectorState& inspector)
+                // bool(const void* ptr, Editor::InspectorState& inspector) ?
 
-                // Call from_json using alias of json node
-                auto res = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
-                assert(res && "Failed to invoke inspect");
+                auto res_any = meta_func.invoke({}, any.data(), entt::forward_as_meta(inspector));
+                assert(res_any && "Failed to invoke inspect meta function");
+
+                auto res_val = res_any.try_cast<bool>();
+                assert(res_val && "inspect meta function expected to return bool");
 
                 // std::cout << "inspect invoked: " << "..." << std::endl;
             }
@@ -448,8 +450,9 @@ namespace Editor {
             //entt::meta_any meta_any;
 
             const auto any_to_string = [](const entt::meta_any& any) -> std::string {
-                if (auto fltptr = any.try_cast<float>(); fltptr) return std::to_string(*fltptr);
-                if (auto intptr = any.try_cast<int>(); intptr) return std::to_string(*intptr);
+                if (auto ptr = any.try_cast<float>(); ptr) return std::to_string(*ptr);
+                if (auto ptr = any.try_cast<int>(); ptr) return std::to_string(*ptr);
+                if (auto ptr = any.try_cast<bool>(); ptr) return std::to_string(*ptr);
                 return std::string("[any not cast]");
                 };
 
@@ -461,29 +464,23 @@ namespace Editor {
 
             assert(c.meta_path.size()); // Must be at least one?
             assert(c.meta_path[0].type == MetaEntry::Type::Data); // First must be Data?            
-            auto& e = c.meta_path[0];
-            entt::meta_data meta_data = meta_type.data(e.data_id);
-            // 1st entry (Data)
-            // meta_any - component
-            // meta_type - component meta type
-            // meta_data - 1st data member
+            auto& entry0 = c.meta_path[0];
+            entt::meta_data meta_data = meta_type.data(entry0.data_id);
 
-            // 2nd entry
-            // meta_any - any for meta_data^    meta_data.get(meta_any)
-            // meta_type - meta type of meta_any
-            // meta_data - 2nd data member
-
-            entt::meta_any data_any = meta_data.get(meta_any);
+            // entt::meta_any data_any = meta_data.get(meta_any);
 
             std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // DebugClass
             std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //DebugClass
-            std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
+            // std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
             std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // debugvec3
 
-            struct Property { entt::meta_any meta_any; entt::meta_data meta_data; MetaEntry entry; /*entt::meta_any new_data_any;*/ };
+            struct Property {
+                entt::meta_any meta_any; entt::meta_data meta_data; MetaEntry entry;
+            };
             std::stack<Property> prop_stack;
-            Property last_prop{ meta_any, meta_data, e };
+            Property last_prop{ meta_any, meta_data, entry0 };
             prop_stack.push(last_prop);
+            
             int i = 1;
             //entt::meta_any meta_any_ = meta_any;
             //entt::meta_data meta_data_ = meta_data;
@@ -499,8 +496,10 @@ namespace Editor {
                         meta_any = last_prop.meta_any.as_sequence_container()[last_prop.entry.index];
                     else if (last_prop.entry.type == MetaEntry::Type::Key)
                         meta_any = last_prop.meta_any.as_associative_container().find(last_prop.entry.key_any)->second;
-                    else
-                        meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
+                    else if (last_prop.entry.type == MetaEntry::Type::Data)
+                        meta_any = last_prop.meta_data.get(last_prop.meta_any);
+                    else {assert(0);}
+                    assert(meta_any);
                     // auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
                     auto meta_type = entt::resolve(meta_any.type().id());  assert(meta_type);
                     auto meta_data = meta_type.data(e.data_id); assert(meta_data);
