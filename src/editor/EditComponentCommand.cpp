@@ -14,6 +14,8 @@
 // #include "meta_literals.h"
 // #include "meta_aux.h"
 
+#include "EditComponentCommand.hpp"
+
 namespace Editor {
 
 

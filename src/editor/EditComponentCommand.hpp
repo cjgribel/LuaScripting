@@ -15,13 +15,23 @@ namespace Editor {
 
     class EditComponentCommand : public Command
     {
-        // entt::registry <- later
+        struct MetaEntry
+        {
+            enum class Type : int { None, Data, Index, Key } type = Type::None;
+            entt::id_type data_id;  // enter data field
+            size_t index;           // enter seq. container index
+            entt::meta_any key_any; // enter assoc. container key
 
+            std::string name = "(no name)";
+        };
+
+               // entt::registry <- later
         // entt::entity entity; <- later ?
-        
-        // entt::id_type comp_id;
-        // std::deque<MetaEntry> meta_path;
-        // entt::meta_any old_value, new_value;
+
+        // MetaCommandDescriptor
+         entt::id_type comp_id;
+         std::vector<MetaEntry> meta_path;
+         entt::meta_any old_value, new_value;
         // bool is_used = false;
 
     public:
@@ -30,6 +40,7 @@ namespace Editor {
 
         }
 
+        // During CMD CREATION vs CMD EXECUTION
         void execute() override
         {
 

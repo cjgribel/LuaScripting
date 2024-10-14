@@ -1,16 +1,21 @@
 #ifndef InspectorState_hpp
 #define InspectorState_hpp
 
-#include <entt/entt.hpp>
-#include <sol/forward.hpp>
+// #include <entt/entt.hpp>
+// #include <entt/fwd.hpp>
+// #include <sol/forward.hpp>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
+#include "Context.hpp"
 
 namespace Editor {
+
+
 
     /// @brief 
     struct InspectorState
     {
+        // Context context;
         sol::state* lua;
         entt::registry* registry;
 
