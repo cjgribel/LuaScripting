@@ -680,7 +680,7 @@ namespace Inspector
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
-        auto& registry = *inspector.registry;
+        auto& registry = *inspector.context.registry;
         auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
@@ -713,7 +713,7 @@ namespace Inspector
 
     void inspect_scenegraph(SceneGraph& scenegraph, Editor::InspectorState& inspector)
     {
-        auto& registry = *inspector.registry;
+        auto& registry = *inspector.context.registry;
         static bool open = true;
         bool* p_open = &open;
 
@@ -770,7 +770,7 @@ namespace Inspector
 
     void inspect_registry(Editor::InspectorState& inspector)
     {
-        auto& registry = *inspector.registry;
+        auto& registry = *inspector.context.registry;
         static bool open = true;
         bool* p_open = &open;
         bool selected_entity_valid =
@@ -1426,8 +1426,9 @@ void Scene::renderUI()
     }
 
     static Editor::InspectorState inspector{};
-    inspector.registry = &registry;
-    inspector.lua = &lua;
+    inspector.context = Editor::Context {&registry, &lua};
+    // inspector.registry = &registry;
+    // inspector.lua = &lua;
 
     Inspector::inspect_registry(inspector);
 

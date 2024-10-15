@@ -8,8 +8,8 @@
 #ifndef EditComponentCommand_hpp
 #define EditComponentCommand_hpp
 
+
 #include "Command.hpp"
-#include <entt/entt.hpp>
 
 namespace Editor {
 

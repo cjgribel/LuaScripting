@@ -16,8 +16,8 @@ namespace Editor {
 
     struct Context
     {
-        sol::state* lua;            // shared_ptr ?
         entt::registry* registry;   // shared_ptr ?
+        sol::state* lua;            // shared_ptr ?
 
         // shared_ptr<Scene>
         // shared_ptr<Resources>

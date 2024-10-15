@@ -52,12 +52,6 @@ namespace Editor {
         // bool res = meta_data.set(meta_any, c.new_value); assert(res);
     }
 
-    static void execute(entt::registry& registry, const MetaCommandDescriptor& cmd)
-    {
-#if 0
-
-#endif
-    }
 #endif
 
     std::string get_entity_name(
@@ -381,7 +375,7 @@ namespace Editor {
         issued_commands.clear();
 #endif
 
-        auto& registry = *inspector.registry;
+        auto& registry = *inspector.context.registry;
         assert(entity != entt::null);
         assert(registry.valid(entity));
 
@@ -450,7 +444,7 @@ namespace Editor {
             // entt::meta_any key_any; // enter assoc. container key
             // std::string name = "(no name)";
 
-            execute(registry, c);
+            // execute(registry, c);
 
             // auto type = registry.storage(e.data_id);
 
@@ -606,7 +600,7 @@ namespace Editor {
         InspectorState& inspector)
     {
         bool mod = false;
-        auto& registry = *inspector.registry;
+        auto& registry = *inspector.context.registry;
 
         auto view = registry.view<entt::entity>();
         for (auto entity : view)

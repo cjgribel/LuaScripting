@@ -15,9 +15,9 @@ namespace Editor {
     /// @brief 
     struct InspectorState
     {
-        // Context context;
-        sol::state* lua;
-        entt::registry* registry;
+        Context context;
+        // sol::state* lua;
+        // entt::registry* registry;
 
         bool imgui_disabled = false;
         entt::entity selected_entity = entt::null;

@@ -583,7 +583,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%s", sol_object_to_string(*inspector.lua, t).c_str());
+        ImGui::TextDisabled("%s", sol_object_to_string(*inspector.context.lua, t).c_str());
         return false;
     }
 
@@ -595,7 +595,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
     {
-        auto& lua = *inspector.lua;
+        auto& lua = *inspector.context.lua;
         bool mod = false;
 
         // Fetch type id of the inspected usertype
@@ -693,7 +693,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
     {
-        auto& lua = *inspector.lua;
+        auto& lua = *inspector.context.lua;
         bool mod = false;
 
         for (auto& [key, value] : tbl)

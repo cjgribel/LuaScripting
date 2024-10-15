@@ -9,13 +9,21 @@
 #define Command_hpp
 
 #include <memory>
+#include <entt/entt.hpp>
+#include "Context.hpp"
 
 namespace Editor {
 
+    struct Selection
+    {
+        entt::entity entity;
+    };
+
+    // Is this a pure Editor thingy?
     class Command
     {
     public:
-        virtual void execute() = 0;
+        virtual void execute(/*Context& context, const Selection& selection*/) = 0;
         virtual void undo() = 0;
     };
 
