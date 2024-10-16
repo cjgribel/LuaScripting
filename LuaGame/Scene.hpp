@@ -12,6 +12,8 @@
 #include "SceneBase.h"
 #include "Observer.h"
 #include "SceneGraph.hpp"
+#include "CommandQueue.hpp"
+
 #include "ParticleBuffer.hpp"
 
 class Scene : public eeng::SceneBase
@@ -33,8 +35,14 @@ class Scene : public eeng::SceneBase
     // entt::entity root_entity = entt::entity  {0};
     SceneGraph scenegraph{};
 
-    ConditionalObserver observer;
+    // Particle buffer
     ParticleBuffer particleBuffer{};
+    
+    // Observer
+    ConditionalObserver observer{};
+
+    // (Editor) Command queue
+    Editor::CommandQueue cmd_queue {};
 
     entt::entity create_entity_and_attach_to_scenegraph(entt::entity parent_entity = entt::null);
 

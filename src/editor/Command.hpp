@@ -9,7 +9,7 @@
 #define Command_hpp
 
 #include <memory>
-#include <entt/entt.hpp>
+#include <entt/fwd.hpp>
 #include "Context.hpp"
 
 namespace Editor {
