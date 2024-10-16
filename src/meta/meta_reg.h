@@ -24,7 +24,7 @@ namespace internal {
 /// @tparam Type 
 /// @param lua 
 template<class Type>
-void register_meta(sol::state& lua)
+void register_meta(std::shared_ptr<sol::state>& lua)
 {
     assert(0 && "Specialization not available for type");
 }

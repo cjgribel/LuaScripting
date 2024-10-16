@@ -89,11 +89,11 @@ namespace {
         }
     }
 
-    void bindAudioManager(sol::state& lua)
+    void bindAudioManager(auto& lua)
     {
         auto& audioManager = AudioManager::getInstance();
 
-        lua.new_usertype<AudioManager>("AudioManager",
+        lua->template new_usertype<AudioManager>("AudioManager",
             // "init", [&audioManager]() {
             //     return audioManager.init();
             // },
@@ -147,7 +147,7 @@ namespace {
             // }
         );
 
-        lua["engine"]["audio"] = &audioManager;
+        lua->operator[]("engine")["audio"] = &audioManager;
     }
 
     // void registerCircleColliderGridComponent(sol::state& lua)
@@ -190,9 +190,9 @@ namespace {
 
     // }
 
-    void registerQuadComponent(sol::state& lua)
+    void registerQuadComponent(auto& lua)
     {
-        lua.new_usertype<QuadComponent>("QuadComponent",
+        lua->template new_usertype<QuadComponent>("QuadComponent",
             "type_id",
             &entt::type_hash<QuadComponent>::value,
             sol::call_constructor,
@@ -210,9 +210,9 @@ namespace {
         );
     }
 
-    void registerCircleColliderComponent(sol::state& lua)
+    void registerCircleColliderComponent(auto& lua)
     {
-        lua.new_usertype<CircleColliderComponent>("CircleColliderComponent",
+        lua->template new_usertype<CircleColliderComponent>("CircleColliderComponent",
             "type_id",
             &entt::type_hash<CircleColliderComponent>::value,
             sol::call_constructor,
@@ -268,7 +268,7 @@ namespace {
     // }
 
 
-    void dump_lua_state(sol::state& lua, sol::table tbl, const std::string& indent = "")
+    void dump_lua_state(auto& lua, sol::table tbl, const std::string& indent = "")
     {
         for (auto& kv : tbl)
         {
@@ -278,7 +278,7 @@ namespace {
             // Assuming the key is a string for simplicity
             std::string key_str = key.as<std::string>();
 
-            std::string type_name = lua_typename(lua.lua_state(), static_cast<int>(value.get_type()));
+            std::string type_name = lua_typename(lua->lua_state(), static_cast<int>(value.get_type()));
 
             std::cout << indent << key_str << " (type: " << type_name << ")\n";
 
@@ -289,7 +289,11 @@ namespace {
                 std::cout << indent << "    [function]\n";
             }
             else {
-                std::cout << indent << "    [" << lua["tostring"](value).get<std::string>() << "]\n";
+                std::cout
+                    << indent
+                    << "    ["
+                    << lua->operator[]("tostring")(value).template get<std::string>()
+                    << "]\n";
             }
         }
     }
@@ -314,16 +318,16 @@ namespace {
     /// inside a view (i.e. inside scripts) while the view is iterated leads to
     /// undefined behavior: 
     /// https://github.com/skypjack/entt/issues/772#issuecomment-907814984
-    void script_system_update(entt::registry& registry, float delta_time)
+    void script_system_update(auto& registry, float delta_time)
     {
         //std::cout << "update" << std::endl;
-        auto view = registry.view<ScriptedBehaviorComponent>();
+        auto view = registry->template view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
             assert(entity != entt::null);
-            assert(registry.valid(entity));
+            assert(registry->valid(entity));
 
-            auto& script_comp = view.get<ScriptedBehaviorComponent>(entity);
+            auto& script_comp = view.template get<ScriptedBehaviorComponent>(entity);
             for (auto& script : script_comp.scripts)
             {
                 assert(script.self.valid());
@@ -333,16 +337,26 @@ namespace {
         }
     }
 
-    void update_input_lua(sol::state& lua, v4f axes, vec4<bool> buttons)
+    void update_input_lua(auto& lua, const v4f& axes, vec4<bool> buttons)
     {
-        lua["engine"]["input"]["axis_left_x"] = axes.x;
-        lua["engine"]["input"]["axis_left_y"] = axes.y;
-        lua["engine"]["input"]["axis_right_x"] = axes.z;
-        lua["engine"]["input"]["axis_right_y"] = axes.w;
-        lua["engine"]["input"]["button_a"] = buttons.x;
-        lua["engine"]["input"]["button_b"] = buttons.y;
-        lua["engine"]["input"]["button_x"] = buttons.z;
-        lua["engine"]["input"]["button_y"] = buttons.w;
+        auto input = lua->operator[]("engine")["input"];
+        input["axis_left_x"] = axes.x;
+        input["axis_left_y"] = axes.y;
+        input["axis_right_x"] = axes.z;
+        input["axis_right_y"] = axes.w;
+        input["button_a"] = buttons.x;
+        input["button_b"] = buttons.y;
+        input["button_x"] = buttons.z;
+        input["button_y"] = buttons.w;
+
+        // lua["engine"]["input"]["axis_left_x"] = axes.x;
+        // lua["engine"]["input"]["axis_left_y"] = axes.y;
+        // lua["engine"]["input"]["axis_right_x"] = axes.z;
+        // lua["engine"]["input"]["axis_right_y"] = axes.w;
+        // lua["engine"]["input"]["button_a"] = buttons.x;
+        // lua["engine"]["input"]["button_b"] = buttons.y;
+        // lua["engine"]["input"]["button_x"] = buttons.z;
+        // lua["engine"]["input"]["button_y"] = buttons.w;
     }
 
     // Called from Lua
@@ -361,7 +375,7 @@ namespace {
         assert(script_table.valid());
 
         ScriptedBehaviorComponent::BehaviorScript script;
-        
+
         script.self = script_table;
 
         script.update = script.self["update"];
@@ -411,16 +425,16 @@ namespace {
     }
 
     sol::table add_script_from_file(
-        entt::registry& registry,
+        auto& registry,
         entt::entity entity,
-        sol::state& lua,
+        auto& lua,
         const std::string& script_dir,
         const std::string& script_name
-        )
+    )
     {
         const std::string script_path = script_dir + script_name + ".lua";
         // sol::load_result behavior_script = lua.load_file(script_file);
-        sol::load_result behavior_script = lua.load_file(script_path);
+        sol::load_result behavior_script = lua->load_file(script_path);
 
         assert(behavior_script.valid());
         sol::protected_function script_function = behavior_script;
@@ -525,14 +539,14 @@ namespace {
         }
     }
 
-    void IslandFinderSystem(entt::registry& registry, float delta_time)
+    void IslandFinderSystem(auto& registry, float delta_time)
     {
-        auto view = registry.view<IslandFinderComponent>();
+        auto view = registry->template view<IslandFinderComponent>();
 #ifdef EENG_COMPILER_CLANG
         for (auto entity : view)
         {
-            auto& grid_comp = view.get<IslandFinderComponent>(entity);
-            auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
+            auto& grid_comp = view.template get<IslandFinderComponent>(entity);
+            auto& colliderset_comp = registry->template get<CircleColliderGridComponent>(entity);
             update_IslandFinderComponent(grid_comp, colliderset_comp);
         }
 #else
@@ -639,9 +653,9 @@ int main() {
     return 0;
 }
 */
-void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
+void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
 {
-    lua.new_usertype<ConditionalObserver>("ConditionalObserver",
+    lua->template new_usertype<ConditionalObserver>("ConditionalObserver",
         "register_callback", [](ConditionalObserver& observer, const sol::table& lua_table, const std::string& event_name) {
             auto lua_callback = [lua_table, event_name](const LuaEvent& luaEvent) {
                 if (lua_table.valid())
@@ -671,7 +685,7 @@ void bind_conditional_observer(sol::state& lua, ConditionalObserver& observer)
         "clear", &ConditionalObserver::clear
     );
 
-    lua["observer"] = &observer;
+    lua->operator[]("observer") = &observer;
 }
 
 namespace Inspector
@@ -680,7 +694,7 @@ namespace Inspector
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
-        auto& registry = *inspector.context.registry;
+        auto& registry = inspector.context.registry;
         auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(index);
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
@@ -713,7 +727,7 @@ namespace Inspector
 
     void inspect_scenegraph(SceneGraph& scenegraph, Editor::InspectorState& inspector)
     {
-        auto& registry = *inspector.context.registry;
+        auto& registry = inspector.context.registry;
         static bool open = true;
         bool* p_open = &open;
 
@@ -730,10 +744,10 @@ namespace Inspector
         {
             bool selected_entity_valid =
                 inspector.selected_entity != entt::null &&
-                registry.valid(inspector.selected_entity);
+                registry->valid(inspector.selected_entity);
             if (selected_entity_valid)
             {
-                auto entity_clone = registry.create();
+                auto entity_clone = registry->create();
                 scenegraph.create_node(entity_clone);
 
                 auto entity_src = inspector.selected_entity; // entt::entity{ 109 };
@@ -770,12 +784,12 @@ namespace Inspector
 
     void inspect_registry(Editor::InspectorState& inspector)
     {
-        auto& registry = *inspector.context.registry;
+        auto& registry = inspector.context.registry;
         static bool open = true;
         bool* p_open = &open;
         bool selected_entity_valid =
             inspector.selected_entity != entt::null &&
-            registry.valid(inspector.selected_entity);
+            registry->valid(inspector.selected_entity);
 
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (!ImGui::Begin("Inspector", p_open))
@@ -836,7 +850,7 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 
 entt::entity Scene::create_entity_and_attach_to_scenegraph(entt::entity parent_entity)
 {
-    auto entity = registry.create();
+    auto entity = registry->create();
     if (parent_entity == entt::null)
     {
         scenegraph.create_node(entity);
@@ -858,7 +872,7 @@ void Scene::destroy_pending_entities()
         entities_pending_destruction.pop_back();
 
         // Destroy entity. May lead to additional entities being added to the queue.
-        registry.destroy(entity);
+        registry->destroy(entity);
 
         // Remove from scene graph
         if (scenegraph.tree.contains(entity))
@@ -902,14 +916,14 @@ bool Scene::init(const v2i& windowSize)
     try
     {
         // Create enTT registry
-        registry = entt::registry{};
+        registry = std::make_shared<entt::registry>();
 
         // Or, rely on RAII to unload scripts?
-        registry.on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
+        registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         // Create Lua state
-        lua = sol::state{ (sol::c_call<decltype(&lua_panic_func), &lua_panic_func>) };
-        lua.open_libraries(
+        lua = std::make_shared<sol::state>(sol::c_call<decltype(&lua_panic_func), &lua_panic_func>);
+        lua->open_libraries(
             sol::lib::base,
             sol::lib::package,
             sol::lib::string,
@@ -919,31 +933,32 @@ bool Scene::init(const v2i& windowSize)
 
         // - Start of Lua binding -
 
-        lua.create_named_table("engine");
+        lua->create_named_table("engine");
 
-        lua["engine"]["entity_null"] = entt::entity{ entt::null };
+        lua->operator[]("engine")["entity_null"] = entt::entity{ entt::null };
+        // lua["engine"]["entity_null"] = entt::entity{ entt::null };
 
         // Create entity
         //
-        lua["engine"]["create_entity"] = [&](entt::entity parent_entity) {
+        lua->operator[]("engine")["create_entity"] = [&](entt::entity parent_entity) {
             return create_entity_and_attach_to_scenegraph(parent_entity);
             };
 
         // Destroy entity
         //
-        lua["engine"]["destroy_entity"] = [&](entt::entity entity) {
-            assert(registry.valid(entity));
+        lua->operator[]("engine")["destroy_entity"] = [&](entt::entity entity) {
+            assert(registry->valid(entity));
             entities_pending_destruction.push_back(entity);
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
-        lua["engine"]["add_script"] = [&](
+        lua->operator[]("engine")["add_script"] = [&](
             entt::registry& registry,
             entt::entity entity,
             const std::string& script_name) {
                 return add_script_from_file(registry, entity, lua, script_dir, script_name);
             };
-        lua["engine"]["get_script"] = &get_script;
+        lua->operator[]("engine")["get_script"] = &get_script;
 
         // // Try to reserve entity root ...
         // auto entity = registry.create(root_entity);
@@ -989,14 +1004,14 @@ bool Scene::init(const v2i& windowSize)
         //     };
 
         // Logging from Lua
-        lua["engine"]["log"] = [&](const std::string& text)
+        lua->operator[]("engine")["log"] = [&](const std::string& text)
             {
                 eeng::Log("[Lua] %s", text.c_str());
                 //eeng::Log::log((std::string("[Lua] ") + text).c_str());
             };
 
         // Particle emitter functions
-        lua["engine"]["emit_particle"] = [&](
+        lua->operator[]("engine")["emit_particle"] = [&](
             float x,
             float y,
             float vx,
@@ -1005,7 +1020,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_point(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, color);
             };
-        lua["engine"]["emit_explosion"] = [&](
+        lua->operator[]("engine")["emit_explosion"] = [&](
             float x,
             float y,
             float vx,
@@ -1015,7 +1030,7 @@ bool Scene::init(const v2i& windowSize)
             {
                 particleBuffer.push_explosion(v3f{ x, y, 0.01f }, v3f{ vx, vy, 0.0f }, nbr_particles, color);
             };
-        lua["engine"]["emit_trail"] = [&](
+        lua->operator[]("engine")["emit_trail"] = [&](
             float x,
             float y,
             float vx,
@@ -1027,12 +1042,12 @@ bool Scene::init(const v2i& windowSize)
             };
 
         // Input v2
-        lua["engine"]["input"] = lua.create_table();
+        lua->operator[]("engine")["input"] = lua->create_table();
         update_input_lua(lua, linalg::v4f_0000, vec4<bool> {false, false, false, false});
 
         // Attach registry to Lua state
-        lua.require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
-        lua["engine"]["registry"] = std::ref(registry);
+        lua->require("registry", sol::c_call<AUTO_ARG(&open_registry)>, false);
+        lua->operator[]("engine")["registry"] = std::ref(registry);
 
         // Register AudioManager to Lua
         bindAudioManager(lua);
@@ -1060,11 +1075,11 @@ bool Scene::init(const v2i& windowSize)
         // ScriptedBehaviorComponent_metaregister(lua);
 
         // ImGui -> Lua
-        lua.set_function("ImGui_Text", &ImGui_Text);
-        lua.set_function("ImGui_Begin", &ImGui_Begin);
-        lua.set_function("ImGui_End", &ImGui_End);
-        lua.set_function("ImGui_SetNextWindowPos", &ImGui_SetNextWindowPos);
-        lua.set_function("ImGui_SetNextWindowWorldPos", [&](float x, float y)
+        lua->set_function("ImGui_Text", &ImGui_Text);
+        lua->set_function("ImGui_Begin", &ImGui_Begin);
+        lua->set_function("ImGui_End", &ImGui_End);
+        lua->set_function("ImGui_SetNextWindowPos", &ImGui_SetNextWindowPos);
+        lua->set_function("ImGui_SetNextWindowWorldPos", [&](float x, float y)
             {
                 // Transform from world to screen space
                 const v4f pos_ss = (VP * P * V) * v4f{ x, y, 0.0f, 1.0f };
@@ -1075,26 +1090,33 @@ bool Scene::init(const v2i& windowSize)
         bind_conditional_observer(lua, observer);
 
         // Load & execute init script
-        lua.safe_script_file(script_dir + "init.lua");
+        lua->safe_script_file(script_dir + "init.lua");
 
-        // Init the game itself
-        assert(lua["game"].valid());
-        assert(lua["game"]["init"].valid());
-        assert(lua["game"]["destroy"].valid());
-        lua["game"]["init"](lua["game"]);
+        // Validate & init the game table
+        {
+            auto lua_game = lua->operator[]("game");
+            assert(lua_game.valid());
+            assert(lua_game["init"].valid());
+            assert(lua_game["destroy"].valid());
+            lua_game["init"](lua_game);
+        }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
 
-        // Inspect the Lua state
-        std::cout << "Inspect Lua engine state:" << std::endl;
-        dump_lua_state(lua, lua["engine"], "    ");
-        std::cout << "Inspect Lua game state:" << std::endl;
-        dump_lua_state(lua, lua["game"], "    ");
+        // Dump Lua game & engine states
+        {
+            auto lua_game = lua->operator[]("game");
+            auto lua_engine = lua->operator[]("engine");
+            std::cout << "Inspect Lua engine state:" << std::endl;
+            dump_lua_state(lua, lua_engine, "    ");
+            std::cout << "Inspect Lua game state:" << std::endl;
+            dump_lua_state(lua, lua_game, "    ");
+        }
 
         // Debugging inspection
         auto debug_entity = create_entity_and_attach_to_scenegraph();// registry.create();
-        registry.emplace<DebugClass>(debug_entity);
+        registry->template emplace<DebugClass>(debug_entity);
 
 #if 0
         // Send event C++ <-> C++
@@ -1231,8 +1253,8 @@ void Scene::update(float time_s, float deltaTime_s)
             entt::entity entity,
             entt::entity other_entity)
             {
-                if (!registry.all_of<ScriptedBehaviorComponent>(entity)) return;
-                auto& script_comp = registry.get<ScriptedBehaviorComponent>(entity);
+                if (!registry->all_of<ScriptedBehaviorComponent>(entity)) return;
+                auto& script_comp = registry->get<ScriptedBehaviorComponent>(entity);
                 for (auto& script : script_comp.scripts)
                 {
                     assert(script.self.valid());
@@ -1240,19 +1262,19 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             };
 
-        auto view = registry.view<CircleColliderGridComponent>();
+        auto view = registry->view<CircleColliderGridComponent>();
         for (auto it1 = view.begin(); it1 != view.end(); ++it1)
         {
             auto entity1 = *it1;
-            const auto& transform1 = registry.get<Transform>(entity1);
-            const auto& collider1 = view.get<CircleColliderGridComponent>(entity1);
+            const auto& transform1 = registry->get<Transform>(entity1);
+            const auto& collider1 = view.template get<CircleColliderGridComponent>(entity1);
             if (!collider1.is_active) continue;
 
             const auto R1 = m2f::rotation(transform1.angle_global);
             for (auto it2 = it1; ++it2 != view.end(); )
             {
                 auto entity2 = *it2;
-                const auto& transform2 = registry.get<Transform>(entity2);
+                const auto& transform2 = registry->get<Transform>(entity2);
                 const auto& collider2 = view.get<CircleColliderGridComponent>(entity2);
 
                 if (!collider2.is_active) continue;
@@ -1400,7 +1422,7 @@ void Scene::renderUI()
 
     {
         size_t nbr_entities = 0;
-        auto view = registry.view<entt::entity>();
+        auto view = registry->view<entt::entity>();
         for (auto entity : view) nbr_entities++;
         ImGui::Text("Nbr of active entities %i", (int)nbr_entities);
     }
@@ -1426,7 +1448,7 @@ void Scene::renderUI()
     }
 
     static Editor::InspectorState inspector{};
-    inspector.context = Editor::Context {&registry, &lua};
+    inspector.context = Editor::Context{ registry, lua };
     // inspector.registry = &registry;
     // inspector.lua = &lua;
 
@@ -1491,13 +1513,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render QuadComponents
     // Todo: Remove Transform from view
     {
-        auto view = registry.view<Transform, QuadComponent>();
+        auto view = registry->view<Transform, QuadComponent>();
         float z = 0.0f;
         for (auto entity : view)
         {
-            auto& transform_comp = registry.get<Transform>(entity);
+            auto& transform_comp = registry->get<Transform>(entity);
 
-            auto& quad_comp = registry.get<QuadComponent>(entity);
+            auto& quad_comp = registry->get<QuadComponent>(entity);
             if (!quad_comp.is_visible) continue;
 
             const auto pos = v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f };
@@ -1515,13 +1537,13 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 #if 1
     // Render all QuadGridComponent
     {
-        auto view = registry.view<QuadGridComponent>();
+        auto view = registry->view<QuadGridComponent>();
         for (auto entity : view)
         {
             auto& quadgrid = view.get<QuadGridComponent>(entity);
             if (!quadgrid.is_active) continue;
 
-            auto& transform_comp = registry.get<Transform>(entity);
+            auto& transform_comp = registry->get<Transform>(entity);
             const auto G = m4f::TRS(
                 v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
                 transform_comp.angle_global, v3f_001,
@@ -1549,12 +1571,12 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render all CircleColliderGridComponent
     if (debug_render)
     {
-        auto view = registry.view<CircleColliderGridComponent>();
+        auto view = registry->view<CircleColliderGridComponent>();
         for (auto entity : view)
         {
             auto& collidergrid = view.get<CircleColliderGridComponent>(entity);
 
-            auto& transform_comp = registry.get<Transform>(entity);
+            auto& transform_comp = registry->get<Transform>(entity);
             const auto G = m4f::TRS(
                 v3f{ transform_comp.x_global, transform_comp.y_global, 0.0f },
                 transform_comp.angle_global, v3f_001,
@@ -1617,7 +1639,10 @@ void Scene::destroy()
     std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
 
     std::cout << "Destroying game..." << std::endl;
-    lua["game"]["destroy"](lua["game"]); // <- entities flagged for destruction ???
+    {
+        auto lua_game = lua->operator[]("game");
+        lua_game["destroy"](lua_game); // <- entities flagged for destruction ???
+    }
 
     std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
     destroy_pending_entities();
@@ -1628,18 +1653,23 @@ void Scene::destroy()
 
     std::cout << "Entities remaining in registry: ";
     {
-        auto view = registry.view<entt::entity>();
+        auto view = registry->view<entt::entity>();
         for (auto entity : view) std::cout << entt::to_integral(entity) << " ";
         std::cout << std::endl;
     }
-    std::cout << "Clearing registry...";
-    registry.clear();
+    std::cout << "Clearing registry..." << std::endl;
+    registry->clear();
 
     // Check so entities were not queued for destruction by registry.clear()
     assert(!entities_pending_destruction.size());
 
-    is_initialized = false;
-
+    std::cout << "Nodes remaining in scene graph:" << std::endl;
     scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+
+    // For clarity
+    registry.reset();
+    lua.reset();
+
+    is_initialized = false;
     std::cout << "Done: Scene::destroy()" << std::endl;
 }

@@ -25,8 +25,8 @@ namespace Editor {
             std::string name = "(no name)";
         };
 
-               // entt::registry <- later
-        // entt::entity entity; <- later ?
+        //entt::registry // WEAK PTR
+        //entt::entity entity;
 
         // MetaCommandDescriptor
          entt::id_type comp_id;

@@ -84,7 +84,7 @@ public:
         // for (auto& node : tree.nodes) node.transform_hnd->global_tfm = m4f_1;
     }
 
-    void traverse(entt::registry& registry);
+    void traverse(std::shared_ptr<entt::registry>& registry);
     // CAN WE LAMBDA THIS?
     //
 //     void traverse()
@@ -131,10 +131,10 @@ public:
 // private:
 
     void dump_to_cout(
-        entt::registry& registry,
+        auto& registry,
         entt::meta_type meta_type_with_name)
     {
-        std::cout << "Scene graph nodes:" << std::endl;
+        //std::cout << "Scene graph nodes:" << std::endl;
         tree.traverse_depthfirst([&](const auto& entity, size_t index, size_t level)
             {
                 //auto entity = node.m_payload;

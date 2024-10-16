@@ -16,11 +16,11 @@ namespace Meta {
 
     nlohmann::json serialize_any(const entt::meta_any& meta_any);
 
-    nlohmann::json serialize_registry(entt::registry& registry);
+    nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry);
 
     void deserialize_any(const nlohmann::json& object_json, entt::meta_any& meta_any);
 
-    void deserialize_registry(const nlohmann::json& json, entt::registry& registry);
+    void deserialize_registry(const nlohmann::json& json, auto& registry);
 
 } // namespace Meta
 

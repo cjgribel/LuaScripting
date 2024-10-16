@@ -8,7 +8,7 @@
 #ifndef Context_hpp
 #define Context_hpp
 
-//#include <memory> // shared_ptr
+#include <memory>
 #include <entt/fwd.hpp>
 #include <sol/forward.hpp>
 
@@ -16,8 +16,8 @@ namespace Editor {
 
     struct Context
     {
-        entt::registry* registry;   // shared_ptr ?
-        sol::state* lua;            // shared_ptr ?
+        std::shared_ptr<entt::registry> registry;
+        std::shared_ptr<sol::state> lua;
 
         // shared_ptr<Scene>
         // shared_ptr<Resources>

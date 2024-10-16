@@ -11,7 +11,7 @@
 //#include "transform.hpp"
 #include "CoreComponents.hpp"
 
-void SceneGraph::traverse(entt::registry& registry)
+void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
 {
     // std::cout << "traverse:" << std::endl;
     tree.traverse_progressive([&](entt::entity* entity_ptr, entt::entity* entity_parent_ptr) {
@@ -21,14 +21,14 @@ void SceneGraph::traverse(entt::registry& registry)
         // std::cout << ", parent " << Editor::get_entity_name(registry, entity_parent, entt::meta_type{});
         // std::cout << std::endl;
 
-        if (!registry.all_of<Transform>(*entity_ptr)) return;
-        assert(registry.valid(*entity_ptr));
-        auto& tfm_node = registry.get<Transform>(*entity_ptr);
+        if (!registry->template all_of<Transform>(*entity_ptr)) return;
+        assert(registry->valid(*entity_ptr));
+        auto& tfm_node = registry->template get<Transform>(*entity_ptr);
 
-        if (entity_parent_ptr && registry.all_of<Transform>(*entity_parent_ptr))
+        if (entity_parent_ptr && registry->template all_of<Transform>(*entity_parent_ptr))
         {
-            assert(registry.valid(*entity_parent_ptr)); // fix
-            auto& tfm_parent = registry.get<Transform>(*entity_parent_ptr);
+            assert(registry->valid(*entity_parent_ptr)); // fix
+            auto& tfm_parent = registry->template get<Transform>(*entity_parent_ptr);
             tfm_node.x_parent = tfm_parent.x_global;
             tfm_node.y_parent = tfm_parent.y_global;
             tfm_node.angle_parent = tfm_parent.angle_global;

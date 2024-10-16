@@ -55,7 +55,7 @@ namespace Editor {
 #endif
 
     std::string get_entity_name(
-        entt::registry& registry,
+        auto& registry,
         entt::entity entity,
         entt::meta_type meta_type_with_name)
     {
@@ -63,7 +63,7 @@ namespace Editor {
         auto entity_str = std::to_string(entt::to_integral(entity));
 
         // DEBUG
-        if (!registry.valid(entity)) entity_str = entity_str + " [invalid]";
+        if (!registry->valid(entity)) entity_str = entity_str + " [invalid]";
 
         // No meta type to use
         if (!meta_type_with_name) return entity_str;
@@ -73,7 +73,7 @@ namespace Editor {
         if (!meta_data) return entity_str;
 
         // Find storage for component type
-        auto storage = registry.storage(meta_type_with_name.id());
+        auto storage = registry->storage(meta_type_with_name.id());
         if (!storage) return entity_str;
         if (!storage->contains(entity)) return entity_str;
 
@@ -86,14 +86,14 @@ namespace Editor {
         auto data = meta_data.get(comp_any);
 
         // Fetch name from component
-        auto name_ptr = data.try_cast<std::string>();
+        auto name_ptr = data.template try_cast<std::string>();
         // Cast failed
         if (!name_ptr) return entity_str;
 
         // Does NOT return the correct string
 //        return *name_ptr + std::string("###") + entity_str;
 
-        return data.cast<std::string>() + "###" + entity_str;
+        return data.template cast<std::string>() + "###" + entity_str;
     }
 
     bool inspect_enum_any(
@@ -375,11 +375,11 @@ namespace Editor {
         issued_commands.clear();
 #endif
 
-        auto& registry = *inspector.context.registry;
+        auto& registry = inspector.context.registry;
         assert(entity != entt::null);
-        assert(registry.valid(entity));
+        assert(registry->valid(entity));
 
-        for (auto&& [id, type] : registry.storage())
+        for (auto&& [id, type] : registry->storage())
         {
             if (!type.contains(entity)) continue;
 
@@ -459,7 +459,7 @@ namespace Editor {
                 };
 
             // Component
-            auto type = registry.storage(c.comp_id);
+            auto type = registry->storage(c.comp_id);
             assert(type->contains(c.entity));
             entt::meta_type meta_type = entt::resolve(c.comp_id);
             entt::meta_any meta_any = meta_type.from_void(type->value(entity));
@@ -600,9 +600,9 @@ namespace Editor {
         InspectorState& inspector)
     {
         bool mod = false;
-        auto& registry = *inspector.context.registry;
+        auto& registry = inspector.context.registry;
 
-        auto view = registry.view<entt::entity>();
+        auto view = registry->template view<entt::entity>();
         for (auto entity : view)
         {
 #if 0
@@ -612,7 +612,7 @@ namespace Editor {
             if (!inspector.begin_node(entity_name.c_str()))
                 continue;
 
-            for (auto&& [id, type] : registry.storage())
+            for (auto&& [id, type] : registry->storage())
             {
                 if (!type.contains(entity)) continue;
 

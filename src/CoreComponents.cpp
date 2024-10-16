@@ -38,7 +38,7 @@ bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 }
 
 template<>
-void register_meta<Transform>(sol::state& lua)
+void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
 {
     // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
     entt::meta<Transform>()
@@ -66,7 +66,7 @@ void register_meta<Transform>(sol::state& lua)
         //.func<&vec3_to_string>(to_string_hs)
         ;
 
-    lua.new_usertype<Transform>("Transform",
+    lua->new_usertype<Transform>("Transform",
 
         sol::call_constructor,
         sol::factories([](float x, float y, float angle) {
@@ -104,7 +104,7 @@ namespace {
 }
 
 template<>
-void register_meta<HeaderComponent>(sol::state& lua)
+void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
 {
     // Register to entt::meta
 
@@ -128,7 +128,7 @@ void register_meta<HeaderComponent>(sol::state& lua)
 
         // Register to sol
 
-        lua.new_usertype<HeaderComponent>("HeaderComponent",
+        lua->new_usertype<HeaderComponent>("HeaderComponent",
             //sol::constructors<HeaderComponent(), HeaderComponent(const std::string&)>(),
 
             // If the type has defined ctors
@@ -180,7 +180,7 @@ void register_meta<HeaderComponent>(sol::state& lua)
 // === CircleColliderGridComponent ============================================
 
 template<>
-void register_meta<CircleColliderGridComponent>(sol::state& lua)
+void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua)
 {
     entt::meta<CircleColliderGridComponent>()
         .type("CircleColliderGridComponent"_hs).prop(display_name_hs, "CircleColliderGrid")
@@ -219,7 +219,7 @@ void register_meta<CircleColliderGridComponent>(sol::state& lua)
         .data<&linalg::v2f::y>("y"_hs).prop(display_name_hs, "y")
         ;
 
-    lua.new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
+    lua->new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
         "type_id",
         &entt::type_hash<CircleColliderGridComponent>::value,
 
@@ -330,7 +330,7 @@ void register_meta<CircleColliderGridComponent>(sol::state& lua)
 // === IslandFinderComponent ==================================================
 
 template<>
-void register_meta<IslandFinderComponent>(sol::state& lua)
+void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua)
 {
     entt::meta<IslandFinderComponent>()
         .type("IslandFinderComponent"_hs).prop(display_name_hs, "IslandFinder")
@@ -340,7 +340,7 @@ void register_meta<IslandFinderComponent>(sol::state& lua)
         .data<&IslandFinderComponent::islands>("islands"_hs).prop(display_name_hs, "islands") // ???
         ;
 
-    lua.new_usertype<IslandFinderComponent>("IslandFinderComponent",
+    lua->new_usertype<IslandFinderComponent>("IslandFinderComponent",
         "type_id",
         &entt::type_hash<IslandFinderComponent>::value,
         sol::call_constructor,
@@ -366,7 +366,7 @@ void register_meta<IslandFinderComponent>(sol::state& lua)
 // === QuadGridComponent ======================================================
 
 template<>
-void register_meta<QuadGridComponent>(sol::state& lua)
+void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua)
 {
     entt::meta<QuadGridComponent>()
         .type("QuadGridComponent"_hs).prop(display_name_hs, "QuadGrid")
@@ -382,7 +382,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
         .data<&QuadGridComponent::is_active_flags>("is_active_flags"_hs).prop(display_name_hs, "is_active_flags")
         ;
 
-    lua.new_usertype<QuadGridComponent>("QuadGridComponent",
+    lua->new_usertype<QuadGridComponent>("QuadGridComponent",
 
         "type_id",
         &entt::type_hash<QuadGridComponent>::value,
@@ -500,7 +500,7 @@ void register_meta<QuadGridComponent>(sol::state& lua)
 // === DataGridComponent ======================================================
 
 template<>
-void register_meta<DataGridComponent>(sol::state& lua)
+void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
 {
     entt::meta<DataGridComponent>()
         .type("DataGridComponent"_hs).prop(display_name_hs, "DataGrid")
@@ -513,7 +513,7 @@ void register_meta<DataGridComponent>(sol::state& lua)
         .data<&DataGridComponent::slot2>("slot2"_hs).prop(display_name_hs, "slot2")
         ;
 
-    lua.new_usertype<DataGridComponent>("DataGridComponent",
+    lua->new_usertype<DataGridComponent>("DataGridComponent",
         "type_id",
         &entt::type_hash<DataGridComponent>::value,
 
@@ -565,14 +565,14 @@ void register_meta<DataGridComponent>(sol::state& lua)
 
 namespace
 {
-    std::string sol_object_to_string(const sol::state& lua, const sol::object object)
+    std::string sol_object_to_string(std::shared_ptr<const sol::state> lua, const sol::object object)
     {
-        return lua["tostring"](object).get<std::string>();
+        return lua->operator[]("tostring")(object).get<std::string>();
     }
 
-    std::string get_lua_type_name(const sol::state& lua, const sol::object object)
+    std::string get_lua_type_name(std::shared_ptr<const sol::state> lua, const sol::object object)
     {
-        return lua_typename(lua.lua_state(), static_cast<int>(object.get_type()));
+        return lua_typename(lua->lua_state(), static_cast<int>(object.get_type()));
     }
 }
 
@@ -583,7 +583,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
     {
-        ImGui::TextDisabled("%s", sol_object_to_string(*inspector.context.lua, t).c_str());
+        ImGui::TextDisabled("%s", sol_object_to_string(inspector.context.lua, t).c_str());
         return false;
     }
 
@@ -595,7 +595,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::userdata>(sol::userdata& userdata, InspectorState& inspector)
     {
-        auto& lua = *inspector.context.lua;
+        auto& lua = inspector.context.lua;
         bool mod = false;
 
         // Fetch type id of the inspected usertype
@@ -693,7 +693,7 @@ namespace Editor {
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
     {
-        auto& lua = *inspector.context.lua;
+        auto& lua = inspector.context.lua;
         bool mod = false;
 
         for (auto& [key, value] : tbl)
@@ -913,7 +913,7 @@ namespace {
 }
 
 template<>
-void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
+void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
 {
     // TODO: Where should meta for sol stuff be placed (table, function etc)?
     // sol::table
@@ -969,7 +969,7 @@ void register_meta<ScriptedBehaviorComponent>(sol::state& lua)
         .data<&ScriptedBehaviorComponent::BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
         ;
 
-    lua.new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
+    lua->new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
         "type_id",
         &entt::type_hash<ScriptedBehaviorComponent>::value,
         sol::call_constructor,

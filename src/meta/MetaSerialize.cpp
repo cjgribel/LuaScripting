@@ -130,11 +130,11 @@ namespace Meta {
         return json;
     }
 
-    nlohmann::json serialize_registry(entt::registry& registry)
+    nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry)
     {
         nlohmann::json json;
 
-        auto view = registry.view<entt::entity>();
+        auto view = registry->template view<entt::entity>();
         for (auto entity : view)
         {
             std::cout << "Serializing entity "
@@ -144,7 +144,7 @@ namespace Meta {
             entity_json["entity"] = entt::to_integral(entity);
 
             // For all component types
-            for (auto&& [id, type] : registry.storage())
+            for (auto&& [id, type] : registry->storage())
             {
                 if (!type.contains(entity)) continue;
 
@@ -309,7 +309,7 @@ namespace Meta {
         }
     }
 
-    void deserialize_registry(const nlohmann::json& json, entt::registry& registry)
+    void deserialize_registry(const nlohmann::json& json, auto& registry)
     {
         assert(json.is_array());
         for (const auto& entity_json : json)

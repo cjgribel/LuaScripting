@@ -253,24 +253,24 @@ struct LuaEvent {
 // === Meta registration ======================================================
 
 template<>
-void register_meta<Transform>(sol::state& lua);
+void register_meta<Transform>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<HeaderComponent>(sol::state& lua);
+void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<CircleColliderGridComponent>(sol::state& lua);
+void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<IslandFinderComponent>(sol::state& lua);
+void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<QuadGridComponent>(sol::state& lua);
+void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<DataGridComponent>(sol::state& lua);
+void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua);
 
 template<>
-void register_meta<ScriptedBehaviorComponent>(sol::state& lua);
+void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua);
 
 #endif // CoreComponents_hpp

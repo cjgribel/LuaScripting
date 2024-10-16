@@ -17,7 +17,7 @@ namespace Editor {
     /// @param registry 
     /// @param src_entity 
     /// @param dst_entity 
-    void clone_entity(entt::registry& registry, entt::entity src_entity, entt::entity dst_entity);
+    void clone_entity(std::shared_ptr<entt::registry>& registry, entt::entity src_entity, entt::entity dst_entity);
 
 }
 
