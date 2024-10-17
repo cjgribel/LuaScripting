@@ -10,9 +10,12 @@
 #define MetaInspect_hpp
 
 #include <entt/entt.hpp>
-#include "CommandQueue.hpp"
+//#include "CommandQueue.hpp"
+#include "EditComponentCommand.hpp"
 
 namespace Editor {
+
+    class ComponentCommandBuilder;
 
     /// @brief Create a name for an entity suitable for imgui widgets
     /// @param registry 
@@ -20,7 +23,7 @@ namespace Editor {
     /// @param comp_with_name_meta_data Meta type of a component with a "name" data field
     /// @return A string in format [entity id] or [name]##[entity id]
     std::string get_entity_name(
-        auto& registry,
+        std::shared_ptr<entt::registry>& registry,
         entt::entity entity,
         entt::meta_type meta_type_with_name);
 
@@ -32,15 +35,18 @@ namespace Editor {
 
     bool inspect_any(
         entt::meta_any& any,
-        InspectorState& inspector);
+        InspectorState& inspector,
+        ComponentCommandBuilder& cmd_builder);
 
     bool inspect_entity(
         entt::entity entity,
         InspectorState& inspector);
 
+#if 0
     bool inspect_registry(
         entt::meta_type comp_with_name,
         InspectorState& inspector);
+#endif
 
 }
 

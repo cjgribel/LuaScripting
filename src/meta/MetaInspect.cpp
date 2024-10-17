@@ -10,10 +10,12 @@
 #include <sstream>
 #include <cassert>
 #include "imgui.h"
-#include "MetaInspect.hpp"
-#include "InspectType.hpp"
 #include "meta_literals.h"
 #include "meta_aux.h"
+
+#include "MetaInspect.hpp"
+#include "InspectType.hpp"
+#include "EditComponentCommand.hpp"
 
 #define USE_COMMANDS
 
@@ -55,7 +57,7 @@ namespace Editor {
 #endif
 
     std::string get_entity_name(
-        auto& registry,
+        std::shared_ptr<entt::registry>& registry,
         entt::entity entity,
         entt::meta_type meta_type_with_name)
     {
@@ -143,7 +145,8 @@ namespace Editor {
 
     bool inspect_any(
         entt::meta_any& any,
-        InspectorState& inspector)
+        InspectorState& inspector,
+        ComponentCommandBuilder& cmd_builder)
     {
         assert(any);
         bool mod = false; // TODO: not used yet
@@ -223,7 +226,7 @@ namespace Editor {
                         if (readonly) inspector.begin_disabled();
 
                         // Inspect
-                        mod |= inspect_any(data_any, inspector);
+                        mod |= inspect_any(data_any, inspector, cmd_builder);
 #ifndef USE_COMMANDS
                         // Update data of the current object
                         meta_data.set(any, data_any);
@@ -260,7 +263,7 @@ namespace Editor {
                     meta_command.meta_path.push_back(meta_entry);
 
                     // ImGui::SetNextItemWidth(-FLT_MIN);
-                    mod |= inspect_any(v, inspector);
+                    mod |= inspect_any(v, inspector, cmd_builder);
 
                     // Pop meta command path
                     meta_command.meta_path.pop_back();
@@ -306,7 +309,7 @@ namespace Editor {
                         // modified).
                         // Workaround: disable all key inspections explicitly
                         inspector.begin_disabled();
-                        inspect_any(key_any, inspector); // key_any holds a const object
+                        inspect_any(key_any, inspector, cmd_builder); // key_any holds a const object
                         inspector.end_disabled();
                         inspector.end_node();
                     }
@@ -323,7 +326,7 @@ namespace Editor {
                         ImGui::SetNextItemOpen(true);
                         if (inspector.begin_node("[value]"))
                         {
-                            mod |= inspect_any(mapped_any, inspector);
+                            mod |= inspect_any(mapped_any, inspector, cmd_builder);
                             inspector.end_node();
                         }
 #ifdef USE_COMMANDS
@@ -341,7 +344,7 @@ namespace Editor {
         else
         {
             // Try casting the meta_any to a primitive type and perform the inspection
-            bool res = try_apply(any, [&any, &mod, &inspector](auto& value) {
+            bool res = try_apply(any, [&](auto& value) {
 #ifdef USE_COMMANDS
                 // Inspect a copy of the value and issue command if a change is detected
                 auto copy = value;
@@ -351,6 +354,12 @@ namespace Editor {
                     meta_command.new_value = copy;
                     assert(!meta_command.is_used); meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
+                    //
+                    assert(!inspector.cmd_queue.expired());
+                    auto cmd_queue = inspector.cmd_queue.lock();
+                    auto cmd = CommandFactory::Create<ComponentCommand>(cmd_builder.build());
+                    cmd_queue->add(cmd);
+
                     mod = true;
                 }
 #else
@@ -373,6 +382,8 @@ namespace Editor {
 #ifdef USE_COMMANDS
         // meta command: clear issued
         issued_commands.clear();
+
+        ComponentCommandBuilder cmd_builder;
 #endif
 
         auto& registry = inspector.context.registry;
@@ -396,7 +407,7 @@ namespace Editor {
 #endif
 
                     auto comp_any = meta_type.from_void(type.value(entity));
-                    mod |= inspect_any(comp_any, inspector);
+                    mod |= inspect_any(comp_any, inspector, cmd_builder);
                     inspector.end_node();
                 }
             }
@@ -595,6 +606,7 @@ namespace Editor {
         return mod;
     }
 
+#if 0
     bool inspect_registry(
         entt::meta_type name_comp_type,
         InspectorState& inspector)
@@ -638,5 +650,6 @@ namespace Editor {
         }
         return mod;
     }
+#endif
 
 } // namespace Editor

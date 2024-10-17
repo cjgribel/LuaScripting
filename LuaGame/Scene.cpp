@@ -782,7 +782,7 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_registry(Editor::InspectorState& inspector)
+    void inspect_entity(Editor::InspectorState& inspector)
     {
         auto& registry = inspector.context.registry;
         static bool open = true;
@@ -913,13 +913,13 @@ bool Scene::init(const v2i& windowSize)
     register_basic_type<std::string>();
     registerDebugClass();
 
+    registry = std::make_shared<entt::registry>();
+    registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>(); // Or, rely on RAII to unload scripts?
+
+    cmd_queue = std::make_shared<Editor::CommandQueue>();
+
     try
     {
-        // Create enTT registry
-        registry = std::make_shared<entt::registry>();
-
-        // Or, rely on RAII to unload scripts?
-        registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
         // Create Lua state
         lua = std::make_shared<sol::state>(sol::c_call<decltype(&lua_panic_func), &lua_panic_func>);
@@ -1449,10 +1449,12 @@ void Scene::renderUI()
 
     static Editor::InspectorState inspector{};
     inspector.context = Editor::Context{ registry, lua };
-    // inspector.registry = &registry;
-    // inspector.lua = &lua;
+    inspector.cmd_queue = cmd_queue;
+    // + cmd_queue + CommandBuilder ???
 
-    Inspector::inspect_registry(inspector);
+    Inspector::inspect_entity(inspector);
+    std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
+    // execute cmd_queue
 
     Inspector::inspect_scenegraph(scenegraph, inspector);
 
@@ -1666,7 +1668,11 @@ void Scene::destroy()
     std::cout << "Nodes remaining in scene graph:" << std::endl;
     scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
 
-    // For clarity
+    // Doesn't need to be explicit
+    std::cout << "cmd_queue.use_count() " << cmd_queue.use_count() << std::endl;
+    std::cout << "registry.use_count() " << registry.use_count() << std::endl;
+    std::cout << "lua.use_count() " << lua.use_count() << std::endl;
+    cmd_queue.reset();
     registry.reset();
     lua.reset();
 

@@ -6,7 +6,9 @@
 // #include <sol/forward.hpp>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
+
 #include "Context.hpp"
+#include "CommandQueue.hpp"
 
 namespace Editor {
 
@@ -16,8 +18,7 @@ namespace Editor {
     struct InspectorState
     {
         Context context;
-        // sol::state* lua;
-        // entt::registry* registry;
+        std::weak_ptr<CommandQueue> cmd_queue;
 
         bool imgui_disabled = false;
         entt::entity selected_entity = entt::null;

@@ -71,7 +71,7 @@ namespace Editor {
         auto& registry(std::weak_ptr<entt::registry> registry) { command.registry = registry; return *this; }
         auto& entity(entt::entity entity) { command.entity = entity; return *this; }
         auto& component(entt::id_type id) { command.component_id = id; return *this; }
-        auto& prev_value(const entt::meta_any& value) { command.old_value = value; return *this; }
+        auto& prev_value(const entt::meta_any& value) { command.prev_value = value; return *this; }
         auto& new_value(const entt::meta_any& value) { command.new_value = value; return *this; }
 
         auto& push_path_data(entt::id_type id)

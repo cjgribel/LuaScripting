@@ -42,7 +42,7 @@ class Scene : public eeng::SceneBase
     ConditionalObserver observer{};
 
     // (Editor) Command queue
-    Editor::CommandQueue cmd_queue {};
+    std::shared_ptr<Editor::CommandQueue> cmd_queue {};
 
     entt::entity create_entity_and_attach_to_scenegraph(entt::entity parent_entity = entt::null);
 

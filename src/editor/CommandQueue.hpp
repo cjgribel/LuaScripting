@@ -28,10 +28,13 @@ namespace Editor {
 
         int current_index = -1;
 
+    public:
         void add(CommandPtr& command)
         {
             queue.push_back(std::move(command));
         }
+
+        size_t size() { return queue.size(); }
 
         void execute_pending()
         {
