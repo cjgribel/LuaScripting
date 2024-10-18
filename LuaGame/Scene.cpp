@@ -836,7 +836,39 @@ namespace Inspector
 
         ImGui::End(); // Window
     }
-}
+
+    void inspect_command_queue(Editor::InspectorState& inspector)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Command Queue", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        assert(!inspector.cmd_queue.expired());
+        auto cmd_queue = inspector.cmd_queue.lock();
+
+        bool can_undo = cmd_queue->can_undo();
+        bool can_redo = cmd_queue->commands_pending();
+
+        if (!can_undo) ImGui::BeginDisabled();
+        if (ImGui::Button("Undo")) cmd_queue->undo_last();
+        if (!can_undo) ImGui::EndDisabled();
+
+        ImGui::SameLine();
+        if (!can_redo) ImGui::BeginDisabled();
+        if (ImGui::Button("Redo")) cmd_queue->execute_next();
+        if (!can_redo) ImGui::EndDisabled();
+
+        // list
+
+        ImGui::End(); // Window
+    }
+} // Inspector
 
 inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 {
@@ -1454,9 +1486,11 @@ void Scene::renderUI()
 
     Inspector::inspect_entity(inspector);
     //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
-    cmd_queue->execute_pending();
-    // execute cmd_queue
+    // cmd_queue->execute_pending();
 
+    Inspector::inspect_command_queue(inspector);
+
+    // Before inspect_entity ???
     Inspector::inspect_scenegraph(scenegraph, inspector);
 
     // float available_width = ImGui::GetContentRegionAvail().x;

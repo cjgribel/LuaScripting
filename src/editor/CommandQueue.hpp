@@ -26,7 +26,7 @@ namespace Editor {
         // std::vector<CommandPtr> queue;
         std::vector<std::unique_ptr<Command>> queue;
 
-        int current_index = 0;
+        int current_index = 0; // Index awaiting execution
 
     public:
         void add(CommandPtr&& command)
@@ -52,9 +52,16 @@ namespace Editor {
             while (commands_pending()) execute_next();
         }
 
+        bool can_undo()
+        {
+            assert(current_index <= queue.size());
+            return current_index > 0;
+        }
+
         void undo_last()
         {
-
+            if (!can_undo()) return;
+            queue[--current_index]->undo();
         }
 
         void clear_executed()
