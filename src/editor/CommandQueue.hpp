@@ -26,19 +26,35 @@ namespace Editor {
         // std::vector<CommandPtr> queue;
         std::vector<std::unique_ptr<Command>> queue;
 
-        int current_index = -1;
+        int current_index = 0;
 
     public:
-        void add(CommandPtr& command)
+        void add(CommandPtr&& command)
         {
             queue.push_back(std::move(command));
         }
 
         size_t size() { return queue.size(); }
 
+        bool commands_pending()
+        {
+            return current_index >= 0 && current_index < queue.size();
+        }
+
+        void execute_next()
+        {
+            if (!commands_pending()) return;
+            queue[current_index++]->execute();
+        }
+
         void execute_pending()
         {
-            //
+            while (commands_pending()) execute_next();
+        }
+
+        void undo_last()
+        {
+
         }
 
         void clear_executed()

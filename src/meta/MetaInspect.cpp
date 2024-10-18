@@ -174,6 +174,14 @@ namespace Editor {
                     meta_command.new_value = copy_any;
                     assert(!meta_command.is_used); meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
+
+                    // Build & issue command
+                    cmd_builder.prev_value(any).new_value(copy_any);
+                    assert(!inspector.cmd_queue.expired());
+                    auto cmd_queue = inspector.cmd_queue.lock();
+                    auto cmd = cmd_builder.build();
+                    // cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+
                     mod = true;
                 }
 #else
@@ -195,6 +203,14 @@ namespace Editor {
                     meta_command.new_value = copy_any;
                     assert(!meta_command.is_used); meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
+
+                    // Build & issue command
+                    cmd_builder.prev_value(any).new_value(copy_any);
+                    assert(!inspector.cmd_queue.expired());
+                    auto cmd_queue = inspector.cmd_queue.lock();
+                    //auto cmd = cmd_builder.build();
+                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+
                     mod = true;
                 }
 #else
@@ -218,6 +234,8 @@ namespace Editor {
                         MetaEntry meta_entry{};
                         meta_entry.type = MetaEntry::Type::Data; meta_entry.data_id = id; meta_entry.name = key_name;
                         meta_command.meta_path.push_back(meta_entry);
+
+                        cmd_builder.push_path_data(id, key_name);
 #endif
                         // Obtain copy of data value
                         entt::meta_any data_any = meta_data.get(any);
@@ -236,6 +254,8 @@ namespace Editor {
 #ifdef USE_COMMANDS
                         // Pop meta command path
                         meta_command.meta_path.pop_back();
+
+                        cmd_builder.pop_path();
 #endif
                         inspector.end_node();
                     }
@@ -262,11 +282,15 @@ namespace Editor {
                     meta_entry.type = MetaEntry::Type::Index; meta_entry.index = count; meta_entry.name = std::to_string(count);
                     meta_command.meta_path.push_back(meta_entry);
 
+                    cmd_builder.push_path_index(count, std::to_string(count));
+
                     // ImGui::SetNextItemWidth(-FLT_MIN);
                     mod |= inspect_any(v, inspector, cmd_builder);
 
                     // Pop meta command path
                     meta_command.meta_path.pop_back();
+
+                    cmd_builder.pop_path();
 #else
                     // ImGui::SetNextItemWidth(-FLT_MIN);
                     mod |= inspect_any(v, inspector); // Will change the actual element
@@ -320,6 +344,8 @@ namespace Editor {
                         MetaEntry meta_entry{};
                         meta_entry.type = MetaEntry::Type::Key; meta_entry.key_any = key_any; meta_entry.name = std::to_string(count);
                         meta_command.meta_path.push_back(meta_entry);
+
+                        cmd_builder.push_path_key(key_any, std::to_string(count));
 #endif
 
                         // Inspect mapped value
@@ -332,6 +358,8 @@ namespace Editor {
 #ifdef USE_COMMANDS
                         // Pop meta command path
                         meta_command.meta_path.pop_back();
+
+                        cmd_builder.pop_path();
 #endif
                     }
 
@@ -347,18 +375,21 @@ namespace Editor {
             bool res = try_apply(any, [&](auto& value) {
 #ifdef USE_COMMANDS
                 // Inspect a copy of the value and issue command if a change is detected
-                auto copy = value;
-                if (Editor::inspect_type(copy, inspector))
+                auto value_copy = value;
+                if (Editor::inspect_type(value_copy, inspector))
                 {
                     meta_command.old_value = any;
-                    meta_command.new_value = copy;
+                    meta_command.new_value = value_copy;
                     assert(!meta_command.is_used); meta_command.is_used = true;
                     issued_commands.push_back(meta_command);
                     //
+
+                    // Build & issue command
+                    cmd_builder.prev_value(any).new_value(value_copy);
                     assert(!inspector.cmd_queue.expired());
                     auto cmd_queue = inspector.cmd_queue.lock();
-                    //auto cmd = CommandFactory::Create<ComponentCommand>(cmd_builder.build());
-                    //cmd_queue->add(cmd);
+                    //auto cmd = cmd_builder.build();
+                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
 
                     mod = true;
                 }
@@ -404,6 +435,11 @@ namespace Editor {
                     // Reset meta command for each component type
                     meta_command = MetaCommandDescriptor{};
                     meta_command.entity = entity; meta_command.comp_id = id;
+
+                    cmd_builder.reset().
+                        registry(inspector.context.registry)
+                        .entity(entity)
+                        .component(id);
 #endif
 
                     auto comp_any = meta_type.from_void(type.value(entity));
@@ -419,6 +455,8 @@ namespace Editor {
         }
 
 #ifdef USE_COMMANDS
+// #define EXECUTE_COMMAND
+#ifdef EXECUTE_COMMAND
         // check issued command (typically one?)
         for (auto& c : issued_commands)
         {
@@ -603,6 +641,7 @@ namespace Editor {
             meta_any.assign(any_new);
         }
 #endif
+#endif
         return mod;
     }
 
@@ -643,11 +682,11 @@ namespace Editor {
                 {
                     //All types exposed to Lua are going to have a meta type
                     assert(false && "Meta-type required");
-                }
-            }
+        }
+    }
             inspector.end_node();
 #endif
-        }
+}
         return mod;
     }
 #endif

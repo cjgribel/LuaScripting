@@ -1453,7 +1453,8 @@ void Scene::renderUI()
     // + cmd_queue + CommandBuilder ???
 
     Inspector::inspect_entity(inspector);
-    std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
+    //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
+    cmd_queue->execute_pending();
     // execute cmd_queue
 
     Inspector::inspect_scenegraph(scenegraph, inspector);
