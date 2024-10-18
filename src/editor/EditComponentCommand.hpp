@@ -39,27 +39,22 @@ namespace Editor {
 
         friend class ComponentCommandBuilder;
 
+        void traverse_and_set_meta_type(entt::meta_any& value_any);
+
     public:
         ComponentCommand()
         {
 
         }
 
-        // During CMD CREATION vs CMD EXECUTION
         void execute() override
         {
-            // if (auto registry = registry_.lock()) {
-            //     // Perform action on lockedRegistry
-            // }
-            // else {
-            //     // Handle case where the registry is no longer alive
-            //     std::cerr << "Registry is no longer available. Command cannot be executed.\n";
-            // }
+            traverse_and_set_meta_type(new_value);
         }
 
         void undo() override
         {
-
+            traverse_and_set_meta_type(prev_value);
         }
     };
 
@@ -103,7 +98,7 @@ namespace Editor {
         auto& clear()
         {
             assert(!command.meta_path.entries.size() && "Meta path not empty when clearing");
-            command = ComponentCommand{}; 
+            command = ComponentCommand{};
             return *this;
         }
 
@@ -118,7 +113,12 @@ namespace Editor {
             assert(command.new_value);
 
             assert(!command.meta_path.entries.empty() && "Meta path empty");
-            // TODO: first must be Data; Index & Key must be followed by Data ...
+            /*
+                first must be Data
+                Index & Key must be followed by Data
+                No entry can None
+                relevant stuff set for Data, Index, Key
+             */
 
             return command;
         }

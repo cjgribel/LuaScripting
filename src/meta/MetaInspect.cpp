@@ -357,8 +357,8 @@ namespace Editor {
                     //
                     assert(!inspector.cmd_queue.expired());
                     auto cmd_queue = inspector.cmd_queue.lock();
-                    auto cmd = CommandFactory::Create<ComponentCommand>(cmd_builder.build());
-                    cmd_queue->add(cmd);
+                    //auto cmd = CommandFactory::Create<ComponentCommand>(cmd_builder.build());
+                    //cmd_queue->add(cmd);
 
                     mod = true;
                 }
