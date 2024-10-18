@@ -179,8 +179,8 @@ namespace Editor {
                     cmd_builder.prev_value(any).new_value(copy_any);
                     assert(!inspector.cmd_queue.expired());
                     auto cmd_queue = inspector.cmd_queue.lock();
-                    auto cmd = cmd_builder.build();
-                    // cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+                    // auto cmd = cmd_builder.build();
+                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
 
                     mod = true;
                 }
@@ -455,7 +455,7 @@ namespace Editor {
         }
 
 #ifdef USE_COMMANDS
-// #define EXECUTE_COMMAND
+        // #define EXECUTE_COMMAND
 #ifdef EXECUTE_COMMAND
         // check issued command (typically one?)
         for (auto& c : issued_commands)
@@ -682,11 +682,11 @@ namespace Editor {
                 {
                     //All types exposed to Lua are going to have a meta type
                     assert(false && "Meta-type required");
-        }
-    }
+                }
+            }
             inspector.end_node();
 #endif
-}
+        }
         return mod;
     }
 #endif
