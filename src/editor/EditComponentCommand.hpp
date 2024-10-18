@@ -20,7 +20,7 @@ namespace Editor {
             enum class Type : int { None, Data, Index, Key } type = Type::None;
 
             entt::id_type data_id;  // entering data field
-            size_t index;           // entering seq. container index
+            int index{ -1 };         // entering seq. container index
             entt::meta_any key_any; // entering assoc. container key
 
             std::string name;       // for debugging
@@ -77,7 +77,7 @@ namespace Editor {
             return *this;
         }
 
-        auto& push_path_index(size_t index)
+        auto& push_path_index(int index)
         {
             command.meta_path.entries.push_back(
                 MetaPath::Entry{ .type = MetaPath::Entry::Type::Index, .index = index }
@@ -102,9 +102,10 @@ namespace Editor {
             return *this;
         }
 
-        // Validate and build the final EditComponentCommand
         auto build()
         {
+            // Valdiate before returning command instance 
+
             assert(!command.registry.expired() && "registry pointer expired");
             assert(command.entity != entt::null && "entity invalid");
             assert(command.component_id != 0 && "component id invalid");
@@ -112,13 +113,40 @@ namespace Editor {
             assert(command.prev_value);
             assert(command.new_value);
 
-            assert(!command.meta_path.entries.empty() && "Meta path empty");
-            /*
-                first must be Data
-                Index & Key must be followed by Data
-                No entry can None
-                relevant stuff set for Data, Index, Key
-             */
+            assert(command.meta_path.entries.size() && "Meta path empty");
+            {
+                bool last_was_index_or_key = false;
+                for (int i = 0; i < command.meta_path.entries.size(); i++)
+                {
+                    auto& entry = command.meta_path.entries[i];
+
+                    // First entry must be Data (enter data member of a component)
+                    assert(i > 0 || entry.type == MetaPath::Entry::Type::Data);
+
+                    // Check so relevant values are set for each entry type
+                    assert(entry.type != MetaPath::Entry::Type::Data || entry.data_id);
+                    assert(entry.type != MetaPath::Entry::Type::Index || entry.index > -1);
+                    assert(entry.type != MetaPath::Entry::Type::Key || entry.key_any);
+
+                    // Index and Key entries must be followed by a Data entry
+                    // assert(!last_was_index_or_key ||
+                    //     (last_was_index_or_key && entry.type == MetaPath::Entry::Type::Data));
+
+                    // if (entry.type == MetaPath::Entry::Type::Index ||
+                    //     entry.type == MetaPath::Entry::Type::Key)
+                    // {
+                    //     assert(command.meta_path.entries.size() > i + 1);
+                    //     assert(command.meta_path.entries[i + 1].type == MetaPath::Entry::Type::Data);
+                    // }
+                    // if (entry.type == MetaPath::Entry::Type::Data) { assert(entry.data_id); }
+                    // if (entry.type == MetaPath::Entry::Type::Index) { assert(entry.index != -1); }
+                    // if (entry.type == MetaPath::Entry::Type::Key) { assert(entry.key); }
+
+                    last_was_index_or_key =
+                        entry.type == MetaPath::Entry::Type::Index ||
+                        entry.type == MetaPath::Entry::Type::Key;
+                }
+            }
 
             return command;
         }
