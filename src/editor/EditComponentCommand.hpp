@@ -37,6 +37,8 @@ namespace Editor {
 
         entt::meta_any prev_value{}, new_value{};
 
+        std::string display_name;
+
         friend class ComponentCommandBuilder;
 
         void traverse_and_set_meta_type(entt::meta_any& value_any);
@@ -55,6 +57,12 @@ namespace Editor {
         void undo() override
         {
             traverse_and_set_meta_type(prev_value);
+        }
+
+        std::string get_name() override
+        {
+            return meta_path.entries.back().name;
+            // return display_name;
         }
     };
 
@@ -128,24 +136,16 @@ namespace Editor {
                     assert(entry.type != MetaPath::Entry::Type::Index || entry.index > -1);
                     assert(entry.type != MetaPath::Entry::Type::Key || entry.key_any);
 
-                    // Index and Key entries must be followed by a Data entry
-                    // assert(!last_was_index_or_key ||
-                    //     (last_was_index_or_key && entry.type == MetaPath::Entry::Type::Data));
-
-                    // if (entry.type == MetaPath::Entry::Type::Index ||
-                    //     entry.type == MetaPath::Entry::Type::Key)
-                    // {
-                    //     assert(command.meta_path.entries.size() > i + 1);
-                    //     assert(command.meta_path.entries[i + 1].type == MetaPath::Entry::Type::Data);
-                    // }
-                    // if (entry.type == MetaPath::Entry::Type::Data) { assert(entry.data_id); }
-                    // if (entry.type == MetaPath::Entry::Type::Index) { assert(entry.index != -1); }
-                    // if (entry.type == MetaPath::Entry::Type::Key) { assert(entry.key); }
-
                     last_was_index_or_key =
                         entry.type == MetaPath::Entry::Type::Index ||
                         entry.type == MetaPath::Entry::Type::Key;
                 }
+            }
+
+            // Build a display name
+            for (int i = 0; i < command.meta_path.entries.size(); i++)
+            {
+                // ...
             }
 
             return command;

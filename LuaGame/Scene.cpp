@@ -851,22 +851,48 @@ namespace Inspector
             return;
         }
 
+        // Fetch state
         assert(!inspector.cmd_queue.expired());
         auto cmd_queue = inspector.cmd_queue.lock();
-
         bool can_undo = cmd_queue->can_undo();
         bool can_redo = cmd_queue->commands_pending();
 
+        // Undo bitton
         if (!can_undo) ImGui::BeginDisabled();
         if (ImGui::Button("Undo")) cmd_queue->undo_last();
         if (!can_undo) ImGui::EndDisabled();
 
+        // Redo bitton
         ImGui::SameLine();
         if (!can_redo) ImGui::BeginDisabled();
         if (ImGui::Button("Redo")) cmd_queue->execute_next();
         if (!can_redo) ImGui::EndDisabled();
 
-        // list
+        // Command list
+        ImGui::BeginChild("ItemListChild", ImVec2(0, 300), true);
+        for (int i = 0; i < cmd_queue->size(); ++i) 
+        {
+            // Ensure that the current_index item is centered in view
+            if (i == cmd_queue->get_current_index() - 1)
+                ImGui::SetScrollHereY(0.5f); // Center the current index
+
+            // Check if the current item is highlighted
+            bool isHighlighted = !cmd_queue->is_executed(i); // true; //highlightedItems.find(i) != highlightedItems.end();
+
+            // Display each item in the list as selectable
+            if (isHighlighted) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));  // Highlight color
+            }
+
+            ImGui::Text("%s", cmd_queue->get_name(i).c_str());
+
+            // ImGui::Selectable(items[i].c_str(), false);
+
+            if (isHighlighted) {
+                ImGui::PopStyleColor();
+            }
+        }
+        ImGui::EndChild(); // Command list window
 
         ImGui::End(); // Window
     }

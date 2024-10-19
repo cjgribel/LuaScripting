@@ -37,6 +37,22 @@ namespace Editor {
 
         size_t size() { return queue.size(); }
 
+        size_t get_current_index()
+        {
+            return current_index;
+        }
+
+        bool is_executed(size_t index)
+        {
+            return index < current_index;
+        }
+
+        std::string get_name(size_t index)
+        {
+            assert(index >= 0 && index < queue.size());
+            return queue[index]->get_name();
+        }
+
         bool commands_pending()
         {
             return current_index >= 0 && current_index < queue.size();
