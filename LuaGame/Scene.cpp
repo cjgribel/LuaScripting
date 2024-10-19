@@ -856,41 +856,42 @@ namespace Inspector
         auto cmd_queue = inspector.cmd_queue.lock();
         bool can_undo = cmd_queue->can_undo();
         bool can_redo = cmd_queue->commands_pending();
+        bool has_commands = cmd_queue->size();
 
-        // Undo bitton
+        // Undo button
         if (!can_undo) ImGui::BeginDisabled();
         if (ImGui::Button("Undo")) cmd_queue->undo_last();
         if (!can_undo) ImGui::EndDisabled();
 
-        // Redo bitton
+        // Redo button
         ImGui::SameLine();
         if (!can_redo) ImGui::BeginDisabled();
         if (ImGui::Button("Redo")) cmd_queue->execute_next();
         if (!can_redo) ImGui::EndDisabled();
 
+        // Clear button
+        ImGui::SameLine();
+        if (!has_commands) ImGui::BeginDisabled();
+        if (ImGui::Button("Clear")) cmd_queue->clear();
+        if (!has_commands) ImGui::EndDisabled();
+
+        // Command count
+        ImGui::SameLine();
+        ImGui::Text("%zu", cmd_queue->size());
+
         // Command list
         ImGui::BeginChild("ItemListChild", ImVec2(0, 300), true);
-        for (int i = 0; i < cmd_queue->size(); ++i) 
+        for (int i = 0; i < cmd_queue->size(); ++i)
         {
-            // Ensure that the current_index item is centered in view
+            // Auto-scroll
             if (i == cmd_queue->get_current_index() - 1)
-                ImGui::SetScrollHereY(0.5f); // Center the current index
+                ImGui::SetScrollHereY(0.5f);
 
-            // Check if the current item is highlighted
-            bool isHighlighted = !cmd_queue->is_executed(i); // true; //highlightedItems.find(i) != highlightedItems.end();
-
-            // Display each item in the list as selectable
-            if (isHighlighted) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));  // Highlight color
-            }
-
-            ImGui::Text("%s", cmd_queue->get_name(i).c_str());
-
-            // ImGui::Selectable(items[i].c_str(), false);
-
-            if (isHighlighted) {
-                ImGui::PopStyleColor();
-            }
+            bool is_pending = !cmd_queue->is_executed(i);
+            if (is_pending)
+                ImGui::TextDisabled("%s", cmd_queue->get_name(i).c_str());
+            else
+                ImGui::Text("%s", cmd_queue->get_name(i).c_str());
         }
         ImGui::EndChild(); // Command list window
 
@@ -1232,9 +1233,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1468,8 +1469,8 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-        }
-    } // anon
+    }
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1689,7 +1690,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles

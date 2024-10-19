@@ -9,6 +9,7 @@
 #define EditComponentCommand_hpp
 
 #include <entt/entt.hpp>
+#include "meta_aux.h"
 #include "Command.hpp"
 
 namespace Editor {
@@ -44,11 +45,6 @@ namespace Editor {
         void traverse_and_set_meta_type(entt::meta_any& value_any);
 
     public:
-        ComponentCommand()
-        {
-
-        }
-
         void execute() override
         {
             traverse_and_set_meta_type(new_value);
@@ -61,8 +57,8 @@ namespace Editor {
 
         std::string get_name() override
         {
-            return meta_path.entries.back().name;
-            // return display_name;
+            // return meta_path.entries.back().name;
+            return display_name;
         }
     };
 
@@ -143,9 +139,19 @@ namespace Editor {
             }
 
             // Build a display name
-            for (int i = 0; i < command.meta_path.entries.size(); i++)
+            // Meta path
+            command.display_name = entt::resolve(command.component_id).info().name();
+            for (auto& entry : command.meta_path.entries)
+                command.display_name += " > " + entry.name;
+            // Try cast to primitive type
+            bool result = try_apply(command.new_value, [&](auto& value) {
+                command.display_name += " = " + std::to_string(value);
+                });
+            if (!result)
             {
-                // ...
+                command.display_name += " = [value]";
+                // Try cast to string ...
+                // Try cast to enum ...
             }
 
             return command;

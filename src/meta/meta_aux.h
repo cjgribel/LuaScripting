@@ -12,6 +12,7 @@
 #include <tuple>
 #include <utility>
 #include <cassert>
+#include "meta_literals.h"
 
 namespace internal {
 

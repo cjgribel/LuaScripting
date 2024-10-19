@@ -87,9 +87,10 @@ namespace Editor {
             queue[--current_index]->undo();
         }
 
-        void clear_executed()
+        void clear()
         {
-            //
+            queue.clear();
+            current_index = 0;
         }
     };
 
