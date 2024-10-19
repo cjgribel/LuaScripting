@@ -782,11 +782,13 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_entity(Editor::InspectorState& inspector)
+    bool inspect_entity(Editor::InspectorState& inspector)
     {
         auto& registry = inspector.context.registry;
+        bool mod = false;
         static bool open = true;
         bool* p_open = &open;
+
         bool selected_entity_valid =
             inspector.selected_entity != entt::null &&
             registry->valid(inspector.selected_entity);
@@ -795,7 +797,7 @@ namespace Inspector
         if (!ImGui::Begin("Inspector", p_open))
         {
             ImGui::End();
-            return;
+            return mod;
         }
 
         ImGui::SetNextItemOpen(true);
@@ -812,8 +814,7 @@ namespace Inspector
 
                 if (selected_entity_valid)
                 {
-                    bool res = Editor::inspect_entity(inspector.selected_entity, inspector);
-                    if (res) { /* Edit detected */ }
+                    mod |= Editor::inspect_entity(inspector.selected_entity, inspector);
                 }
                 else
                     ImGui::Text("Selected entity is null or invalid");
@@ -833,8 +834,9 @@ namespace Inspector
             ImGui::TreePop(); // Entities node
             ImGui::PopStyleVar();
         }
-
         ImGui::End(); // Window
+
+        return mod;
     }
 
     void inspect_command_queue(Editor::InspectorState& inspector)
@@ -1484,9 +1486,11 @@ void Scene::renderUI()
     inspector.cmd_queue = cmd_queue;
     // + cmd_queue + CommandBuilder ???
 
-    Inspector::inspect_entity(inspector);
-    //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
-    // cmd_queue->execute_pending();
+    if (Inspector::inspect_entity(inspector))
+    {
+        //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
+        cmd_queue->execute_pending();
+    }
 
     Inspector::inspect_command_queue(inspector);
 

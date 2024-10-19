@@ -31,6 +31,7 @@ namespace Editor {
     public:
         void add(CommandPtr&& command)
         {
+            remove_pending();
             queue.push_back(std::move(command));
         }
 
@@ -39,6 +40,12 @@ namespace Editor {
         bool commands_pending()
         {
             return current_index >= 0 && current_index < queue.size();
+        }
+
+        void remove_pending()
+        {
+            if (!commands_pending()) return;
+            queue.erase(queue.begin() + current_index, queue.end());
         }
 
         void execute_next()
