@@ -9,8 +9,12 @@
 #define EditComponentCommand_hpp
 
 #include <entt/entt.hpp>
-#include "meta_aux.h"
 #include "Command.hpp"
+
+// -> cpp
+#include <iostream>
+#include "meta_aux.h"
+#include "MetaSerialize.hpp"
 
 namespace Editor {
 
@@ -138,20 +142,15 @@ namespace Editor {
                 }
             }
 
-            // Build a display name
-            // Meta path
-            command.display_name = entt::resolve(command.component_id).info().name();
-            for (auto& entry : command.meta_path.entries)
-                command.display_name += " > " + entry.name;
-            // Try cast to primitive type
-            bool result = try_apply(command.new_value, [&](auto& value) {
-                command.display_name += " = " + std::to_string(value);
-                });
-            if (!result)
+            // Build a display name for the command
             {
-                command.display_name += " = [value]";
-                // Try cast to string ...
-                // Try cast to enum ...
+                // Meta path
+                command.display_name = entt::resolve(command.component_id).info().name();
+                for (auto& entry : command.meta_path.entries)
+                    command.display_name += " > " + entry.name;
+                // Serialize new value
+                auto j_new = Meta::serialize_any(command.new_value);
+                command.display_name += " -> " + j_new.dump();
             }
 
             return command;
