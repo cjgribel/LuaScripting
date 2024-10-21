@@ -293,7 +293,7 @@ namespace Editor {
                     cmd_builder.pop_path();
 #else
                     // ImGui::SetNextItemWidth(-FLT_MIN);
-                    mod |= inspect_any(v, inspector); // Will change the actual element
+                    mod |= inspect_any(v, inspector, cmd_builder); // Will change the actual element
 #endif
                 }
                 inspector.end_leaf();
@@ -414,8 +414,8 @@ namespace Editor {
         // meta command: clear issued
         issued_commands.clear();
 
-        ComponentCommandBuilder cmd_builder;
 #endif
+        ComponentCommandBuilder cmd_builder;
 
         auto& registry = inspector.context.registry;
         assert(entity != entt::null);
