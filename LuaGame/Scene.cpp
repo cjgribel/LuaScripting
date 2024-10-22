@@ -401,7 +401,7 @@ namespace {
 
         // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
-        script_comp.scripts.push_back({ script /*, script["update"]*/ });
+        script_comp.scripts.push_back(script);
 
         // Print the table's contents
 #if 0
@@ -1233,9 +1233,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1469,8 +1469,8 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-    }
-} // anon
+        }
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1690,7 +1690,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles

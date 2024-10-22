@@ -48,7 +48,7 @@ namespace Meta {
             }
             else if (meta_type.is_enum())
             {
-                std::cout << " [is_enum]";
+                // std::cout << " [is_enum]";
 
                 // Cast to underlying meta type
                 auto any_conv = cast_to_underlying_type(meta_type, any);

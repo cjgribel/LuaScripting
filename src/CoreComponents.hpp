@@ -170,7 +170,7 @@ struct DataGridComponent
     std::array<float, GridSize> slot2 = { 0.0f };
     int count = 0, width = 0;
 
-        std::string to_string() const
+    std::string to_string() const
     {
         return "DataGridComponent { ... }";
     }
@@ -217,8 +217,8 @@ struct ScriptedBehaviorComponent
         // Lua object
         sol::table self;
         // Update function of Lua object
-        sol::function update;
-        sol::function on_collision;
+        sol::protected_function update;
+        sol::protected_function on_collision;
         std::string identifier;
         std::string path;
 
@@ -226,7 +226,6 @@ struct ScriptedBehaviorComponent
         // sol::function init;
         // sol::function destroy;
     };
-
     std::vector<BehaviorScript> scripts;
 
     [[nodiscard]] std::string to_string() const {

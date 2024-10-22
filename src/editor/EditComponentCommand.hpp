@@ -150,7 +150,10 @@ namespace Editor {
                     command.display_name += " > " + entry.name;
                 // Serialize new value
                 auto j_new = Meta::serialize_any(command.new_value);
-                command.display_name += " -> " + j_new.dump();
+                if (!j_new.is_null())
+                    command.display_name += " -> " + j_new.dump();
+                else
+                    command.display_name += " -> n/a";
             }
 
             return command;

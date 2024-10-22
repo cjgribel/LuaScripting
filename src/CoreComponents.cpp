@@ -627,7 +627,7 @@ namespace Editor {
                 ImGui::TextDisabled("[Unvailable]");
             return mod;
 #endif
-        }
+}
 
         assert(type_id.get_type() == sol::type::function);
         entt::id_type id = type_id.call();
@@ -693,8 +693,11 @@ namespace Editor {
     template<>
     bool inspect_type<sol::table>(sol::table& tbl, InspectorState& inspector)
     {
+        // std::cout << "inspecting sol::table" << std::endl;
         auto& lua = inspector.context.lua;
         bool mod = false;
+
+        if (!tbl.valid()) return mod;
 
         for (auto& [key, value] : tbl)
         {
@@ -871,13 +874,37 @@ namespace {
 
         // Deep copy self
         // functions?
-        for (int i = 0; i < comp_ptr->scripts.size(); i++)
+        // std::cout << "cpy.scripts.size() " << cpy.scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+        // std::cout << "comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+
+        // std::cout << "comp_ptr " << comp_ptr << std::endl;
+        // if (comp_ptr->scripts.size() == 0) 
+        // {
+        //     std::cout << "== 0! comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+        // }
+        // else
+        // {
+        //     std::cout << "!= 0! comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+        // }
+
+        for (size_t i = 0; i < comp_ptr->scripts.size(); i++)
         {
+            // std::cout << "cpy.scripts.size() " << cpy.scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+            // std::cout << "comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
+            //     std::cout << i << std::endl << std::flush;
+
+                // Shallow (already done ^)
+                ///cpy.scripts[i].self = comp_ptr->scripts[i].self;
+                // Deep
             cpy.scripts[i].self = deep_copy_table(comp_ptr->scripts[i].self.lua_state(), comp_ptr->scripts[i].self);
+
+            // std::cout << i << std::endl << std::flush;
 
             // Not needed probably functions are references inside table
             cpy.scripts[i].update = cpy.scripts[i].self["update"];
             cpy.scripts[i].on_collision = cpy.scripts[i].self["on_collision"];
+
+            // std::cout << i << std::endl << std::flush;
 
             // -> entityID?
             cpy.scripts[i].self["id"] = sol::readonly_property([dst_entity] { return dst_entity; });
@@ -886,8 +913,11 @@ namespace {
 
             // Changes copy AND original - must be some kind of reference
             // cpy.scripts[i].self["HEADER"]["name"] = "BYE";
+
+            // std::cout << i << std::endl << std::flush;
         }
 
+        std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
         return cpy;
     };
 
@@ -930,13 +960,30 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         //.func <copy_table>(clone_hs)
         ;
 
-    // sol::function
-    entt::meta<sol::function>()
-        .type("sol::function"_hs).prop(display_name_hs, "sol::function")
+    // sol::protected_function
+    entt::meta<sol::protected_function>()
+        .type("sol::protected_function"_hs).prop(display_name_hs, "sol::protected_function")
         // inspect
         //.func<&solfunction_inspect>(inspect_hs)
         // inspect v2 - 'widget not implemented' for BehaviorScript::update, on_collision
-        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::function*>(ptr), inspector); } > (inspect_hs)
+        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::protected_function*>(ptr), inspector); } > (inspect_hs)
+        ;
+
+    // ScriptedBehaviorComponent::BehaviorScript
+    entt::meta<ScriptedBehaviorComponent::BehaviorScript>()
+        .type("BehaviorScript"_hs).prop(display_name_hs, "BehaviorScript")
+
+        .data<&ScriptedBehaviorComponent::BehaviorScript::identifier>("identifier"_hs)
+        .prop(display_name_hs, "identifier")
+        .prop(readonly_hs, true)
+        .data<&ScriptedBehaviorComponent::BehaviorScript::path>("path"_hs)
+        .prop(display_name_hs, "path")
+        .prop(readonly_hs, true)
+
+        // sol stuff
+        .data<&ScriptedBehaviorComponent::BehaviorScript::self>("self"_hs).prop(display_name_hs, "self")
+        .data<&ScriptedBehaviorComponent::BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")
+        .data<&ScriptedBehaviorComponent::BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
         ;
 
     // ScriptedBehaviorComponent
@@ -955,18 +1002,6 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
 
             // clone
         .func<&copy_ScriptedBehaviorComponent>(clone_hs)
-        ;
-
-    entt::meta<ScriptedBehaviorComponent::BehaviorScript>()
-        .type("BehaviorScript"_hs).prop(display_name_hs, "BehaviorScript")
-
-        .data<&ScriptedBehaviorComponent::BehaviorScript::identifier>("identifier"_hs)
-        .prop(display_name_hs, "identifier")
-        .prop(readonly_hs, true)
-        // sol stuff
-        .data<&ScriptedBehaviorComponent::BehaviorScript::self>("self"_hs).prop(display_name_hs, "table")
-        .data<&ScriptedBehaviorComponent::BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")
-        .data<&ScriptedBehaviorComponent::BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
         ;
 
     lua->new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",

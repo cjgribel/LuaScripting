@@ -17,9 +17,20 @@
 #include "InspectType.hpp"
 #include "EditComponentCommand.hpp"
 
+// #define INSPECT_DEBUG_PRINT
 #define USE_COMMANDS
 
 namespace Editor {
+
+    namespace
+    {
+        void generate_command(auto& cmd_queue_wptr, auto& cmd_builder)
+        {
+            assert(!cmd_queue_wptr.expired());
+            auto cmd_queue_sptr = cmd_queue_wptr.lock();
+            cmd_queue_sptr->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+        }
+    }
 
 #ifdef USE_COMMANDS
     struct MetaEntry
@@ -150,6 +161,9 @@ namespace Editor {
     {
         assert(any);
         bool mod = false; // TODO: not used yet
+#ifdef INSPECT_DEBUG_PRINTS
+        std::cout << "inspect_any " << meta_type_name(any.type()) << std::endl;
+#endif
 
         if (entt::meta_type meta_type = entt::resolve(any.type().id()); meta_type)
         {
@@ -177,10 +191,10 @@ namespace Editor {
 
                     // Build & issue command
                     cmd_builder.prev_value(any).new_value(copy_any);
-                    assert(!inspector.cmd_queue.expired());
-                    auto cmd_queue = inspector.cmd_queue.lock();
-                    // auto cmd = cmd_builder.build();
-                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+                    generate_command(inspector.cmd_queue, cmd_builder);
+                    // assert(!inspector.cmd_queue.expired());
+                    // auto cmd_queue = inspector.cmd_queue.lock();
+                    // cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
 
                     mod = true;
                 }
@@ -206,10 +220,11 @@ namespace Editor {
 
                     // Build & issue command
                     cmd_builder.prev_value(any).new_value(copy_any);
-                    assert(!inspector.cmd_queue.expired());
-                    auto cmd_queue = inspector.cmd_queue.lock();
-                    //auto cmd = cmd_builder.build();
-                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+                    generate_command(inspector.cmd_queue, cmd_builder);
+                    // assert(!inspector.cmd_queue.expired());
+                    // auto cmd_queue = inspector.cmd_queue.lock();
+                    // //auto cmd = cmd_builder.build();
+                    // cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
 
                     mod = true;
                 }
@@ -223,7 +238,9 @@ namespace Editor {
                 for (auto&& [id, meta_data] : meta_type.data())
                 {
                     std::string key_name = meta_data_name(id, meta_data);
-
+#ifdef INSPECT_DEBUG_PRINT
+                    std::cout << "inspecting data field: " << key_name << std::endl;
+#endif
                     // if (inspector.is_disabled())
                     ImGui::SetNextItemOpen(true);
 
@@ -259,6 +276,9 @@ namespace Editor {
 #endif
                         inspector.end_node();
                     }
+#ifdef INSPECT_DEBUG_PRINT
+                    std::cout << "DONE inspecting data field" << key_name << std::endl;
+#endif
                 }
             }
             return mod;
@@ -270,7 +290,9 @@ namespace Editor {
         {
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
-
+#ifdef INSPECT_DEBUG_PRINT
+            std::cout << "is_sequence_container: " << meta_type_name(any.type()) << ", size " << view.size() << std::endl;
+#endif
             int count = 0;
             for (auto&& v : view)
             {
@@ -305,19 +327,12 @@ namespace Editor {
         {
             auto view = any.as_associative_container();
             assert(view && "as_associative_container() failed");
-
+#ifdef INSPECT_DEBUG_PRINT
+            std::cout << "is_associative_container: " << meta_type_name(any.type()) << ", size " << view.size() << std::endl;
+#endif
             int count = 0;
             for (auto&& [key_any, mapped_any] : view)
             {
-                // inspector.begin_leaf((std::string("#") + std::to_string(count++)).c_str());
-                // inspect_any(key_any, inspector);
-                // if (view.mapped_type())
-                // {
-                //     ImGui::SetNextItemWidth(-FLT_MIN);
-                //     inspect_any(mapped_any, inspector);
-                // }
-                // inspector.end_leaf();
-
                 // Displaying key, value and the element itself as expandable nodes
                 ImGui::SetNextItemOpen(true);
                 if (inspector.begin_node((std::string("#") + std::to_string(count)).c_str()))
@@ -386,10 +401,11 @@ namespace Editor {
 
                     // Build & issue command
                     cmd_builder.prev_value(any).new_value(value_copy);
-                    assert(!inspector.cmd_queue.expired());
-                    auto cmd_queue = inspector.cmd_queue.lock();
-                    //auto cmd = cmd_builder.build();
-                    cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+                    generate_command(inspector.cmd_queue, cmd_builder);
+                    // assert(!inspector.cmd_queue.expired());
+                    // auto cmd_queue = inspector.cmd_queue.lock();
+                    // //auto cmd = cmd_builder.build();
+                    // cmd_queue->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
 
                     mod = true;
                 }
@@ -401,7 +417,10 @@ namespace Editor {
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
-
+        
+#ifdef INSPECT_DEBUG_PRINT
+        std::cout << "DONE inspect_any " << meta_type_name(any.type()) << std::endl;
+#endif
         return mod;
     }
 
