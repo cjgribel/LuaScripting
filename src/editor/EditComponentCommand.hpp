@@ -144,16 +144,26 @@ namespace Editor {
 
             // Build a display name for the command
             {
-                // Meta path
+                // Gather meta path
                 command.display_name = entt::resolve(command.component_id).info().name();
                 for (auto& entry : command.meta_path.entries)
-                    command.display_name += " > " + entry.name;
+                {
+                    if (entry.type == MetaPath::Entry::Type::Data) {
+                        command.display_name += "::" + entry.name;
+                    }
+                    else if (entry.type == MetaPath::Entry::Type::Index) {
+                        command.display_name += "[" + std::to_string(entry.index) + "]";
+                    }
+                    else if (entry.type == MetaPath::Entry::Type::Key) {
+                        if (auto j_new = Meta::serialize_any(entry.key_any); !j_new.is_null())
+                            command.display_name += "[" + j_new.dump() + "]";
+                        else
+                            command.display_name += "[]";
+                    }
+                }
                 // Serialize new value
-                auto j_new = Meta::serialize_any(command.new_value);
-                if (!j_new.is_null())
-                    command.display_name += " -> " + j_new.dump();
-                else
-                    command.display_name += " -> n/a";
+                if (auto j_new = Meta::serialize_any(command.new_value); !j_new.is_null())
+                    command.display_name += " = " + j_new.dump();
             }
 
             return command;
