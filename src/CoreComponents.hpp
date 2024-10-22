@@ -236,7 +236,7 @@ struct ScriptedBehaviorComponent
         return ss.str();
     }
 };
-
+//static_assert(std::is_same_v<sol::function, sol::protected_function>); // True in Debug mode, but false in Release mode (Clang -O4)
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
 // === LuaEvent ===============================================================
