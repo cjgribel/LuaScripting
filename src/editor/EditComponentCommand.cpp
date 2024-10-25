@@ -7,12 +7,13 @@
 
 #include <iostream>
 // #include <sstream>
-// #include <cassert>
+#include <cassert>
 // #include "imgui.h"
 // #include "MetaInspect.hpp"
 // #include "InspectType.hpp"
 #include "meta_literals.h"
 // #include "meta_aux.h"
+#include "MetaSerialize.hpp"
 
 #include "EditComponentCommand.hpp"
 
@@ -197,6 +198,128 @@ namespace Editor {
         // At this point, the type held by any_new is the component type
         // any_new is an updated copy of the component - now assign ut to the actual component
         meta_any.assign(any_new);
+    }
+
+    void ComponentCommand::execute()
+    {
+        traverse_and_set_meta_type(new_value);
+    }
+
+    void ComponentCommand::undo()
+    {
+        traverse_and_set_meta_type(prev_value);
+    }
+
+    std::string ComponentCommand::get_name() const
+    {
+        return display_name;
+    }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::registry(std::weak_ptr<entt::registry> registry) { command.registry = registry; return *this; }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::entity(entt::entity entity) { command.entity = entity; return *this; }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::component(entt::id_type id) { command.component_id = id; return *this; }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::prev_value(const entt::meta_any& value) { command.prev_value = value; return *this; }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::new_value(const entt::meta_any& value) { command.new_value = value; return *this; }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::push_path_data(entt::id_type id, const std::string& name)
+    {
+        command.meta_path.entries.push_back(
+            MetaPath::Entry{ .type = MetaPath::Entry::Type::Data, .data_id = id, .name = name }
+        );
+        return *this;
+    }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::push_path_index(int index, const std::string& name)
+    {
+        command.meta_path.entries.push_back(
+            MetaPath::Entry{ .type = MetaPath::Entry::Type::Index, .index = index, .name = name }
+        );
+        return *this;
+    }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::push_path_key(const entt::meta_any& key_any, const std::string& name)
+    {
+        command.meta_path.entries.push_back(
+            MetaPath::Entry{ .type = MetaPath::Entry::Type::Key, .key_any = key_any, .name = name }
+        );
+        return *this;
+    }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::pop_path()
+    {
+        command.meta_path.entries.pop_back();
+        return *this;
+    }
+
+    ComponentCommandBuilder& ComponentCommandBuilder::reset()
+    {
+        assert(!command.meta_path.entries.size() && "Meta path not empty when clearing");
+        command = ComponentCommand{};
+        return *this;
+    }
+
+    ComponentCommand ComponentCommandBuilder::build()
+    {
+        // Valdiate before returning command instance 
+
+        assert(!command.registry.expired() && "registry pointer expired");
+        assert(command.entity != entt::null && "entity invalid");
+        assert(command.component_id != 0 && "component id invalid");
+
+        assert(command.prev_value);
+        assert(command.new_value);
+
+        assert(command.meta_path.entries.size() && "Meta path empty");
+        {
+            bool last_was_index_or_key = false;
+            for (int i = 0; i < command.meta_path.entries.size(); i++)
+            {
+                auto& entry = command.meta_path.entries[i];
+
+                // First entry must be Data (enter data member of a component)
+                assert(i > 0 || entry.type == MetaPath::Entry::Type::Data);
+
+                // Check so relevant values are set for each entry type
+                assert(entry.type != MetaPath::Entry::Type::None);
+                assert(entry.type != MetaPath::Entry::Type::Data || entry.data_id);
+                assert(entry.type != MetaPath::Entry::Type::Index || entry.index > -1);
+                assert(entry.type != MetaPath::Entry::Type::Key || entry.key_any);
+
+                last_was_index_or_key =
+                    entry.type == MetaPath::Entry::Type::Index ||
+                    entry.type == MetaPath::Entry::Type::Key;
+            }
+        }
+
+        // Build a display name for the command
+        {
+            // Gather meta path
+            command.display_name = entt::resolve(command.component_id).info().name();
+            for (auto& entry : command.meta_path.entries)
+            {
+                if (entry.type == MetaPath::Entry::Type::Data) {
+                    command.display_name += "::" + entry.name;
+                }
+                else if (entry.type == MetaPath::Entry::Type::Index) {
+                    command.display_name += "[" + std::to_string(entry.index) + "]";
+                }
+                else if (entry.type == MetaPath::Entry::Type::Key) {
+                    if (auto j_new = Meta::serialize_any(entry.key_any); !j_new.is_null())
+                        command.display_name += "[" + j_new.dump() + "]";
+                    else
+                        command.display_name += "[]";
+                }
+            }
+            // Serialize new value
+            if (auto j_new = Meta::serialize_any(command.new_value); !j_new.is_null())
+                command.display_name += " = " + j_new.dump();
+        }
+
+        return command;
     }
 
 } // namespace Editor

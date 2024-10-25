@@ -211,7 +211,6 @@ struct CircleColliderComponent
 
 struct ScriptedBehaviorComponent
 {
-    // BehaviorScript
     struct BehaviorScript
     {
         // Lua object

@@ -26,7 +26,7 @@ namespace Editor {
         virtual void execute(/*Context& context, const Selection& selection*/) = 0;
         virtual void undo() = 0;
 
-        virtual std::string get_name() = 0;
+        virtual std::string get_name() const = 0;
     };
 
     using CommandPtr = std::unique_ptr<Command>;
