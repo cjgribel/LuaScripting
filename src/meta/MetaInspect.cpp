@@ -17,8 +17,7 @@
 #include "InspectType.hpp"
 #include "EditComponentCommand.hpp"
 
-// #define INSPECT_DEBUG_PRINT
-#define USE_COMMANDS
+
 
 namespace Editor {
 
@@ -126,7 +125,7 @@ namespace Editor {
     {
         assert(any);
         bool mod = false; // TODO: not used yet
-#ifdef INSPECT_DEBUG_PRINTS
+#ifdef INSPECTION_DEBUG_PRINTS
         std::cout << "inspect_any " << meta_type_name(any.type()) << std::endl;
 #endif
 
@@ -186,7 +185,7 @@ namespace Editor {
                 for (auto&& [id, meta_data] : meta_type.data())
                 {
                     std::string key_name = meta_data_name(id, meta_data);
-#ifdef INSPECT_DEBUG_PRINT
+#ifdef INSPECTION_DEBUG_PRINT
                     std::cout << "inspecting data field: " << key_name << std::endl;
 #endif
                     // if (inspector.is_disabled())
@@ -218,7 +217,7 @@ namespace Editor {
 #endif
                         inspector.end_node();
                     }
-#ifdef INSPECT_DEBUG_PRINT
+#ifdef INSPECTION_DEBUG_PRINT
                     std::cout << "DONE inspecting data field" << key_name << std::endl;
 #endif
                 }
@@ -232,7 +231,7 @@ namespace Editor {
         {
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
-#ifdef INSPECT_DEBUG_PRINT
+#ifdef INSPECTION_DEBUG_PRINT
             std::cout << "is_sequence_container: " << meta_type_name(any.type()) << ", size " << view.size() << std::endl;
 #endif
             int count = 0;
@@ -263,7 +262,7 @@ namespace Editor {
         {
             auto view = any.as_associative_container();
             assert(view && "as_associative_container() failed");
-#ifdef INSPECT_DEBUG_PRINT
+#ifdef INSPECTION_DEBUG_PRINT
             std::cout << "is_associative_container: " << meta_type_name(any.type()) << ", size " << view.size() << std::endl;
 #endif
             int count = 0;
@@ -336,7 +335,7 @@ namespace Editor {
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
 
-#ifdef INSPECT_DEBUG_PRINT
+#ifdef INSPECTION_DEBUG_PRINT
         std::cout << "DONE inspect_any " << meta_type_name(any.type()) << std::endl;
 #endif
         return mod;

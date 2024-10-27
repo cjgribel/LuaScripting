@@ -13,14 +13,14 @@
 #include <SDL_mixer.h> // included by audiomanager?
 #include "AudioManager.hpp"
 
-#include <entt/entt.hpp> // -> Scene source
+//#include <entt/entt.hpp> // -> Scene source
 
 // -> UI source
 #include <iostream>
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
-#include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
+//#include "misc/cpp/imgui_stdlib.h" // ImGui widgets for std::string
 
 #include "vec.h"
 #include "mat.h"

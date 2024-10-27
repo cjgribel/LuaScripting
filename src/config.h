@@ -7,6 +7,12 @@
 #include <string_view>
 #include <format>
 
+/// Debugging and behavior defines
+
+// #define INSPECTION_DEBUG_PRINTS  /* Make print-outs to track meta inspection */
+#define COMMAND_DEBUG_PRINTS        /* Make print-outs to track command genenration and/or execution */
+#define USE_COMMANDS                /* Generate commands rather than executing inspector edits directly */
+
 /// Misc global defines
 #define EENG_NULL_INDEX -1
 #define EENG_FINF std::numeric_limits<float>::max()

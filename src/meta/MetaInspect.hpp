@@ -10,7 +10,7 @@
 #define MetaInspect_hpp
 
 #include <entt/entt.hpp>
-//#include "CommandQueue.hpp"
+#include "config.h"
 #include "EditComponentCommand.hpp"
 
 namespace Editor {

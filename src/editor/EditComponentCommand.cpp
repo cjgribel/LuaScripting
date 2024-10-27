@@ -25,6 +25,27 @@ namespace Editor {
         assert(!registry.expired());
         auto registry_sp = registry.lock();
 
+#ifdef COMMAND_DEBUG_PRINTS
+        auto any_to_string = [](const entt::meta_any any) -> std::string {
+            if (auto j = Meta::serialize_any(any); !j.is_null())
+                return j.dump();
+            return "n/a";
+            };
+
+        std::cout << "Executing command: " << get_name() << std::endl;
+        std::cout << "\tentity " << entt::to_integral(entity);
+        std::cout << ", component type " << component_id << std::endl;
+        std::cout << "\tprev value: " << any_to_string(prev_value) << std::endl;
+        std::cout << "\tnew value: " << any_to_string(new_value) << std::endl;
+        // std::cout << "\tpath:" << std::endl;
+        // for (auto& e : meta_path.entries)
+        // {
+        //     if (e.type == EntryType::Data) std::cout << "\t\tData: data_id = " << e.data_id << std::endl;
+        //     if (e.type == EntryType::Index) std::cout << "\t\tIndex: index = " << e.index << std::endl;
+        //     if (e.type == EntryType::Key) std::cout << "\t\tKey: key = " << any_to_string(e.key_any) << std::endl;
+        // }
+#endif   
+#if 0
         std::cout << "traverse_and_set_meta_type, entity " << entt::to_integral(entity) << std::endl;
         for (auto& e : meta_path.entries)
         {
@@ -43,28 +64,7 @@ namespace Editor {
         auto fltptr = value_any.try_cast<float>(); // c.new_value.try_cast<float>();
         if (fltptr) std::cout << *fltptr;
         std::cout << std::endl;
-
-        // EXECUTE command ...
-        // new_value is actually old value ...
-        // enum class Type : int { Data, Index, Key } type;
-        // entt::id_type data_id;  // enter data field
-        // size_t index;           // enter seq. container index
-        // entt::meta_any key_any; // enter assoc. container key
-        // std::string name = "(no name)";
-
-        // execute(registry, c);
-
-        // auto type = registry.storage(e.data_id);
-
-        //entt::meta_type meta_type = c.component_meta_type;
-        //entt::meta_any meta_any;
-
-        const auto any_to_string = [](const entt::meta_any& any) -> std::string {
-            if (auto ptr = any.try_cast<float>(); ptr) return std::to_string(*ptr);
-            if (auto ptr = any.try_cast<int>(); ptr) return std::to_string(*ptr);
-            if (auto ptr = any.try_cast<bool>(); ptr) return std::to_string(*ptr);
-            return std::string("[any not cast]");
-            };
+#endif
 
         // Component
         auto type = registry_sp->storage(component_id);

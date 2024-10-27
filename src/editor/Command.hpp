@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <entt/fwd.hpp>
+#include "config.h"
 #include "Context.hpp"
 
 namespace Editor {
