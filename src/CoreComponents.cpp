@@ -627,7 +627,7 @@ namespace Editor {
                 ImGui::TextDisabled("[Unvailable]");
             return mod;
 #endif
-}
+        }
 
         assert(type_id.get_type() == sol::type::function);
         entt::id_type id = type_id.call();
@@ -922,6 +922,7 @@ namespace {
     };
 
     // v2
+#if 0
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
     {
         // -- Need to either 1) send in a object to clone, or 2) use Command
@@ -940,6 +941,7 @@ namespace {
         // const std::string& identifier,
         // const std::string& script_path)
     }
+#endif
 }
 
 template<>
