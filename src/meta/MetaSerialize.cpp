@@ -9,6 +9,7 @@
 #include <sstream>
 #include <cassert>
 // #include <nlohmann/json_fwd.hpp> //
+#include "config.h"
 #include "MetaSerialize.hpp"
 #include "meta_literals.h"
 #include "meta_aux.h"
@@ -44,7 +45,9 @@ namespace Meta {
                 assert(res && "Failed to invoke to_json");
                 json = json_any.cast<nlohmann::json>();
 #endif
+#ifdef SERIALIZATION_DEBUG_PRINTS
                 std::cout << "to_json invoked: " << json.dump() << std::endl;
+#endif
             }
             else if (meta_type.is_enum())
             {

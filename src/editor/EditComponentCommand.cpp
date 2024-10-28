@@ -32,7 +32,8 @@ namespace Editor {
             return "n/a";
             };
 
-        std::cout << "Executing command: " << get_name() << std::endl;
+        std::cout << "Executing command" << std::endl;
+        std::cout << "\t" << get_name() << std::endl;
         std::cout << "\tentity " << entt::to_integral(entity);
         std::cout << ", component type " << component_id << std::endl;
         std::cout << "\tprev value: " << any_to_string(prev_value) << std::endl;
@@ -72,17 +73,17 @@ namespace Editor {
         entt::meta_type meta_type = entt::resolve(component_id);
         entt::meta_any meta_any = meta_type.from_void(type->value(entity));
 
-        assert(meta_path.entries.size()); // Must be at least one?
-        assert(meta_path.entries[0].type == EntryType::Data); // First must be Data?            
+        //assert(meta_path.entries.size()); // Must be at least one?
+        //assert(meta_path.entries[0].type == EntryType::Data); // First must be Data?            
         auto& entry0 = meta_path.entries[0];
         entt::meta_data meta_data = meta_type.data(entry0.data_id);
 
         // entt::meta_any data_any = meta_data.get(meta_any);
 
-        std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // DebugClass
-        std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //DebugClass
-        // std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
-        std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // debugvec3
+        // std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // DebugClass
+        // std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //DebugClass
+        // // std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
+        // std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // debugvec3
 
         struct Property {
             entt::meta_any meta_any; entt::meta_data meta_data; MetaPath::Entry entry;
@@ -90,6 +91,11 @@ namespace Editor {
         std::stack<Property> prop_stack;
         Property last_prop{ meta_any, meta_data, entry0 };
         prop_stack.push(last_prop);
+
+#ifdef COMMAND_DEBUG_PRINTS
+        std::cout << "building property stack..." << std::endl;
+        std::cout << "entry 0: " << last_prop.meta_any.type().info().name() << std::endl;
+#endif
 
         int i = 1;
         //entt::meta_any meta_any_ = meta_any;
@@ -100,14 +106,18 @@ namespace Editor {
             if (e.type == EntryType::Data)
             {
                 entt::meta_any meta_any;
-                // If the previous entry was Index, meta_data will be empty
-                // Fetch meta_data from elem_any = the container?
                 if (last_prop.entry.type == EntryType::Index)
+                {
                     meta_any = last_prop.meta_any.as_sequence_container()[last_prop.entry.index];
+                }
                 else if (last_prop.entry.type == EntryType::Key)
+                {
                     meta_any = last_prop.meta_any.as_associative_container().find(last_prop.entry.key_any)->second;
+                }
                 else if (last_prop.entry.type == EntryType::Data)
+                {
                     meta_any = last_prop.meta_data.get(last_prop.meta_any);
+                }
                 else { assert(0); }
                 assert(meta_any);
                 // auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any);
@@ -121,11 +131,6 @@ namespace Editor {
             {
                 assert(last_prop.entry.type == EntryType::Data);
                 auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
-                ///* Should not exist */ auto meta_type = entt::resolve(meta_any.type().id());  assert(!meta_type);
-                //auto meta_data = meta_type.data(e.data_id); assert(meta_data);
-
-                // Forward any to element
-                // auto elem_any = meta_any.as_sequence_container()[e.index];
 
                 last_prop = Property{ meta_any, entt::meta_data{}, e };
                 prop_stack.push(last_prop);
@@ -138,66 +143,69 @@ namespace Editor {
                 prop_stack.push(last_prop);
             }
             else { assert(0); }
+#ifdef COMMAND_DEBUG_PRINTS
+            std::cout << "entry " << i << ": " << last_prop.meta_any.type().info().name() << std::endl;
+#endif
         }
-        entt::meta_any any_new = value_any; // c.new_value; // float -> UVCoord -> debugvec3 -> DebugClass
+
+#ifdef COMMAND_DEBUG_PRINTS
+        std::cout << "assigning new values..." << std::endl;
+#endif
+        entt::meta_any any_new = value_any;
+
         while (!prop_stack.empty())
         {
             auto& prop = prop_stack.top();
-            std::cout << prop_stack.size() << " prop.meta_any " << prop.meta_any.type().info().name() << std::endl; // 
-            std::cout << prop_stack.size() << " any_new " << any_new.type().info().name() << std::endl; // 
-
+#ifdef COMMAND_DEBUG_PRINTS
+            std::cout << "Property " << prop_stack.size() << std::endl;
+            std::cout << "object:" << std::endl;
+            std::cout << prop.meta_any.type().info().name() << " ";     // object type
+            std::cout << any_to_string(prop.meta_any) << std::endl;     // object value
+            std::cout << prop.entry.name << " =>" << std::endl;         // property name/index
+            std::cout << any_new.type().info().name() << " ";           // new property type
+            std::cout << any_to_string(any_new) << std::endl;           // new property value
+#endif
             if (prop.entry.type == EntryType::Data)
             {
-                // Data
                 bool res = prop.meta_data.set(prop.meta_any, any_new); assert(res);
             }
             else if (prop.entry.type == EntryType::Index)
             {
-                // TODO: range check
-
-                // Container - meta_any IS the element?
-                std::cout << "prop.meta_any " << prop.meta_any.type().info().name() << std::endl; //                     
-                // std::cout << "prop.elem_any " << prop.elem_any.type().info().name() << std::endl; // 
-
-                //bool res = prop.elem_any.assign(any_new); assert(res);
                 assert(prop.meta_any.type().is_sequence_container());
                 auto view = prop.meta_any.as_sequence_container();
-                std::cout << "before val=" << any_to_string(view[prop.entry.index])
-                    << " new=" << any_to_string(any_new) << std::endl;
-                view[prop.entry.index].assign(any_new); // WORKS
-                // view[prop.entry.index] = any_new; // DOES NOT WORK
-                std::cout << "after val=" << any_to_string(view[prop.entry.index])
-                    << " new=" << any_to_string(any_new) << std::endl;
-                // int count = 0;
-                // for (auto&& v : view)
-                // {
-                //     if (count++ == prop.index) {v = any_new; std::cout << "set val " << any_new.cast<int>() << std::endl; }
-                // }
-                //bool res_ = prop.meta_data.set(prop.meta_any, prop.any_new); assert(res_);
-                std::cout << "view[prop.index] " << view[prop.entry.index].type().info().name() << std::endl; // 
-                std::cout << "view[prop.index] value " << any_to_string(view[prop.entry.index]) << std::endl; // 
+                assert(prop.entry.index < view.size());
+
+                view[prop.entry.index].assign(any_new);
             }
             else if (prop.entry.type == EntryType::Key)
             {
                 assert(prop.meta_any.type().is_associative_container());
                 auto view = prop.meta_any.as_associative_container();
-                view.find(prop.entry.key_any)->second.assign(any_new); // WORKS?
-                // view[prop.entry.index] = any_new; // DOES NOT WORK?
+                auto pair = view.find(prop.entry.key_any);
+                assert(pair);
+
+                pair->second.assign(any_new);
             }
             else { assert(0); }
 
             any_new = prop.meta_any;
             prop_stack.pop();
         }
-        std::cout << "DONE" << std::endl;
-        std::cout << "prop.meta_any " << meta_any.type().info().name() << std::endl; // 
-        std::cout << "meta_any_rec " << any_new.type().info().name() << std::endl; // 
-        std::cout << " meta_any_rec " << any_to_string(any_new) << std::endl;
 
-        // meta_data.set(meta_any, meta_any_rec);
-        // At this point, the type held by any_new is the component type
-        // any_new is an updated copy of the component - now assign ut to the actual component
+#ifdef COMMAND_DEBUG_PRINTS
+        std::cout << "Object before:" << std::endl;
+        std::cout << any_to_string(meta_any) << std::endl;
+#endif
+
+        // At this point, any_new is an updated copy of the component:
+        // assign it to the actual component
         meta_any.assign(any_new);
+
+#ifdef COMMAND_DEBUG_PRINTS
+        std::cout << "Object after:" << std::endl;
+        std::cout << any_to_string(meta_any) << std::endl;
+        std::cout << "Done executing command" << std::endl;
+#endif
     }
 
     void ComponentCommand::execute()
