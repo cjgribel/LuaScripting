@@ -103,7 +103,7 @@ namespace Editor {
             {
                 assert(last_prop.entry.type == EntryType::Data);
                 auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
-                
+
                 // Validate key
                 assert(meta_any.type().is_associative_container());
                 assert(meta_any.as_associative_container().find(e.key_any));
