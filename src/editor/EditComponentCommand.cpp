@@ -6,15 +6,9 @@
 //
 
 #include <iostream>
-// #include <sstream>
 #include <cassert>
-// #include "imgui.h"
-// #include "MetaInspect.hpp"
-// #include "InspectType.hpp"
 #include "meta_literals.h"
-// #include "meta_aux.h"
 #include "MetaSerialize.hpp"
-
 #include "EditComponentCommand.hpp"
 
 namespace Editor {
@@ -38,34 +32,7 @@ namespace Editor {
         std::cout << ", component type " << component_id << std::endl;
         std::cout << "\tprev value: " << any_to_string(prev_value) << std::endl;
         std::cout << "\tnew value: " << any_to_string(new_value) << std::endl;
-        // std::cout << "\tpath:" << std::endl;
-        // for (auto& e : meta_path.entries)
-        // {
-        //     if (e.type == EntryType::Data) std::cout << "\t\tData: data_id = " << e.data_id << std::endl;
-        //     if (e.type == EntryType::Index) std::cout << "\t\tIndex: index = " << e.index << std::endl;
-        //     if (e.type == EntryType::Key) std::cout << "\t\tKey: key = " << any_to_string(e.key_any) << std::endl;
-        // }
 #endif   
-#if 0
-        std::cout << "traverse_and_set_meta_type, entity " << entt::to_integral(entity) << std::endl;
-        for (auto& e : meta_path.entries)
-        {
-            std::cout << "\t";
-            if (e.type == EntryType::Data) std::cout << "DATA";
-            if (e.type == EntryType::Index) std::cout << "INDEX";
-            if (e.type == EntryType::Key) std::cout << "KEY";
-            std::cout << ", " << e.name << ", (field) data_id " << e.data_id;
-            std::cout << ", (index) index " << e.index;
-            // std::cout << " (id_type for float " << entt::type_hash<float>::value() << ")";
-            auto xhs = "x"_hs; std::cout << " (id_type for 'x'_hs " << xhs.value() << ")";
-            std::cout << std::endl;
-        }
-        std::cout << "new_value true " << (bool)value_any; // (bool)c.new_value;
-        std::cout << " try_cast to float ";
-        auto fltptr = value_any.try_cast<float>(); // c.new_value.try_cast<float>();
-        if (fltptr) std::cout << *fltptr;
-        std::cout << std::endl;
-#endif
 
         // Component
         auto type = registry_sp->storage(component_id);
@@ -73,22 +40,16 @@ namespace Editor {
         entt::meta_type meta_type = entt::resolve(component_id);
         entt::meta_any meta_any = meta_type.from_void(type->value(entity));
 
-        //assert(meta_path.entries.size()); // Must be at least one?
-        //assert(meta_path.entries[0].type == EntryType::Data); // First must be Data?            
-        auto& entry0 = meta_path.entries[0];
-        entt::meta_data meta_data = meta_type.data(entry0.data_id);
-
-        // entt::meta_any data_any = meta_data.get(meta_any);
-
-        // std::cout << "meta_any.type().info().name() " << meta_any.type().info().name() << std::endl; // DebugClass
-        // std::cout << "meta_type.info().name " << meta_type.info().name() << std::endl; //DebugClass
-        // // std::cout << "data_any.type().info().name() " << data_any.type().info().name() << std::endl; // debugvec3
-        // std::cout << "meta_data.type().info().name() " << meta_data.type().info().name() << std::endl; // debugvec3
-
+        // 1.   Use meta path to build a stack with values copied from the specific component
+        // 2.   Iterate stack and assign values, from the edited data field up to the component itself 
         struct Property {
             entt::meta_any meta_any; entt::meta_data meta_data; MetaPath::Entry entry;
         };
         std::stack<Property> prop_stack;
+
+        // Push first path entry manually (this is the component itself)
+        auto& entry0 = meta_path.entries[0];
+        entt::meta_data meta_data = meta_type.data(entry0.data_id);
         Property last_prop{ meta_any, meta_data, entry0 };
         prop_stack.push(last_prop);
 
@@ -97,9 +58,8 @@ namespace Editor {
         std::cout << "entry 0: " << last_prop.meta_any.type().info().name() << std::endl;
 #endif
 
+        // Push the remaining path entries
         int i = 1;
-        //entt::meta_any meta_any_ = meta_any;
-        //entt::meta_data meta_data_ = meta_data;
         for (;i < meta_path.entries.size(); i++)
         {
             auto& e = meta_path.entries[i];
@@ -132,6 +92,10 @@ namespace Editor {
                 assert(last_prop.entry.type == EntryType::Data);
                 auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
 
+                // Validate index
+                assert(meta_any.type().is_sequence_container());
+                assert(e.index < meta_any.as_sequence_container().size());
+
                 last_prop = Property{ meta_any, entt::meta_data{}, e };
                 prop_stack.push(last_prop);
             }
@@ -139,6 +103,11 @@ namespace Editor {
             {
                 assert(last_prop.entry.type == EntryType::Data);
                 auto meta_any = last_prop.meta_data.get(last_prop.meta_any); assert(meta_any); // = container
+                
+                // Validate key
+                assert(meta_any.type().is_associative_container());
+                assert(meta_any.as_associative_container().find(e.key_any));
+
                 last_prop = Property{ meta_any, entt::meta_data{}, e };
                 prop_stack.push(last_prop);
             }
@@ -153,6 +122,7 @@ namespace Editor {
 #endif
         entt::meta_any any_new = value_any;
 
+        // Iterate stack and assign new values
         while (!prop_stack.empty())
         {
             auto& prop = prop_stack.top();
@@ -171,19 +141,15 @@ namespace Editor {
             }
             else if (prop.entry.type == EntryType::Index)
             {
-                assert(prop.meta_any.type().is_sequence_container());
                 auto view = prop.meta_any.as_sequence_container();
-                assert(prop.entry.index < view.size());
-
+                // Index already validated
                 view[prop.entry.index].assign(any_new);
             }
             else if (prop.entry.type == EntryType::Key)
             {
-                assert(prop.meta_any.type().is_associative_container());
                 auto view = prop.meta_any.as_associative_container();
+                // Key already validated
                 auto pair = view.find(prop.entry.key_any);
-                assert(pair);
-
                 pair->second.assign(any_new);
             }
             else { assert(0); }
@@ -198,7 +164,7 @@ namespace Editor {
 #endif
 
         // At this point, any_new is an updated copy of the component:
-        // assign it to the actual component
+        // assign it to the in-memory component
         meta_any.assign(any_new);
 
 #ifdef COMMAND_DEBUG_PRINTS
