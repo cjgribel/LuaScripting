@@ -23,6 +23,7 @@
 
 #include "vec.h"
 #include "SparseSet.hpp"
+#include "BehaviorScript.hpp"
 
 using linalg::v2f;
 #define GridSize 64
@@ -224,6 +225,14 @@ struct ScriptedBehaviorComponent
         // Called via entt callbacks when component is constructed & destroyed
         // sol::function init;
         // sol::function destroy;
+#if 0
+        BehaviorScript() = default;
+        BehaviorScript(const BehaviorScript& other);
+        BehaviorScript& operator=(const BehaviorScript& other);
+        // BehaviorScript(BehaviorScript&& other) noexcept;
+        // BehaviorScript& operator=(BehaviorScript&& other) noexcept;
+        ~BehaviorScript();
+#endif
     };
     std::vector<BehaviorScript> scripts;
 
@@ -245,7 +254,8 @@ struct LuaEvent {
     std::string event_name;
 
     LuaEvent(const sol::table& data, const std::string& event_name)
-        : data(data), event_name(event_name) {}
+        : data(data), event_name(event_name) {
+    }
 };
 
 // === Meta registration ======================================================

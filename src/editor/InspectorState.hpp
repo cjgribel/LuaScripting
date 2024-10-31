@@ -12,8 +12,6 @@
 
 namespace Editor {
 
-
-
     /// @brief 
     struct InspectorState
     {

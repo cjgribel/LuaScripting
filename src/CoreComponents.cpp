@@ -563,6 +563,39 @@ void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
 
 // === ScriptedBehaviorComponent ==============================================
 
+#if 0
+ScriptedBehaviorComponent::BehaviorScript::BehaviorScript(const ScriptedBehaviorComponent::BehaviorScript& other)
+{
+    // std::cout << "Copy Constructor called for " << name << "\n";
+}
+
+ScriptedBehaviorComponent::BehaviorScript& ScriptedBehaviorComponent::BehaviorScript::operator=(const ScriptedBehaviorComponent::BehaviorScript& other)
+{
+    if (this == &other) return *this; // Check for self-assignment
+    // name = other.name;
+    // std::cout << "Copy Assignment Operator called for " << name << "\n";
+    return *this;
+}
+
+// ScriptedBehaviorComponent::BehaviorScript::BehaviorScript(ScriptedBehaviorComponent::BehaviorScript&& other) noexcept // : name(std::move(other.name)) 
+// {
+//     //    std::cout << "Move Constructor called for " << name << "\n";
+// }
+
+// ScriptedBehaviorComponent::BehaviorScript& ScriptedBehaviorComponent::BehaviorScript::operator=(ScriptedBehaviorComponent::BehaviorScript&& other) noexcept
+// {
+//     if (this == &other) return *this; // Check for self-assignment
+//     //    name = std::move(other.name);
+//       //  std::cout << "Move Assignment Operator called for " << name << "\n";
+//     return *this;
+// }
+
+// Destructor
+ScriptedBehaviorComponent::BehaviorScript::~BehaviorScript() {
+    // std::cout << "Destructor called for " << name << "\n";
+}
+#endif
+
 namespace
 {
     std::string sol_object_to_string(std::shared_ptr<const sol::state> lua, const sol::object object)
@@ -574,7 +607,7 @@ namespace
     {
         return lua_typename(lua->lua_state(), static_cast<int>(object.get_type()));
     }
-}
+    }
 
 // sol inspection
 namespace Editor {
@@ -919,7 +952,7 @@ namespace {
 
         std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
         return cpy;
-    };
+};
 
     // v2
 #if 0
