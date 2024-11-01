@@ -16,6 +16,15 @@
 
 // === Transform ==============================================================
 
+std::string Transform::to_string() const
+{
+    std::stringstream ss;
+    ss << "Transform { x = " << std::to_string(x)
+        << ", y = " << std::to_string(y)
+        << ", angle = " << std::to_string(angle) << " }";
+    return ss.str();
+}
+
 // + const (e.g. when used as key) ?
 bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 {
@@ -95,6 +104,13 @@ void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
 }
 
 // === HeaderComponent ========================================================
+
+std::string HeaderComponent::to_string() const
+{
+    std::stringstream ss;
+    ss << "HeaderComponent { name = " << name << " }";
+    return  ss.str();
+}
 
 namespace {
     bool HeaderComponent_inspect(void* ptr, Editor::InspectorState& inspector)
@@ -178,6 +194,17 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
 }
 
 // === CircleColliderGridComponent ============================================
+
+std::string CircleColliderGridComponent::to_string() const
+{
+    return "CircleColliderGridComponent { ... }";
+    //     std::stringstream ss;
+    //     ss << "{ radii = ";
+    //     for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
+    //     ss << "{ is_active_flags = ";
+    //     for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+    //     return ss.str();
+}
 
 template<>
 void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua)
@@ -329,6 +356,11 @@ void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua
 
 // === IslandFinderComponent ==================================================
 
+std::string IslandFinderComponent::to_string() const
+{
+    return "IslandFinderComponent { ... }";
+}
+
 template<>
 void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua)
 {
@@ -364,6 +396,19 @@ void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua)
 }
 
 // === QuadGridComponent ======================================================
+
+std::string QuadGridComponent::to_string() const
+{
+    return "QuadGridComponent { ... }";
+    // std::stringstream ss;
+    // ss << "{ size = ";
+    // for (int i = 0; i < count; i++) ss << std::to_string(sizes[i]) << ", ";
+    // ss << "{ colors = ";
+    // for (int i = 0; i < count; i++) ss << std::to_string(colors[i]) << ", ";
+    // ss << "{ is_active_flags = ";
+    // for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
+    // return ss.str();
+}
 
 template<>
 void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua)
@@ -499,6 +544,11 @@ void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua)
 
 // === DataGridComponent ======================================================
 
+std::string DataGridComponent::to_string() const
+{
+    return "DataGridComponent { ... }";
+}
+
 template<>
 void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
 {
@@ -563,38 +613,13 @@ void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
 
 // === ScriptedBehaviorComponent ==============================================
 
-#if 0
-ScriptedBehaviorComponent::BehaviorScript::BehaviorScript(const ScriptedBehaviorComponent::BehaviorScript& other)
-{
-    // std::cout << "Copy Constructor called for " << name << "\n";
+std::string ScriptedBehaviorComponent::to_string() const {
+    std::stringstream ss;
+    ss << "{ scripts = ";
+    for (auto& script : scripts) ss << script.identifier << " ";
+    ss << "}";
+    return ss.str();
 }
-
-ScriptedBehaviorComponent::BehaviorScript& ScriptedBehaviorComponent::BehaviorScript::operator=(const ScriptedBehaviorComponent::BehaviorScript& other)
-{
-    if (this == &other) return *this; // Check for self-assignment
-    // name = other.name;
-    // std::cout << "Copy Assignment Operator called for " << name << "\n";
-    return *this;
-}
-
-// ScriptedBehaviorComponent::BehaviorScript::BehaviorScript(ScriptedBehaviorComponent::BehaviorScript&& other) noexcept // : name(std::move(other.name)) 
-// {
-//     //    std::cout << "Move Constructor called for " << name << "\n";
-// }
-
-// ScriptedBehaviorComponent::BehaviorScript& ScriptedBehaviorComponent::BehaviorScript::operator=(ScriptedBehaviorComponent::BehaviorScript&& other) noexcept
-// {
-//     if (this == &other) return *this; // Check for self-assignment
-//     //    name = std::move(other.name);
-//       //  std::cout << "Move Assignment Operator called for " << name << "\n";
-//     return *this;
-// }
-
-// Destructor
-ScriptedBehaviorComponent::BehaviorScript::~BehaviorScript() {
-    // std::cout << "Destructor called for " << name << "\n";
-}
-#endif
 
 namespace
 {
@@ -607,7 +632,7 @@ namespace
     {
         return lua_typename(lua->lua_state(), static_cast<int>(object.get_type()));
     }
-    }
+}
 
 // sol inspection
 namespace Editor {
@@ -952,7 +977,7 @@ namespace {
 
         std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
         return cpy;
-};
+    };
 
     // v2
 #if 0
@@ -1005,20 +1030,20 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         ;
 
     // ScriptedBehaviorComponent::BehaviorScript
-    entt::meta<ScriptedBehaviorComponent::BehaviorScript>()
+    entt::meta<BehaviorScript>()
         .type("BehaviorScript"_hs).prop(display_name_hs, "BehaviorScript")
 
-        .data<&ScriptedBehaviorComponent::BehaviorScript::identifier>("identifier"_hs)
+        .data<&BehaviorScript::identifier>("identifier"_hs)
         .prop(display_name_hs, "identifier")
         .prop(readonly_hs, true)
-        .data<&ScriptedBehaviorComponent::BehaviorScript::path>("path"_hs)
+        .data<&BehaviorScript::path>("path"_hs)
         .prop(display_name_hs, "path")
         .prop(readonly_hs, true)
 
         // sol stuff
-        .data<&ScriptedBehaviorComponent::BehaviorScript::self>("self"_hs).prop(display_name_hs, "self")
-        .data<&ScriptedBehaviorComponent::BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")
-        .data<&ScriptedBehaviorComponent::BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
+        .data<&BehaviorScript::self>("self"_hs).prop(display_name_hs, "self")
+        .data<&BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")
+        .data<&BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
         ;
 
     // ScriptedBehaviorComponent

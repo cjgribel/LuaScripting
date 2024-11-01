@@ -10,8 +10,8 @@
 // sol is used by
 //      For ScriptedBehaviorComponent => its own hpp/cpp
 //      Lua event
-#define SOL_ALL_SAFETIES_ON 1
-#include <sol/sol.hpp> 
+// #define SOL_ALL_SAFETIES_ON 1
+// #include <sol/sol.hpp> 
 //#include <sol/forward.hpp>
 // Fwwd decl?
 // namespace sol {
@@ -49,14 +49,7 @@ struct Transform
     //     angle_global = angle + angle_parent;
     // }
 
-    std::string to_string() const
-    {
-        std::stringstream ss;
-        ss << "Transform { x = " << std::to_string(x)
-            << ", y = " << std::to_string(y)
-            << ", angle = " << std::to_string(angle) << " }";
-        return ss.str();
-    }
+    std::string to_string() const;
 };
 
 
@@ -68,12 +61,7 @@ struct HeaderComponent
     // std::string name2;
     // std::string name3;
 
-    std::string to_string() const
-    {
-        std::stringstream ss;
-        ss << "HeaderComponent { name = " << name << " }";
-        return  ss.str();
-    }
+    std::string to_string() const;
 };
 
 // === CircleColliderGridComponent ============================================
@@ -101,16 +89,7 @@ struct CircleColliderGridComponent
     bool is_active = true;
     unsigned char layer_bit, layer_mask;
 
-    std::string to_string() const
-    {
-        return "CircleColliderGridComponent { ... }";
-        //     std::stringstream ss;
-        //     ss << "{ radii = ";
-        //     for (int i = 0; i < count; i++) ss << std::to_string(radii[i]) << ", ";
-        //     ss << "{ is_active_flags = ";
-        //     for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
-        //     return ss.str();
-    }
+    std::string to_string() const;
 };
 
 // === IslandFinderComponent ==================================================
@@ -126,10 +105,7 @@ struct IslandFinderComponent
     // Exposed to Lua
     std::vector<int> islands;
 
-    std::string to_string() const
-    {
-        return "IslandFinderComponent { ... }";
-    }
+    std::string to_string() const;
 };
 
 // === QuadGridComponent ======================================================
@@ -149,18 +125,7 @@ struct QuadGridComponent
     int count = 0, width = 0;
     bool is_active = true;
 
-    std::string to_string() const
-    {
-        return "QuadGridComponent { ... }";
-        // std::stringstream ss;
-        // ss << "{ size = ";
-        // for (int i = 0; i < count; i++) ss << std::to_string(sizes[i]) << ", ";
-        // ss << "{ colors = ";
-        // for (int i = 0; i < count; i++) ss << std::to_string(colors[i]) << ", ";
-        // ss << "{ is_active_flags = ";
-        // for (int i = 0; i < count; i++) ss << std::to_string(is_active_flags[i]) << ", ";
-        // return ss.str();
-    }
+    std::string to_string() const;
 };
 
 // === DataGridComponent ======================================================
@@ -171,10 +136,7 @@ struct DataGridComponent
     std::array<float, GridSize> slot2 = { 0.0f };
     int count = 0, width = 0;
 
-    std::string to_string() const
-    {
-        return "DataGridComponent { ... }";
-    }
+    std::string to_string() const;
 };
 
 // === NOT USED ===============================================================
@@ -212,51 +174,15 @@ struct CircleColliderComponent
 
 struct ScriptedBehaviorComponent
 {
-    struct BehaviorScript
-    {
-        // Lua object
-        sol::table self;
-        // Update function of Lua object
-        sol::protected_function update;
-        sol::protected_function on_collision;
-        std::string identifier;
-        std::string path;
-
-        // Called via entt callbacks when component is constructed & destroyed
-        // sol::function init;
-        // sol::function destroy;
-#if 0
-        BehaviorScript() = default;
-        BehaviorScript(const BehaviorScript& other);
-        BehaviorScript& operator=(const BehaviorScript& other);
-        // BehaviorScript(BehaviorScript&& other) noexcept;
-        // BehaviorScript& operator=(BehaviorScript&& other) noexcept;
-        ~BehaviorScript();
-#endif
-    };
     std::vector<BehaviorScript> scripts;
 
-    [[nodiscard]] std::string to_string() const {
-        std::stringstream ss;
-        ss << "{ scripts = ";
-        for (auto& script : scripts) ss << script.identifier << " ";
-        ss << "}";
-        return ss.str();
-    }
+    [[nodiscard]] std::string to_string() const;
 };
-//static_assert(std::is_same_v<sol::function, sol::protected_function>); // True in Debug mode, but false in Release mode (Clang -O4)
+
+// True in Debug mode, but false in Release mode (Clang -O4)
+//static_assert(std::is_same_v<sol::function, sol::protected_function>); 
+
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
-
-// === LuaEvent ===============================================================
-
-struct LuaEvent {
-    sol::table data;
-    std::string event_name;
-
-    LuaEvent(const sol::table& data, const std::string& event_name)
-        : data(data), event_name(event_name) {
-    }
-};
 
 // === Meta registration ======================================================
 

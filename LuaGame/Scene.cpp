@@ -22,6 +22,7 @@
 #include "DebugClass.h"
 
 #include "InspectType.hpp"
+// #include "BehaviorScript.hpp"
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
@@ -374,7 +375,7 @@ namespace {
         //return;
         assert(script_table.valid());
 
-        ScriptedBehaviorComponent::BehaviorScript script;
+        BehaviorScript script;
 
         script.self = script_table;
 
