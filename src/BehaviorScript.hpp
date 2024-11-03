@@ -4,6 +4,8 @@
 #include <cassert>
 #include <vector>
 
+#include <entt/entt.hpp>
+
 // sol is used by
 //      For ScriptedBehaviorComponent => its own hpp/cpp
 //      Lua event
@@ -25,13 +27,13 @@ struct BehaviorScript
     // sol::function init;
     // sol::function destroy;
 
-#if 0
     BehaviorScript() = default;
+#if 0
     BehaviorScript(const BehaviorScript& other);
     BehaviorScript& operator=(const BehaviorScript& other);
     // BehaviorScript(BehaviorScript&& other) noexcept;
     // BehaviorScript& operator=(BehaviorScript&& other) noexcept;
-    ~BehaviorScript();
+    ~BehaviorScript() = default;
 #endif
 };
 

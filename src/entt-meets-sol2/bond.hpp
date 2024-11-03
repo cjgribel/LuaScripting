@@ -188,6 +188,12 @@ sol::table open_registry(sol::this_state s)
             }
             return view;
         }
+
+        // "rebind",
+        // [](entt::registry& self, sol::table new_table) {
+        //     new_table["owner"] = std::ref(self); // <- TODO: try to not use key here
+        //     std::cout << "copy rebind" << std::endl; // 
+        // }
     );
 
     return entt_module;

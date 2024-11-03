@@ -402,7 +402,7 @@ namespace {
 
         // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
-        script_comp.scripts.push_back(script);
+        script_comp.scripts.push_back(script); // Invokes copy-ctor
 
         // Print the table's contents
 #if 0
@@ -422,7 +422,8 @@ namespace {
             }
         }
 #endif
-        return script.self;
+        // return script.self;
+        return script_comp.scripts.back().self;
     }
 
     sol::table add_script_from_file(

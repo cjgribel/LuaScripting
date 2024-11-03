@@ -1049,7 +1049,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
     // ScriptedBehaviorComponent
     entt::meta<ScriptedBehaviorComponent>()
         .type("ScriptedBehaviorComponent"_hs).prop(display_name_hs, "ScriptedBehavior")
-        .data<&ScriptedBehaviorComponent::scripts>("scripts"_hs).prop(display_name_hs, "scripts")
+        .data<&ScriptedBehaviorComponent::scripts, entt::as_ref_t>("scripts"_hs).prop(display_name_hs, "scripts")
 
         // Optional meta functions
 
@@ -1061,6 +1061,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
                 // .func<&inspect_Transform>(inspect_hs)
 
             // clone
+            // Remove if copy constructor is defined
         .func<&copy_ScriptedBehaviorComponent>(clone_hs)
         ;
 

@@ -38,6 +38,7 @@ namespace Editor {
         auto type = registry_sp->storage(component_id);
         assert(type->contains(entity));
         entt::meta_type meta_type = entt::resolve(component_id);
+        // from_void returns "a wrapper that references the given instance"
         entt::meta_any meta_any = meta_type.from_void(type->value(entity));
 
         // 1.   Use meta path to build a stack with values copied from the specific component
@@ -47,11 +48,12 @@ namespace Editor {
         };
         std::stack<Property> prop_stack;
 
-        // Push first path entry manually (this is the component itself)
+        // Push first data path entry manually (meta_any is the component itself)
         auto& entry0 = meta_path.entries[0];
         entt::meta_data meta_data = meta_type.data(entry0.data_id);
         Property last_prop{ meta_any, meta_data, entry0 };
         prop_stack.push(last_prop);
+        prop_stack.top().meta_any = meta_any.as_ref();
 
 #ifdef COMMAND_DEBUG_PRINTS
         std::cout << "building property stack..." << std::endl;
@@ -137,7 +139,7 @@ namespace Editor {
 #endif
             if (prop.entry.type == EntryType::Data)
             {
-                bool res = prop.meta_data.set(prop.meta_any, any_new); assert(res);
+                bool res = prop.meta_data.set(prop.meta_any, any_new); assert(res); //break;
             }
             else if (prop.entry.type == EntryType::Index)
             {
@@ -165,7 +167,7 @@ namespace Editor {
 
         // At this point, any_new is an updated copy of the component:
         // assign it to the in-memory component
-        meta_any.assign(any_new);
+        // meta_any.assign(any_new);
 
 #ifdef COMMAND_DEBUG_PRINTS
         std::cout << "Object after:" << std::endl;
