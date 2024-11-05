@@ -11,6 +11,21 @@
 #include "MetaSerialize.hpp"
 #include "EditComponentCommand.hpp"
 
+namespace
+{
+    bool is_ref(const entt::meta_any& any)
+    {
+        return any.policy() == entt::meta_any_policy::ref; // as_ref_t::value(); // entt::meta_any::policy::reference;
+
+        // DOOES NOT WORK
+        // Create a reference-based meta_any from the original
+        auto ref_any = any.as_ref();
+        // Compare addresses: if the original `any` was already a reference, 
+        // `ref_any` should match it in content (same underlying object)
+        return ref_any == any;
+    }
+}
+
 namespace Editor {
 
     void ComponentCommand::traverse_and_set_meta_type(entt::meta_any& value_any)
@@ -45,6 +60,11 @@ namespace Editor {
         // 2.   Iterate stack and assign values, from the edited data field up to the component itself 
         struct Property {
             entt::meta_any meta_any; entt::meta_data meta_data; MetaPath::Entry entry;
+
+            // explicit Property(entt::meta_any& meta_any, const entt::meta_data& meta_data, const MetaPath::Entry& entry)
+            //     : meta_any{ is_ref(meta_any) ? meta_any : meta_any.as_ref() },
+            //     meta_data(meta_data),
+            //     entry(entry) { }
         };
         std::stack<Property> prop_stack;
 
@@ -53,7 +73,18 @@ namespace Editor {
         entt::meta_data meta_data = meta_type.data(entry0.data_id);
         Property last_prop{ meta_any, meta_data, entry0 };
         prop_stack.push(last_prop);
-        prop_stack.top().meta_any = meta_any.as_ref();
+        prop_stack.top().meta_any = meta_any.as_ref(); //
+        assert(is_ref(prop_stack.top().meta_any));
+
+        //entt::as_ref_t
+        //meta_any.policy
+        entt::meta_any any = meta_any;
+        //assert(any == any.as_ref());
+        entt::meta_any cpy2 = meta_any.as_ref();
+        std::cout << "is_ref meta_any " << is_ref(meta_any) << std::endl;
+        std::cout << "is_ref meta_any.as_ref() " << is_ref(meta_any.as_ref()) << std::endl;
+        std::cout << "is_ref cpy1 " << is_ref(any) << std::endl;
+        std::cout << "is_ref cpy2 " << is_ref(cpy2) << std::endl;
 
 #ifdef COMMAND_DEBUG_PRINTS
         std::cout << "building property stack..." << std::endl;
