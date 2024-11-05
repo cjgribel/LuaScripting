@@ -13,6 +13,9 @@
 #include <sol/sol.hpp> 
 //#include <sol/forward.hpp>
 
+//#define BEHAVIOR_SCRIPT_DEEP_COPY
+//#define BEHAVIOR_SCRIPT_SHALLOW_COPY
+
 struct BehaviorScript
 {
     // Lua object
@@ -28,7 +31,8 @@ struct BehaviorScript
     // sol::function destroy;
 
     BehaviorScript() = default;
-#if 0
+    
+#if defined(BEHAVIOR_SCRIPT_DEEP_COPY) or defined(BEHAVIOR_SCRIPT_SHALLOW_COPY)
     BehaviorScript(const BehaviorScript& other);
     BehaviorScript& operator=(const BehaviorScript& other);
     // BehaviorScript(BehaviorScript&& other) noexcept;
