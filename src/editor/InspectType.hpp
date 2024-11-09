@@ -76,10 +76,10 @@ namespace Editor {
     template<>
     inline bool inspect_type<const bool>(const bool& t, InspectorState& inspector)
     {
-        ImGui::BeginDisabled();
+        inspector.begin_disabled();
         bool b = t;
-        return ImGui::Checkbox("##label", &b);
-        ImGui::EndDisabled();
+        ImGui::Checkbox("##label", &b);
+        inspector.end_disabled();
         return false;
     }
 
