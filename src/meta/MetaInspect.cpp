@@ -13,6 +13,7 @@
 #include "meta_literals.h"
 #include "meta_aux.h"
 
+#include "MetaClone.hpp"
 #include "MetaInspect.hpp"
 #include "InspectType.hpp"
 #include "EditComponentCommand.hpp"
@@ -139,7 +140,9 @@ namespace Editor {
 
 #ifdef USE_COMMANDS
                 // Invoke inspection meta function on a copy of the object
-                auto copy_any = any;
+
+                auto copy_any = Editor::clone_any(any, inspector.selected_entity);
+                //auto copy_any = any;
                 auto res_any = meta_func.invoke({}, copy_any.data(), entt::forward_as_meta(inspector));
                 assert(res_any && "Failed to invoke inspect meta function");
 
@@ -198,7 +201,8 @@ namespace Editor {
                         cmd_builder.push_path_data(id, key_name);
 #endif
                         // Obtain copy of data value
-                        entt::meta_any data_any = meta_data.get(any);
+                        entt::meta_any data_any = meta_data.get(any); //.as_ref() will yield REF to a TEMP VALUE if entt::as_ref_t is not used
+                        //std::cout << key_name << ": is_ref " << (any.policy() == entt::meta_any_policy::ref) << ", " << (data_any.policy() == entt::meta_any_policy::ref) << std::endl;
                         // Check & set readonly
                         bool readonly = get_meta_data_prop<bool, ReadonlyDefault>(meta_data, readonly_hs);
                         if (readonly) inspector.begin_disabled();
@@ -311,13 +315,23 @@ namespace Editor {
             }
         }
 
-        else
+        else //if (any.policy() != entt::meta_any_policy::cref)
         {
+
+            // Copy as any before???
+            // entt::meta_any any_copy = Editor::clone_any(any, inspector.selected_entity);
+
             // Try casting the meta_any to a primitive type and perform the inspection
             bool res = try_apply(any, [&](auto& value) {
 #ifdef USE_COMMANDS
                 // Inspect a copy of the value and issue command if a change is detected
                 auto value_copy = value;
+
+                //entt::meta_any any_copy = Editor::clone_any(any, inspector.selected_entity);
+
+                // std::remove_reference_t<decltype(value)> v;
+                //decltype(value) v;
+
                 if (Editor::inspect_type(value_copy, inspector))
                 {
                     // Build & issue command
@@ -334,6 +348,7 @@ namespace Editor {
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
         }
+        // else { /* cref */ }
 
 #ifdef INSPECTION_DEBUG_PRINT
         std::cout << "DONE inspect_any " << meta_type_name(any.type()) << std::endl;
@@ -369,9 +384,9 @@ namespace Editor {
                         .entity(entity)
                         .component(id);
 #endif
-                    auto comp_any = meta_type.from_void(type.value(entity));
+                    auto comp_any = meta_type.from_void(type.value(entity)); // ref
                     mod |= inspect_any(comp_any, inspector, cmd_builder);
-                    
+
                     inspector.end_node();
                 }
             }

@@ -17,12 +17,12 @@ namespace
     {
         return any.policy() == entt::meta_any_policy::ref; // as_ref_t::value(); // entt::meta_any::policy::reference;
 
-        // DOOES NOT WORK
-        // Create a reference-based meta_any from the original
-        auto ref_any = any.as_ref();
-        // Compare addresses: if the original `any` was already a reference, 
-        // `ref_any` should match it in content (same underlying object)
-        return ref_any == any;
+        // // DOOES NOT WORK
+        // // Create a reference-based meta_any from the original
+        // auto ref_any = any.as_ref();
+        // // Compare addresses: if the original `any` was already a reference, 
+        // // `ref_any` should match it in content (same underlying object)
+        // return ref_any == any;
     }
 }
 
@@ -73,18 +73,18 @@ namespace Editor {
         entt::meta_data meta_data = meta_type.data(entry0.data_id);
         Property last_prop{ meta_any, meta_data, entry0 };
         prop_stack.push(last_prop);
-        prop_stack.top().meta_any = meta_any.as_ref(); //
-        assert(is_ref(prop_stack.top().meta_any));
+        prop_stack.top().meta_any = meta_any.as_ref(); // TODO
+        assert(is_ref(prop_stack.top().meta_any)); // TODO
 
         //entt::as_ref_t
         //meta_any.policy
-        entt::meta_any any = meta_any;
-        //assert(any == any.as_ref());
-        entt::meta_any cpy2 = meta_any.as_ref();
-        std::cout << "is_ref meta_any " << is_ref(meta_any) << std::endl;
-        std::cout << "is_ref meta_any.as_ref() " << is_ref(meta_any.as_ref()) << std::endl;
-        std::cout << "is_ref cpy1 " << is_ref(any) << std::endl;
-        std::cout << "is_ref cpy2 " << is_ref(cpy2) << std::endl;
+        // entt::meta_any any = meta_any;
+        // //assert(any == any.as_ref());
+        // entt::meta_any cpy2 = meta_any.as_ref();
+        // std::cout << "is_ref meta_any " << is_ref(meta_any) << std::endl;
+        // std::cout << "is_ref meta_any.as_ref() " << is_ref(meta_any.as_ref()) << std::endl;
+        // std::cout << "is_ref cpy1 " << is_ref(any) << std::endl;
+        // std::cout << "is_ref cpy2 " << is_ref(cpy2) << std::endl;
 
 #ifdef COMMAND_DEBUG_PRINTS
         std::cout << "building property stack..." << std::endl;
@@ -196,8 +196,11 @@ namespace Editor {
         std::cout << any_to_string(meta_any) << std::endl;
 #endif
 
-        // At this point, any_new is an updated copy of the component:
+        // At this point, any_new is an updated COPY of the component:
         // assign it to the in-memory component
+        // This works since
+        //      * meta_type.from_void(type.value(entity)) is a REFERENCE
+        //      * We do this above: prop_stack.top().meta_any = meta_any.as_ref();
         // meta_any.assign(any_new);
 
 #ifdef COMMAND_DEBUG_PRINTS
@@ -251,7 +254,7 @@ namespace Editor {
     ComponentCommandBuilder& ComponentCommandBuilder::push_path_key(const entt::meta_any& key_any, const std::string& name)
     {
         command.meta_path.entries.push_back(
-            MetaPath::Entry{ .type = MetaPath::Entry::Type::Key, .key_any = key_any, .name = name }
+            MetaPath::Entry{ .type = MetaPath::Entry::Type::Key, .key_any = key_any/*.as_ref()*/, .name = name }
         );
         return *this;
     }

@@ -88,11 +88,9 @@ BehaviorScript::BehaviorScript(const BehaviorScript& rhs)
     // Rebind original's registry to copy
     //script.self["owner"] = std::ref(registry); // &registry also seems to work
     {
-        auto registry_ref = rhs.self["owner"];
-        assert(registry_ref.valid());
+        auto registry_ref = rhs.self["owner"];      assert(registry_ref.valid());
         //if (registry_ref.get_type() == sol::type::userdata) std::cout << "registry_ref is userdata\n";
-        auto rebind_func = registry_ref["rebind"];
-        assert(rebind_func.valid());
+        auto rebind_func = registry_ref["rebind"];  assert(rebind_func.valid());
         //if (rebind_func.get_type() == sol::type::function) std::cout << "rebind_func is function\n";
         rebind_func(registry_ref, self);
 

@@ -920,9 +920,9 @@ namespace {
         return copy;
     }
 
-    ScriptedBehaviorComponent copy_ScriptedBehaviorComponent(void* ptr, entt::entity dst_entity)
+    ScriptedBehaviorComponent copy_ScriptedBehaviorComponent(const void* ptr, entt::entity dst_entity)
     {
-        auto comp_ptr = static_cast<ScriptedBehaviorComponent*>(ptr);
+        auto comp_ptr = static_cast<const ScriptedBehaviorComponent*>(ptr);
         std::cout << "COPY ScriptedBehaviorComponent" << std::endl;
 
         // Will suffice if ScriptedBehaviorComponent has a copy constructor
@@ -979,6 +979,16 @@ namespace {
         return cpy;
     };
 
+
+
+    sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
+    {
+        auto tbl = static_cast<const sol::table*>(ptr);
+        std::cout << "copy_soltable" << std::endl;
+
+        return deep_copy_table(tbl->lua_state(), *tbl);
+    }
+
     // v2
 #if 0
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
@@ -1017,7 +1027,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
 
         // clone
         // Note: Let ScriptedBehaviorComponent do the copying
-        //.func <copy_table>(clone_hs)
+        .func <&copy_soltable>(clone_hs)
         ;
 
     // sol::protected_function
