@@ -28,7 +28,7 @@ namespace Editor {
         {
             if (entt::meta_func meta_func = meta_type.func(clone_hs); meta_func)
             {
-                std::cout << "clone_any: invoking clone() for " << any.type().info().name() << std::endl;
+                // std::cout << "clone_any: invoking clone() for " << any.type().info().name() << std::endl;
 
                 auto copy_any = meta_func.invoke({}, any.data() /*src_ptr*/, dst_entity);
                 assert(copy_any && "Failed to invoke clone() for type ");
