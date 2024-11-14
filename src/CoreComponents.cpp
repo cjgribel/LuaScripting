@@ -984,7 +984,7 @@ namespace {
     sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
     {
         auto tbl = static_cast<const sol::table*>(ptr);
-        std::cout << "copy_soltable" << std::endl;
+        // std::cout << "copy_soltable" << std::endl;
 
         return deep_copy_table(tbl->lua_state(), *tbl);
     }
