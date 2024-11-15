@@ -40,20 +40,20 @@ namespace {
     // }
 }
 
-#if defined(BEHAVIOR_SCRIPT_DEEP_COPY) or defined(BEHAVIOR_SCRIPT_SHALLOW_COPY)
+#if defined(BEHAVIORSCRIPT_EXPLICIT_DEEPCOPY) or defined(BEHAVIORSCRIPT_EXPLICIT_SHALLOWCOPY)
 
 BehaviorScript::BehaviorScript(const BehaviorScript& rhs)
     : identifier(rhs.identifier), path(rhs.path)
 {
     std::cout << "copyctor BehaviorScript(const BehaviorScript& other)" << std::endl;;
 
-#ifdef BEHAVIOR_SCRIPT_SHALLOW_COPY)
+#ifdef BEHAVIORSCRIPT_EXPLICIT_SHALLOWCOPY)
     // SHALLOW
     self = rhs.self;
     update = rhs.update;
     on_collision = rhs.on_collision;
 #endif
-#ifdef BEHAVIOR_SCRIPT_DEEP_COPY)
+#ifdef BEHAVIORSCRIPT_EXPLICIT_DEEPCOPY)
     // DEEP
     sol::state_view lua = rhs.self.lua_state();
 

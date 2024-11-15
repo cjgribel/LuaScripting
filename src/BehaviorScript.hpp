@@ -13,8 +13,8 @@
 #include <sol/sol.hpp> 
 //#include <sol/forward.hpp>
 
-//#define BEHAVIOR_SCRIPT_DEEP_COPY
-//#define BEHAVIOR_SCRIPT_SHALLOW_COPY
+//#define BEHAVIORSCRIPT_EXPLICIT_DEEPCOPY
+//#define BEHAVIORSCRIPT_EXPLICIT_SHALLOWCOPY
 
 struct BehaviorScript
 {
@@ -32,7 +32,7 @@ struct BehaviorScript
 
     BehaviorScript() = default;
     
-#if defined(BEHAVIOR_SCRIPT_DEEP_COPY) or defined(BEHAVIOR_SCRIPT_SHALLOW_COPY)
+#if defined(BEHAVIORSCRIPT_EXPLICIT_DEEPCOPY) or defined(BEHAVIORSCRIPT_EXPLICIT_SHALLOWCOPY)
     BehaviorScript(const BehaviorScript& other);
     BehaviorScript& operator=(const BehaviorScript& other);
     // BehaviorScript(BehaviorScript&& other) noexcept;
