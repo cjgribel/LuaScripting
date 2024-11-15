@@ -989,6 +989,17 @@ namespace {
         return deep_copy_table(tbl->lua_state(), *tbl);
     }
 
+    /*
+     copy BehaviorScript
+     (no clone_hs for sol::table - use BehaviorScript instead)
+    
+    1. LOAD script. Don't run init()?
+        LOAD = add_script minus init()
+    2. Copy dst -> src 
+        Use metadata to decide what to copy
+        (deep_copy_table currently copied "everything")
+    */
+
     // v2
 #if 0
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
