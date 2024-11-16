@@ -53,8 +53,8 @@ struct BehaviorScriptFactory
     static BehaviorScript create_from_file(
         entt::registry& registry,
         const entt::entity entity,
-        std::shared_ptr<sol::state>& lua,
-        const std::string& script_dir,
+        sol::state_view lua,
+        const std::string& script_path,
         const std::string& script_name);
 };
 

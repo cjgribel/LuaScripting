@@ -222,14 +222,14 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
 BehaviorScript BehaviorScriptFactory::create_from_file(
     entt::registry& registry,
     const entt::entity entity,
-    std::shared_ptr<sol::state>& lua,
-    const std::string& script_dir,
+    sol::state_view lua,
+    const std::string& script_path,
     const std::string& script_name
 )
 {
-    const std::string script_path = script_dir + script_name + ".lua";
+    //const std::string script_path = script_dir + script_name + ".lua";
     // sol::load_result behavior_script = lua.load_file(script_file);
-    sol::load_result behavior_script = lua->load_file(script_path);
+    sol::load_result behavior_script = lua.load_file(script_path);
 
     assert(behavior_script.valid());
     sol::protected_function script_function = behavior_script;

@@ -637,42 +637,42 @@ namespace
 // sol inspection
 namespace Editor {
 
-    bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name) 
+    bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name)
     {
-    // Ensure the key is a string (assuming only string keys are tagged)
-    if (!key.is<std::string>()) {
-        return false; // Non-string keys cannot have tags
+        // Ensure the key is a string (assuming only string keys are tagged)
+        if (!key.is<std::string>()) {
+            return false; // Non-string keys cannot have tags
+        }
+
+        std::string field_name = key.as<std::string>();
+
+        // Access the optional meta table
+        sol::optional<sol::table> maybe_meta = tbl["meta"];
+        if (!maybe_meta) {
+            return false; // No meta table, so no tags
+        }
+
+        sol::table meta = *maybe_meta;
+
+        // Access the optional tags table within meta
+        sol::optional<sol::table> maybe_tags = meta["tags"];
+        if (!maybe_tags) {
+            return false; // No tags table, so no tags
+        }
+
+        sol::table tags = *maybe_tags;
+
+        // Access the tags for the specific field
+        sol::optional<sol::table> maybe_field_tags = tags[field_name];
+        if (!maybe_field_tags) {
+            return false; // No tags for this field
+        }
+
+        sol::table field_tags = *maybe_field_tags;
+
+        // Check the specified tag
+        return field_tags[tag_name].get_or(false);
     }
-
-    std::string field_name = key.as<std::string>();
-
-    // Access the optional meta table
-    sol::optional<sol::table> maybe_meta = tbl["meta"];
-    if (!maybe_meta) {
-        return false; // No meta table, so no tags
-    }
-
-    sol::table meta = *maybe_meta;
-
-    // Access the optional tags table within meta
-    sol::optional<sol::table> maybe_tags = meta["tags"];
-    if (!maybe_tags) {
-        return false; // No tags table, so no tags
-    }
-
-    sol::table tags = *maybe_tags;
-
-    // Access the tags for the specific field
-    sol::optional<sol::table> maybe_field_tags = tags[field_name];
-    if (!maybe_field_tags) {
-        return false; // No tags for this field
-    }
-
-    sol::table field_tags = *maybe_field_tags;
-
-    // Check the specified tag
-    return field_tags[tag_name].get_or(false);
-}
 
     /// Inspect sol::function
     template<>
@@ -964,6 +964,60 @@ namespace {
         auto comp_ptr = static_cast<const ScriptedBehaviorComponent*>(ptr);
         std::cout << "COPY ScriptedBehaviorComponent" << std::endl;
 
+
+        ScriptedBehaviorComponent comp_cpy;
+
+#if 0
+        for (auto& script : comp_ptr->scripts)
+        {
+            auto& self = script.self;
+
+            // LOAD
+            auto lua_registry = self["owner"];      assert(lua_registry.valid());
+            //if (registry_ref.get_type() == sol::type::userdata) std::cout << "registry_ref is userdata\n";
+            //if (rebind_func.get_type() == sol::type::function) std::cout << "rebind_func is function\n";
+
+            // Get registry pointer from source script
+            sol::optional<entt::registry*> registry_opt = lua_registry;
+            assert(registry_opt);
+            entt::registry* registry_ptr = *registry_opt;
+
+            //entt::registry& registry_ptr = lua_registry.get<entt::registry&>(); // REPLACES REBIND?
+            std::cout << registry_ptr->valid(dst_entity) << std::endl; //
+
+            // Do for the copied table
+            //auto rebind_func = lua_registry.operator[]("rebind");  assert(rebind_func.valid());
+            //rebind_func(registry_ref, self);
+
+            // CHECK
+            // auto new_registry_ref = self["owner"];
+            // assert(new_registry_ref.valid());
+            // auto new_rebind = self["owner"]["rebind"];
+            // assert(new_rebind.valid());
+
+            auto script_cpy = BehaviorScriptFactory::create_from_file(
+                *registry_ptr,
+                dst_entity,
+                self.lua_state(),
+                script.path,
+                script.identifier);
+
+            // COPY LUA META FIELDS from self -> script_cpy.self
+            // = deep_copy_table 
+            //      without lua.create_table() 
+            //      & without userdata["construct"]
+            //      LOAD creates these - we just need to update specific fields
+
+            comp_cpy.scripts.push_back(std::move(script_cpy));
+        }
+
+
+        std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
+        return comp_cpy;
+
+#else
+
+
         // Will suffice if ScriptedBehaviorComponent has a copy constructor
         // (Except updating the id() function)
         // Can entity be sent to script's update() ??
@@ -1016,6 +1070,7 @@ namespace {
 
         std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
         return cpy;
+#endif
     };
 
 
@@ -1058,7 +1113,7 @@ namespace {
         // const sol::table& script_table,
         // const std::string& identifier,
         // const std::string& script_path)
-    }
+}
 #endif
 }
 
