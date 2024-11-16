@@ -637,6 +637,43 @@ namespace
 // sol inspection
 namespace Editor {
 
+    bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name) 
+    {
+    // Ensure the key is a string (assuming only string keys are tagged)
+    if (!key.is<std::string>()) {
+        return false; // Non-string keys cannot have tags
+    }
+
+    std::string field_name = key.as<std::string>();
+
+    // Access the optional meta table
+    sol::optional<sol::table> maybe_meta = tbl["meta"];
+    if (!maybe_meta) {
+        return false; // No meta table, so no tags
+    }
+
+    sol::table meta = *maybe_meta;
+
+    // Access the optional tags table within meta
+    sol::optional<sol::table> maybe_tags = meta["tags"];
+    if (!maybe_tags) {
+        return false; // No tags table, so no tags
+    }
+
+    sol::table tags = *maybe_tags;
+
+    // Access the tags for the specific field
+    sol::optional<sol::table> maybe_field_tags = tags[field_name];
+    if (!maybe_field_tags) {
+        return false; // No tags for this field
+    }
+
+    sol::table field_tags = *maybe_field_tags;
+
+    // Check the specified tag
+    return field_tags[tag_name].get_or(false);
+}
+
     /// Inspect sol::function
     template<>
     bool inspect_type<sol::function>(sol::function& t, InspectorState& inspector)
@@ -759,6 +796,8 @@ namespace Editor {
 
         for (auto& [key, value] : tbl)
         {
+            if (!check_field_tag(tbl, key, "inspectable")) continue;
+
             std::string key_str = sol_object_to_string(lua, key) + " [" + get_lua_type_name(lua, value) + "]";
             std::string key_str_label = "##" + key_str;
 
@@ -992,10 +1031,10 @@ namespace {
     /*
      copy BehaviorScript
      (no clone_hs for sol::table - use BehaviorScript instead)
-    
+
     1. LOAD script. Don't run init()?
         LOAD = add_script minus init()
-    2. Copy dst -> src 
+    2. Copy dst -> src
         Use metadata to decide what to copy
         (deep_copy_table currently copied "everything")
     */

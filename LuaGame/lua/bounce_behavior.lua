@@ -6,9 +6,18 @@ local node = {
     STRING = "STRING",
     BOOL = true,
     NUMBER = 123.123,
+
+    -- usertype tests: these types are defined as usertypes via sol
     HEADER = HeaderComponent("Hello123"),
     TRANSFORM = Transform(1.0, 2.0, 3.0),
-    QUADGRID = QuadGridComponent(1,1,false)
+    QUADGRID = QuadGridComponent(1,1,false),
+
+    meta = {
+        tags = {
+            VELOCITY_MIN = {inspectable = true, serializable = true},
+            VELOCITY_MAX = {inspectable = true}
+        }
+    }
 }
 
 function node:init()
