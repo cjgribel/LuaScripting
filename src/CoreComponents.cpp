@@ -794,11 +794,16 @@ namespace Editor {
         auto& lua = inspector.context.lua;
         bool mod = false;
 
+        assert(tbl.valid());
         if (!tbl.valid()) return mod;
 
         for (auto& [key, value] : tbl)
         {
-            if (!check_field_tag(tbl, key, "inspectable")) continue;
+            if (!check_field_tag(tbl, key, "inspectable")) 
+            {
+                //std::cout << "Not inspectable"
+                continue;
+            }
 
             std::string key_str = sol_object_to_string(lua, key) + " [" + get_lua_type_name(lua, value) + "]";
             std::string key_str_label = "##" + key_str;
@@ -884,6 +889,31 @@ namespace Editor {
         return mod;
     }
 
+    template<>
+    bool inspect_type<BehaviorScript>(BehaviorScript& script, InspectorState& inspector)
+    {
+        bool mod = false;
+
+        inspector.begin_leaf("id");
+        inspector.begin_disabled();
+        mod |= inspect_type(script.identifier, inspector);
+        inspector.end_disabled();
+        inspector.end_leaf();
+
+        inspector.begin_leaf("path");
+        inspector.begin_disabled();
+        mod |= inspect_type(script.path, inspector);
+        inspector.end_disabled();
+        inspector.end_leaf();
+
+        if (inspector.begin_node("script"))
+        {
+            mod |= inspect_type(script.self, inspector);
+            inspector.end_node();
+        }
+
+        return mod;
+    }
 }
 
 // sol copying
@@ -897,7 +927,7 @@ namespace {
         // if (!construct.valid())  return userdata_src; // Copy by reference
         // // Let userdata_src decide how to copy
         // sol::userdata userdata_cpy = construct();
-        
+
         // ASSUME DEST IS LOADED?
         assert(userdata_dst.valid());
         if (!userdata_dst.valid())
@@ -991,6 +1021,62 @@ namespace {
         // return copy;
     }
 
+    BehaviorScript copy_BehaviorScript(const void* ptr, entt::entity dst_entity)
+    {
+        auto script = static_cast<const BehaviorScript*>(ptr);
+        std::cout << "COPY BehaviorScript" << std::endl;
+
+
+        // ScriptedBehaviorComponent comp_cpy;
+
+        // for (auto& script : comp_ptr->scripts)
+        // {
+        auto& self = script->self;
+
+        // LOAD
+        auto lua_registry = self["owner"];      assert(lua_registry.valid());
+        //if (registry_ref.get_type() == sol::type::userdata) std::cout << "registry_ref is userdata\n";
+        //if (rebind_func.get_type() == sol::type::function) std::cout << "rebind_func is function\n";
+
+        // Get registry pointer from source script
+        sol::optional<entt::registry*> registry_opt = lua_registry;
+        assert(registry_opt);
+        entt::registry* registry_ptr = *registry_opt;
+
+        //entt::registry& registry_ptr = lua_registry.get<entt::registry&>(); // REPLACES REBIND?
+        std::cout << registry_ptr->valid(dst_entity) << std::endl; //
+
+        // Do for the copied table
+        //auto rebind_func = lua_registry.operator[]("rebind");  assert(rebind_func.valid());
+        //rebind_func(registry_ref, self);
+
+        // CHECK
+        // auto new_registry_ref = self["owner"];
+        // assert(new_registry_ref.valid());
+        // auto new_rebind = self["owner"]["rebind"];
+        // assert(new_rebind.valid());
+
+        auto script_cpy = BehaviorScriptFactory::create_from_file(
+            *registry_ptr,
+            dst_entity,
+            self.lua_state(),
+            script->path,
+            script->identifier);
+
+        deep_copy_table(self, script_cpy.self);
+        // COPY LUA META FIELDS from self -> script_cpy.self
+        // = deep_copy_table 
+        //      without lua.create_table() 
+        //      & without userdata["construct"]
+        //      LOAD creates these - we just need to update specific fields
+
+        // comp_cpy.scripts.push_back(std::move(script_cpy));
+    // }
+
+        std::cout << "DONE COPY BehaviorScript" << std::endl << std::flush;
+        return script_cpy;
+    };
+
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent(const void* ptr, entt::entity dst_entity)
     {
         auto comp_ptr = static_cast<const ScriptedBehaviorComponent*>(ptr);
@@ -1002,6 +1088,9 @@ namespace {
 #if 1
         for (auto& script : comp_ptr->scripts)
         {
+#if 1
+            comp_cpy.scripts.push_back(std::move(copy_BehaviorScript(&script, dst_entity)));
+#else
             auto& self = script.self;
 
             // LOAD
@@ -1042,6 +1131,7 @@ namespace {
             //      LOAD creates these - we just need to update specific fields
 
             comp_cpy.scripts.push_back(std::move(script_cpy));
+#endif
         }
 
 
@@ -1108,32 +1198,34 @@ namespace {
 
 
 
-//     sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
-//     {
-//         auto tbl = static_cast<const sol::table*>(ptr);
-//         // std::cout << "copy_soltable" << std::endl;
 
-// //        return deep_copy_table(tbl->lua_state(), *tbl);
 
-//         // Create a blank new table
-//         sol::state_view lua = tbl->lua_state();
-//         auto tbl_dst = lua.create_table();
-//         deep_copy_table(*tbl, tbl_dst);
-//         return tbl_dst;
-//     }
+    //     sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
+    //     {
+    //         auto tbl = static_cast<const sol::table*>(ptr);
+    //         // std::cout << "copy_soltable" << std::endl;
 
-    /*
-     copy BehaviorScript
-     (no clone_hs for sol::table - use BehaviorScript instead)
+    // //        return deep_copy_table(tbl->lua_state(), *tbl);
 
-    1. LOAD script. Don't run init()?
-        LOAD = add_script minus init()
-    2. Copy dst -> src
-        Use metadata to decide what to copy
-        (deep_copy_table currently copied "everything")
-    */
+    //         // Create a blank new table
+    //         sol::state_view lua = tbl->lua_state();
+    //         auto tbl_dst = lua.create_table();
+    //         deep_copy_table(*tbl, tbl_dst);
+    //         return tbl_dst;
+    //     }
 
-    // v2
+        /*
+         copy BehaviorScript
+         (no clone_hs for sol::table - use BehaviorScript instead)
+
+        1. LOAD script. Don't run init()?
+            LOAD = add_script minus init()
+        2. Copy dst -> src
+            Use metadata to decide what to copy
+            (deep_copy_table currently copied "everything")
+        */
+
+        // v2
 #if 0
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
     {
@@ -1165,9 +1257,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .type("sol::table"_hs).prop(display_name_hs, "sol::table")
 
         // inspect
-        //.func<&soltable_inspect>(inspect_hs)
-        // inspect v2
-        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
+        //.func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::table*>(ptr), inspector); } > (inspect_hs)
 
         // clone
         // Note: Let ScriptedBehaviorComponent do the copying
@@ -1177,6 +1267,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
     // sol::protected_function
     entt::meta<sol::protected_function>()
         .type("sol::protected_function"_hs).prop(display_name_hs, "sol::protected_function")
+
         // inspect
         //.func<&solfunction_inspect>(inspect_hs)
         // inspect v2 - 'widget not implemented' for BehaviorScript::update, on_collision
@@ -1199,12 +1290,18 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .data<&BehaviorScript::self/*, entt::as_ref_t*/>("self"_hs).prop(display_name_hs, "self")
         .data<&BehaviorScript::update/*, entt::as_ref_t*/>("update"_hs).prop(display_name_hs, "update")
         .data<&BehaviorScript::on_collision/*, entt::as_ref_t*/>("on_collision"_hs).prop(display_name_hs, "on_collision")
+
+        // inspect_hs (overrides props for members)
+        .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<BehaviorScript*>(ptr), inspector); } > (inspect_hs)
+
+        // clone
+        .func<&copy_BehaviorScript>(clone_hs)
         ;
 
     // ScriptedBehaviorComponent
     entt::meta<ScriptedBehaviorComponent>()
         .type("ScriptedBehaviorComponent"_hs).prop(display_name_hs, "ScriptedBehavior")
-        .data<&ScriptedBehaviorComponent::scripts/*, entt::as_ref_t*/>("scripts"_hs).prop(display_name_hs, "scripts")
+        .data<&ScriptedBehaviorComponent::scripts, entt::as_ref_t>("scripts"_hs).prop(display_name_hs, "scripts")
 
         // Optional meta functions
 
