@@ -7,16 +7,30 @@ local node = {
     BOOL = true,
     NUMBER = 123.123,
 
+    velocity = {
+        x = 0.0, 
+        y = 0.0, 
+        angle = 0.0,
+
+        meta = {
+            x = {inspectable = true, serializable = true}, 
+            y = {inspectable = true, serializable = true}, 
+            angle = {inspectable = true, serializable = true}
+        }
+    },
+
     -- usertype tests: these types are defined as usertypes via sol
     HEADER = HeaderComponent("Hello123"),
     TRANSFORM = Transform(1.0, 2.0, 3.0),
-    QUADGRID = QuadGridComponent(1,1,false),
+    --QUADGRID = QuadGridComponent(1,1,false),
 
     meta = {
-        tags = {
-            VELOCITY_MIN = {inspectable = true, serializable = true},
-            VELOCITY_MAX = {inspectable = true}
-        }
+        VELOCITY_MIN = {inspectable = true, serializable = true},
+        VELOCITY_MAX = {inspectable = true},
+
+        velocity = {inspectable = true, serializable = true},
+
+        HEADER = {inspectable = true, serializable = true}
     }
 }
 
@@ -29,11 +43,9 @@ function node:init()
     --    print("Key:", k, "Type:", type(v))
     --end
 
-    self.velocity = {
-        x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
-        y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN,
-        angle = -math.pi * 0.5 + math.random() * math.pi
-    }
+    self.velocity.x = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+    self.velocity.y = math.random() * (self.VELOCITY_MAX - self.VELOCITY_MIN) + self.VELOCITY_MIN
+    self.velocity.yangle = -math.pi * 0.5 + math.random() * math.pi
 
 	print('bounce_behavior [#' .. self.id() .. '] init ()', self)
 end

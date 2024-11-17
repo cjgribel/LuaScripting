@@ -634,9 +634,7 @@ namespace
     }
 }
 
-// sol inspection
-namespace Editor {
-
+namespace {
     bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name)
     {
         // Ensure the key is a string (assuming only string keys are tagged)
@@ -655,15 +653,15 @@ namespace Editor {
         sol::table meta = *maybe_meta;
 
         // Access the optional tags table within meta
-        sol::optional<sol::table> maybe_tags = meta["tags"];
-        if (!maybe_tags) {
-            return false; // No tags table, so no tags
-        }
+        // sol::optional<sol::table> maybe_tags = meta["tags"];
+        // if (!maybe_tags) {
+        //     return false; // No tags table, so no tags
+        // }
 
-        sol::table tags = *maybe_tags;
+        // sol::table tags = *maybe_tags;
 
         // Access the tags for the specific field
-        sol::optional<sol::table> maybe_field_tags = tags[field_name];
+        sol::optional<sol::table> maybe_field_tags = meta[field_name];
         if (!maybe_field_tags) {
             return false; // No tags for this field
         }
@@ -673,6 +671,10 @@ namespace Editor {
         // Check the specified tag
         return field_tags[tag_name].get_or(false);
     }
+}
+
+// sol inspection
+namespace Editor {
 
     /// Inspect sol::function
     template<>
@@ -887,31 +889,40 @@ namespace Editor {
 // sol copying
 namespace {
 
-    sol::table deep_copy_table(sol::state_view lua, const sol::table& original);
+    void deep_copy_table(const sol::table& tbl_src, sol::table& tbl_dst);
 
-    sol::userdata deep_copy_userdata(sol::state_view lua, const sol::userdata& userdata)
+    void deep_copy_userdata(const sol::userdata& userdata_src, sol::userdata& userdata_dst)
     {
-        sol::function construct = userdata["construct"];
-        if (!construct.valid())  return userdata; // Copy by reference
-        // Let userdata decide how to copy
-        sol::userdata userdata_cpy = construct();
+        // sol::function construct = userdata_src["construct"];
+        // if (!construct.valid())  return userdata_src; // Copy by reference
+        // // Let userdata_src decide how to copy
+        // sol::userdata userdata_cpy = construct();
+        
+        // ASSUME DEST IS LOADED?
+        assert(userdata_dst.valid());
+        if (!userdata_dst.valid())
+        {
+            sol::function construct = userdata_src["construct"];
+            if (!construct.valid()) { userdata_dst = userdata_src; return; } // return userdata_src; // Fallback: copy by reference
+            sol::userdata userdata_cpy = construct();
+        }
 
         // Fetch type id
-        auto type_id = userdata["type_id"];
-        if (type_id.get_type() != sol::type::function) return userdata;
+        auto type_id = userdata_src["type_id"];
+        if (type_id.get_type() != sol::type::function) { userdata_dst = userdata_src; return; } // return userdata_src;
 
         // Fetch entt meta type, iterate its data and copy to userdata
         entt::id_type id = type_id.call();
         entt::meta_type meta_type = entt::resolve(id);
         assert(meta_type);
-        // entt::meta_any meta_any = meta_type.construct(); // cannot go any -> userdata
+        // entt::meta_any meta_any = meta_type.construct(); // cannot go any -> userdata_src
         for (auto&& [id, meta_data] : meta_type.data())
         {
             // entt field name
             std::string key_name = meta_data_name(id, meta_data); // Don't use displayname
             const auto key_name_cstr = key_name.c_str();
 
-            sol::object value = userdata[key_name_cstr];
+            sol::object value = userdata_src[key_name_cstr];
 
             if (!value.valid())
             {
@@ -922,41 +933,62 @@ namespace {
             }
             else if (value.get_type() == sol::type::table)
             {
-                userdata_cpy[key_name_cstr] = deep_copy_table(lua, value.as<sol::table>());
+                // userdata_cpy[key_name_cstr] = deep_copy_table(lua, value.as<sol::table>());
+
+                sol::table nested_tbl_dst = userdata_dst[key_name_cstr];
+                deep_copy_table(value.as<sol::table>(), nested_tbl_dst);
             }
             else if (value.get_type() == sol::type::userdata)
             {
-                userdata_cpy[key_name_cstr] = deep_copy_userdata(lua, value.as<sol::userdata>());
+                // userdata_cpy[key_name_cstr] = deep_copy_userdata(lua, value.as<sol::userdata>());
+
+                sol::userdata nested_userdata_dst = userdata_dst[key_name_cstr];
+                deep_copy_userdata(value.as<sol::userdata>(), nested_userdata_dst);
             }
             else
             {
-                userdata_cpy[key_name_cstr] = value;
+                userdata_dst[key_name_cstr] = value;
             }
         }
 
-        return userdata_cpy;
+        // return userdata_cpy;
     }
 
-    sol::table deep_copy_table(sol::state_view lua, const sol::table& original)
+    void deep_copy_table(const sol::table& tbl_src, sol::table& tbl_dst)
     {
-        sol::table copy = lua.create_table();
-
-        for (const auto& [key, value] : original)
+        // ASSUME DEST IS LOADED?
+        assert(tbl_dst.valid());
+        if (!tbl_dst.valid())
         {
+            sol::state_view lua = tbl_src.lua_state();
+            tbl_dst = lua.create_table();
+        }
+        // assert(tbl_dst.get_type() == sol::type::table);
+        //sol::table tbl_dst = lua.create_table();
+
+        for (const auto& [key, value] : tbl_src)
+        {
+            if (!check_field_tag(tbl_src, key, "serializable")) continue;
+
             if (value.get_type() == sol::type::table)
             {
-                copy[key] = deep_copy_table(lua, value.as<sol::table>());
+                sol::table nested_tbl_dst = tbl_dst[key];
+                deep_copy_table(value.as<sol::table>(), nested_tbl_dst);
             }
             else if (value.get_type() == sol::type::userdata)
             {
-                copy[key] = deep_copy_userdata(lua, value.as<sol::userdata>());
+                //tbl_dst[key] = deep_copy_userdata(lua, value.as<sol::userdata>());
+
+                sol::userdata nested_userdata_dst = tbl_dst[key];
+                deep_copy_userdata(value.as<sol::userdata>(), nested_userdata_dst);
+
             }
             else
             {
-                copy[key] = value;
+                tbl_dst[key] = value;
             }
         }
-        return copy;
+        // return copy;
     }
 
     ScriptedBehaviorComponent copy_ScriptedBehaviorComponent(const void* ptr, entt::entity dst_entity)
@@ -967,7 +999,7 @@ namespace {
 
         ScriptedBehaviorComponent comp_cpy;
 
-#if 0
+#if 1
         for (auto& script : comp_ptr->scripts)
         {
             auto& self = script.self;
@@ -1002,6 +1034,7 @@ namespace {
                 script.path,
                 script.identifier);
 
+            deep_copy_table(self, script_cpy.self);
             // COPY LUA META FIELDS from self -> script_cpy.self
             // = deep_copy_table 
             //      without lua.create_table() 
@@ -1075,13 +1108,19 @@ namespace {
 
 
 
-    sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
-    {
-        auto tbl = static_cast<const sol::table*>(ptr);
-        // std::cout << "copy_soltable" << std::endl;
+//     sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
+//     {
+//         auto tbl = static_cast<const sol::table*>(ptr);
+//         // std::cout << "copy_soltable" << std::endl;
 
-        return deep_copy_table(tbl->lua_state(), *tbl);
-    }
+// //        return deep_copy_table(tbl->lua_state(), *tbl);
+
+//         // Create a blank new table
+//         sol::state_view lua = tbl->lua_state();
+//         auto tbl_dst = lua.create_table();
+//         deep_copy_table(*tbl, tbl_dst);
+//         return tbl_dst;
+//     }
 
     /*
      copy BehaviorScript
@@ -1113,7 +1152,7 @@ namespace {
         // const sol::table& script_table,
         // const std::string& identifier,
         // const std::string& script_path)
-}
+    }
 #endif
 }
 
@@ -1132,7 +1171,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
 
         // clone
         // Note: Let ScriptedBehaviorComponent do the copying
-        .func <&copy_soltable>(clone_hs)
+        //.func <&copy_soltable>(clone_hs)
         ;
 
     // sol::protected_function
@@ -1151,20 +1190,21 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .data<&BehaviorScript::identifier>("identifier"_hs)
         .prop(display_name_hs, "identifier")
         .prop(readonly_hs, true)
+
         .data<&BehaviorScript::path>("path"_hs)
         .prop(display_name_hs, "path")
         .prop(readonly_hs, true)
 
         // sol stuff
-        .data<&BehaviorScript::self>("self"_hs).prop(display_name_hs, "self")
-        .data<&BehaviorScript::update>("update"_hs).prop(display_name_hs, "update")
-        .data<&BehaviorScript::on_collision>("on_collision"_hs).prop(display_name_hs, "on_collision")
+        .data<&BehaviorScript::self/*, entt::as_ref_t*/>("self"_hs).prop(display_name_hs, "self")
+        .data<&BehaviorScript::update/*, entt::as_ref_t*/>("update"_hs).prop(display_name_hs, "update")
+        .data<&BehaviorScript::on_collision/*, entt::as_ref_t*/>("on_collision"_hs).prop(display_name_hs, "on_collision")
         ;
 
     // ScriptedBehaviorComponent
     entt::meta<ScriptedBehaviorComponent>()
         .type("ScriptedBehaviorComponent"_hs).prop(display_name_hs, "ScriptedBehavior")
-        .data<&ScriptedBehaviorComponent::scripts, entt::as_ref_t>("scripts"_hs).prop(display_name_hs, "scripts")
+        .data<&ScriptedBehaviorComponent::scripts/*, entt::as_ref_t*/>("scripts"_hs).prop(display_name_hs, "scripts")
 
         // Optional meta functions
 
