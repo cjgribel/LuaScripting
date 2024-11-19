@@ -799,11 +799,7 @@ namespace Editor {
 
         for (auto& [key, value] : tbl)
         {
-            if (!check_field_tag(tbl, key, "inspectable")) 
-            {
-                //std::cout << "Not inspectable"
-                continue;
-            }
+            if (!check_field_tag(tbl, key, "inspectable")) continue;
 
             std::string key_str = sol_object_to_string(lua, key) + " [" + get_lua_type_name(lua, value) + "]";
             std::string key_str_label = "##" + key_str;
@@ -916,7 +912,7 @@ namespace Editor {
     }
 }
 
-// sol copying
+// Lua copying
 namespace {
 
     void deep_copy_table(const sol::table& tbl_src, sol::table& tbl_dst);
@@ -1082,176 +1078,26 @@ namespace {
         auto comp_ptr = static_cast<const ScriptedBehaviorComponent*>(ptr);
         std::cout << "COPY ScriptedBehaviorComponent" << std::endl;
 
-
         ScriptedBehaviorComponent comp_cpy;
 
-#if 1
         for (auto& script : comp_ptr->scripts)
         {
-#if 1
             comp_cpy.scripts.push_back(std::move(copy_BehaviorScript(&script, dst_entity)));
-#else
-            auto& self = script.self;
-
-            // LOAD
-            auto lua_registry = self["owner"];      assert(lua_registry.valid());
-            //if (registry_ref.get_type() == sol::type::userdata) std::cout << "registry_ref is userdata\n";
-            //if (rebind_func.get_type() == sol::type::function) std::cout << "rebind_func is function\n";
-
-            // Get registry pointer from source script
-            sol::optional<entt::registry*> registry_opt = lua_registry;
-            assert(registry_opt);
-            entt::registry* registry_ptr = *registry_opt;
-
-            //entt::registry& registry_ptr = lua_registry.get<entt::registry&>(); // REPLACES REBIND?
-            std::cout << registry_ptr->valid(dst_entity) << std::endl; //
-
-            // Do for the copied table
-            //auto rebind_func = lua_registry.operator[]("rebind");  assert(rebind_func.valid());
-            //rebind_func(registry_ref, self);
-
-            // CHECK
-            // auto new_registry_ref = self["owner"];
-            // assert(new_registry_ref.valid());
-            // auto new_rebind = self["owner"]["rebind"];
-            // assert(new_rebind.valid());
-
-            auto script_cpy = BehaviorScriptFactory::create_from_file(
-                *registry_ptr,
-                dst_entity,
-                self.lua_state(),
-                script.path,
-                script.identifier);
-
-            deep_copy_table(self, script_cpy.self);
-            // COPY LUA META FIELDS from self -> script_cpy.self
-            // = deep_copy_table 
-            //      without lua.create_table() 
-            //      & without userdata["construct"]
-            //      LOAD creates these - we just need to update specific fields
-
-            comp_cpy.scripts.push_back(std::move(script_cpy));
-#endif
         }
-
 
         std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
         return comp_cpy;
-
-#else
-
-
-        // Will suffice if ScriptedBehaviorComponent has a copy constructor
-        // (Except updating the id() function)
-        // Can entity be sent to script's update() ??
-        ScriptedBehaviorComponent cpy = *comp_ptr;
-
-        // Deep copy self
-        // functions?
-        // std::cout << "cpy.scripts.size() " << cpy.scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-        // std::cout << "comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-
-        // std::cout << "comp_ptr " << comp_ptr << std::endl;
-        // if (comp_ptr->scripts.size() == 0) 
-        // {
-        //     std::cout << "== 0! comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-        // }
-        // else
-        // {
-        //     std::cout << "!= 0! comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-        // }
-
-        for (size_t i = 0; i < comp_ptr->scripts.size(); i++)
-        {
-            // std::cout << "cpy.scripts.size() " << cpy.scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-            // std::cout << "comp_ptr->scripts.size() " << comp_ptr->scripts.size() << ", " << entt::to_integral(dst_entity) << std::endl;
-            //     std::cout << i << std::endl << std::flush;
-
-                // Shallow (already done ^)
-                ///cpy.scripts[i].self = comp_ptr->scripts[i].self;
-                // Deep
-            cpy.scripts[i].self = deep_copy_table(comp_ptr->scripts[i].self.lua_state(), comp_ptr->scripts[i].self);
-
-            // std::cout << i << std::endl << std::flush;
-
-            // Not needed probably functions are references inside table
-            cpy.scripts[i].update = cpy.scripts[i].self["update"];
-            cpy.scripts[i].on_collision = cpy.scripts[i].self["on_collision"];
-
-            // std::cout << i << std::endl << std::flush;
-
-            // -> entityID?
-            cpy.scripts[i].self["id"] = sol::readonly_property([dst_entity] { return dst_entity; });
-            // -> registry?
-            // cpy.scripts[i].self["owner"] = comp_ptr->scripts[i].self["owner"]; // std::ref(registry);
-
-            // Changes copy AND original - must be some kind of reference
-            // cpy.scripts[i].self["HEADER"]["name"] = "BYE";
-
-            // std::cout << i << std::endl << std::flush;
-        }
-
-        std::cout << "DONE COPY ScriptedBehaviorComponent" << std::endl << std::flush;
-        return cpy;
-#endif
-    };
-
-
-
-
-
-    //     sol::table copy_soltable(const void* ptr, entt::entity dst_entity)
-    //     {
-    //         auto tbl = static_cast<const sol::table*>(ptr);
-    //         // std::cout << "copy_soltable" << std::endl;
-
-    // //        return deep_copy_table(tbl->lua_state(), *tbl);
-
-    //         // Create a blank new table
-    //         sol::state_view lua = tbl->lua_state();
-    //         auto tbl_dst = lua.create_table();
-    //         deep_copy_table(*tbl, tbl_dst);
-    //         return tbl_dst;
-    //     }
-
-        /*
-         copy BehaviorScript
-         (no clone_hs for sol::table - use BehaviorScript instead)
-
-        1. LOAD script. Don't run init()?
-            LOAD = add_script minus init()
-        2. Copy dst -> src
-            Use metadata to decide what to copy
-            (deep_copy_table currently copied "everything")
-        */
-
-        // v2
-#if 0
-    ScriptedBehaviorComponent copy_ScriptedBehaviorComponent_(void* ptr, entt::entity dst_entity)
-    {
-        // -- Need to either 1) send in a object to clone, or 2) use Command
-        // registry is needed
-        // lua is needed (can dig it out from self table in ptr)
-        // In other cloning siutations, stuff like Scene, resources ... might be needed
-        //      for complex objects such as meshes, node hierarchies ...
-
-        // 1. Use script paths (ptr) to call add_script for dst_entity
-        // 2. Copy "serializable fields" of sol::table from ptr to dst_entity
-
-        // sol::table add_script(
-        // entt::registry& registry,
-        // entt::entity entity,
-        // const sol::table& script_table,
-        // const std::string& identifier,
-        // const std::string& script_path)
     }
-#endif
 }
 
 template<>
 void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
 {
-    // TODO: Where should meta for sol stuff be placed (table, function etc)?
+    // Note
+    // sol::table and sol::function need meta definitions since BehaviorScript 
+    // Commands will try to serialize them.
+    // If/when BehaviorScript has its own serialization meta function, these might not be needed
+#if 1
     // sol::table
     entt::meta<sol::table>()
         .type("sol::table"_hs).prop(display_name_hs, "sol::table")
@@ -1273,6 +1119,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         // inspect v2 - 'widget not implemented' for BehaviorScript::update, on_collision
         .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<sol::protected_function*>(ptr), inspector); } > (inspect_hs)
         ;
+#endif
 
     // ScriptedBehaviorComponent::BehaviorScript
     entt::meta<BehaviorScript>()
@@ -1291,11 +1138,17 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .data<&BehaviorScript::update/*, entt::as_ref_t*/>("update"_hs).prop(display_name_hs, "update")
         .data<&BehaviorScript::on_collision/*, entt::as_ref_t*/>("on_collision"_hs).prop(display_name_hs, "on_collision")
 
-        // inspect_hs (overrides props for members)
+        // inspect_hs
+        // We have this, and not one for sol::table, so that when a sol::table if edited,
+        // a deep copy of BehaviorScript is made, and not just the sol::table
         .func < [](void* ptr, Editor::InspectorState& inspector) {return Editor::inspect_type(*static_cast<BehaviorScript*>(ptr), inspector); } > (inspect_hs)
 
         // clone
         .func<&copy_BehaviorScript>(clone_hs)
+
+        // TODO
+        // serialize_hs & deserialize_hs
+        // ...
         ;
 
     // ScriptedBehaviorComponent

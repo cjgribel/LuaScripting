@@ -1,6 +1,4 @@
 local node = {
-    --MIN_BOUND = -5.0,
-    --MAX_BOUND = 5.0,
     VELOCITY_MIN = -5.0,
     VELOCITY_MAX = 5.0,
     STRING = "STRING",
@@ -27,9 +25,7 @@ local node = {
     meta = {
         VELOCITY_MIN = {inspectable = true, serializable = true},
         VELOCITY_MAX = {inspectable = true, serializable = true},
-
         velocity = {inspectable = true, serializable = true},
-
         HEADER = {inspectable = true, serializable = true}
     }
 }
