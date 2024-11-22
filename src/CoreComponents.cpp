@@ -1094,9 +1094,10 @@ namespace {
 // Lua copying
 namespace {
 
+    // Share for inspect, clone & serialize
+    bool is_array_table(const sol::table& tbl) {
     void table_to_json(nlohmann::json& j, const sol::table& tbl);
 
-    bool is_array_table(const sol::table& tbl) {
         size_t index = 1;
         for (const auto& [key, value] : tbl) {
             if (key.get_type() != sol::type::number || key.as<size_t>() != index++) {
@@ -1106,14 +1107,14 @@ namespace {
         return true;
     }
 
-    // Converts a sequential (array-like) Lua table to a JSON array
-    void arraytable_to_json(nlohmann::json& j, const sol::table& tbl) 
+    void table_to_json(nlohmann::json& j, const sol::table& tbl);
+
+    // Sequential (array-like) Lua table to a JSON array
+    void array_table_to_json(nlohmann::json& j, const sol::table& tbl) 
     {
         j = nlohmann::json::array();
         for (const auto& [key, value] : tbl) 
         {
-            if (!check_field_tag(tbl, key, "serializable")) continue;
-
             nlohmann::json element;
             if (value.get_type() == sol::type::table) 
             {
@@ -1144,12 +1145,19 @@ namespace {
         }
     }
 
+    void userdata_to_json(nlohmann::json& j, const sol::userdata& userdata)
+    {
+        // Use fields defined by the type's entt::meta
+        j = "userdata...";
+    }
+
+    // sol::table to JSON
     void table_to_json(nlohmann::json& j, const sol::table& tbl)
     {
         assert(tbl.valid());
 
         if (is_array_table(tbl)) {
-            arraytable_to_json(j, tbl);
+            array_table_to_json(j, tbl);
             return;
         }
 
@@ -1181,7 +1189,9 @@ namespace {
             }
             else if (value.get_type() == sol::type::userdata) 
             {
-                // ...
+                nlohmann::json nested_json;
+                userdata_to_json(nested_json, value.as<sol::userdata>());
+                j[json_key] = nested_json;
             }
             else if (value.get_type() == sol::type::string) 
             {

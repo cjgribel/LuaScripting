@@ -28,7 +28,7 @@ local node = {
     meta = {
         VELOCITY_MIN = {inspectable = true, serializable = true},
         VELOCITY_MAX = {inspectable = true, serializable = true},
-        --inventory = {inspectable = true, serializable = true},
+        inventory = {inspectable = true, serializable = true},
         velocity = {inspectable = true, serializable = true},
         HEADER = {inspectable = true, serializable = true}
     }
