@@ -5,6 +5,9 @@ local node = {
     BOOL = true,
     NUMBER = 123.123,
 
+    -- Array table test
+    inventory = { "sword", "shield", "potion" },
+
     velocity = {
         x = 0.0, 
         y = 0.0, 
@@ -25,6 +28,7 @@ local node = {
     meta = {
         VELOCITY_MIN = {inspectable = true, serializable = true},
         VELOCITY_MAX = {inspectable = true, serializable = true},
+        --inventory = {inspectable = true, serializable = true},
         velocity = {inspectable = true, serializable = true},
         HEADER = {inspectable = true, serializable = true}
     }
