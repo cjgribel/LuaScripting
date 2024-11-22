@@ -637,6 +637,19 @@ namespace
 }
 
 namespace {
+
+    bool is_array_table(const sol::table& tbl) {
+        void table_to_json(nlohmann::json & j, const sol::table & tbl);
+
+        size_t index = 1;
+        for (const auto& [key, value] : tbl) {
+            if (key.get_type() != sol::type::number || key.as<size_t>() != index++) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name)
     {
         // Ensure the key is a string (assuming only string keys are tagged)
@@ -1091,52 +1104,39 @@ namespace {
     }
 }
 
-// Lua copying
+// Lua serialization
 namespace {
-
-    // Share for inspect, clone & serialize
-    bool is_array_table(const sol::table& tbl) {
-    void table_to_json(nlohmann::json& j, const sol::table& tbl);
-
-        size_t index = 1;
-        for (const auto& [key, value] : tbl) {
-            if (key.get_type() != sol::type::number || key.as<size_t>() != index++) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     void table_to_json(nlohmann::json& j, const sol::table& tbl);
 
     // Sequential (array-like) Lua table to a JSON array
-    void array_table_to_json(nlohmann::json& j, const sol::table& tbl) 
+    void array_table_to_json(nlohmann::json& j, const sol::table& tbl)
     {
         j = nlohmann::json::array();
-        for (const auto& [key, value] : tbl) 
+        for (const auto& [key, value] : tbl)
         {
             nlohmann::json element;
-            if (value.get_type() == sol::type::table) 
+            if (value.get_type() == sol::type::table)
             {
                 table_to_json(element, value.as<sol::table>());  // Recursive handling of nested tables
             }
-            else if (value.get_type() == sol::type::string) 
+            else if (value.get_type() == sol::type::string)
             {
                 element = value.as<std::string>();
             }
-            else if (value.get_type() == sol::type::number) 
+            else if (value.get_type() == sol::type::number)
             {
                 element = value.as<double>();
             }
-            else if (value.get_type() == sol::type::boolean) 
+            else if (value.get_type() == sol::type::boolean)
             {
                 element = value.as<bool>();
             }
-            else if (value.get_type() == sol::type::lua_nil || value.get_type() == sol::type::none) 
+            else if (value.get_type() == sol::type::lua_nil || value.get_type() == sol::type::none)
             {
                 element = nullptr;
             }
-            else 
+            else
             {
                 // Skip unsupported types
                 continue;
@@ -1162,17 +1162,17 @@ namespace {
         }
 
         j = nlohmann::json::object();
-        for (const auto& [key, value] : tbl) 
+        for (const auto& [key, value] : tbl)
         {
             if (!check_field_tag(tbl, key, "serializable")) continue;
-            
+
             std::string json_key;
 
-            if (key.get_type() == sol::type::string) 
+            if (key.get_type() == sol::type::string)
             {
                 json_key = key.as<std::string>();
             }
-            else if (key.get_type() == sol::type::number) 
+            else if (key.get_type() == sol::type::number)
             {
                 json_key = std::to_string(key.as<double>());
             }
@@ -1181,35 +1181,35 @@ namespace {
                 continue;
             }
 
-            if (value.get_type() == sol::type::table) 
+            if (value.get_type() == sol::type::table)
             {
                 nlohmann::json nested_json;
                 table_to_json(nested_json, value.as<sol::table>());
                 j[json_key] = nested_json;
             }
-            else if (value.get_type() == sol::type::userdata) 
+            else if (value.get_type() == sol::type::userdata)
             {
                 nlohmann::json nested_json;
                 userdata_to_json(nested_json, value.as<sol::userdata>());
                 j[json_key] = nested_json;
             }
-            else if (value.get_type() == sol::type::string) 
+            else if (value.get_type() == sol::type::string)
             {
                 j[json_key] = value.as<std::string>();
             }
-            else if (value.get_type() == sol::type::number) 
+            else if (value.get_type() == sol::type::number)
             {
                 j[json_key] = value.as<double>();
             }
-            else if (value.get_type() == sol::type::boolean) 
+            else if (value.get_type() == sol::type::boolean)
             {
                 j[json_key] = value.as<bool>();
             }
-            else if (value.get_type() == sol::type::lua_nil || value.get_type() == sol::type::none) 
+            else if (value.get_type() == sol::type::lua_nil || value.get_type() == sol::type::none)
             {
                 j[json_key] = nullptr;
             }
-            else 
+            else
             {
                 // Skip unsupported types
                 continue;
@@ -1218,19 +1218,151 @@ namespace {
 
     }
 
-    void to_json_BehaviorScript(nlohmann::json& j, const void* ptr)
+    void BehaviorScript_to_json(nlohmann::json& j, const void* ptr)
     {
+        std::cout << "BehaviorScript_to_json\n";
+
         auto script = static_cast<const BehaviorScript*>(ptr);
+
+        // TODO identifier
+        // TODO path
 
         nlohmann::json self_json;
         table_to_json(self_json, script->self);
-
         j["self"] = self_json;
     }
 
-    // + Context
-    void from_json_BehaviorScript(const nlohmann::json& j, void* ptr)
+}
+
+// Lua deserialization
+namespace {
+
+    void table_from_json(sol::table& tbl, const nlohmann::json& j);
+
+    // Helper function to handle usertype deserialization
+    void usertype_from_json(sol::object usertype_obj, const nlohmann::json& json_value)
     {
+        if (json_value.is_object())
+        {
+            for (const auto& [subkey, subvalue] : json_value.items())
+            {
+                if (subvalue.is_number_float())
+                {
+                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<double>();
+                }
+                else if (subvalue.is_number_integer())
+                {
+                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<int>();
+                }
+                else if (subvalue.is_string())
+                {
+                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<std::string>();
+                }
+                else if (subvalue.is_boolean())
+                {
+                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<bool>();
+                }
+            }
+        }
+    }
+
+    // Function to handle JSON arrays and populate a Lua table
+    void arrayjson_to_table(sol::table& tbl, const nlohmann::json& j)
+    {
+        size_t index = 1; // Lua arrays are 1-indexed
+        for (const auto& element : j)
+        {
+            if (element.is_object())
+            {
+                sol::table nested_tbl = tbl.create(index++);
+                table_from_json(nested_tbl, element); // Recursively handle nested tables
+            }
+            else if (element.is_array())
+            {
+                sol::table nested_tbl = tbl.create(index++);
+                arrayjson_to_table(nested_tbl, element); // Recursively handle nested arrays
+            }
+            else if (element.is_string())
+            {
+                tbl[index++] = element.get<std::string>();
+            }
+            else if (element.is_number_float())
+            {
+                tbl[index++] = element.get<double>();
+            }
+            else if (element.is_number_integer())
+            {
+                tbl[index++] = element.get<int>();
+            }
+            else if (element.is_boolean())
+            {
+                tbl[index++] = element.get<bool>();
+            }
+            else if (element.is_null())
+            {
+                tbl[index++] = sol::lua_nil; // Represent null values as Lua nil
+            }
+        }
+    }
+
+    // Main function to populate a Lua table from JSON
+    void table_from_json(sol::table& tbl, const nlohmann::json& j)
+    {
+        for (const auto& [key, default_value] : tbl)
+        {
+            std::string key_str = key.as<std::string>();
+
+            if (j.contains(key_str))
+            {
+                const auto& json_value = j[key_str];
+
+                if (default_value.get_type() == sol::type::userdata)
+                {
+                    usertype_from_json(tbl[key_str], json_value);
+                }
+                else if (default_value.get_type() == sol::type::table)
+                {
+                    // Handle nested table deserialization
+                    sol::table nested_tbl = tbl[key_str];
+                    table_from_json(nested_tbl, json_value);
+                }
+                else if (json_value.is_array())
+                {
+                    // Handle array deserialization
+                    sol::table nested_tbl = tbl[key_str];
+                    arrayjson_to_table(nested_tbl, json_value);
+                }
+                else if (json_value.is_string())
+                {
+                    tbl[key_str] = json_value.get<std::string>();
+                }
+                else if (json_value.is_number_float())
+                {
+                    tbl[key_str] = json_value.get<double>();
+                }
+                else if (json_value.is_number_integer())
+                {
+                    tbl[key_str] = json_value.get<int>();
+                }
+                else if (json_value.is_boolean())
+                {
+                    tbl[key_str] = json_value.get<bool>();
+                }
+                else if (json_value.is_null())
+                {
+                    tbl[key_str] = sol::lua_nil;
+                }
+            }
+            // If the key does not exist in JSON, leave the default value intact
+        }
+    }
+
+
+    // + Context
+    void BehaviorScript_from_json(const nlohmann::json& j, void* ptr)
+    {
+        std::cout << "BehaviorScript_from_json\n";
+
         auto script = static_cast<BehaviorScript*>(ptr);
 
         // LOAD + copy Lua meta fields
@@ -1296,10 +1428,10 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .func<&copy_BehaviorScript>(clone_hs)
 
         // to_json
-        .func<&to_json_BehaviorScript>(to_json_hs)
+        .func<&BehaviorScript_to_json>(to_json_hs)
 
         // to_json
-        .func<&from_json_BehaviorScript>(from_json_hs)
+        .func<&BehaviorScript_from_json>(from_json_hs)
         ;
 
     // [](nlohmann::json& j, const void* ptr)
