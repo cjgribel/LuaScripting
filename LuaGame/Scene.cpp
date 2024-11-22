@@ -151,46 +151,6 @@ namespace {
         lua->operator[]("engine")["audio"] = &audioManager;
     }
 
-    // void registerCircleColliderGridComponent(sol::state& lua)
-    // {
-
-    // }
-
-//     void registerIslandFinderComponent(sol::state& lua)
-//     {
-//         lua.new_usertype<IslandFinderComponent>("IslandFinderComponent",
-//             "type_id",
-//             &entt::type_hash<IslandFinderComponent>::value,
-//             sol::call_constructor,
-//             sol::factories([](int core_x, int core_y) {
-//                 return IslandFinderComponent{
-//                     .core_x = core_x,
-//                     .core_y = core_y
-//                 };
-//                 }),
-//             "get_nbr_islands", [](IslandFinderComponent& c) {
-//                 return c.islands.size();
-//             },
-//             "get_island_index_at", [](IslandFinderComponent& c, int index) {
-//                 assert(index < c.islands.size());
-//                 return c.islands[index];
-//             }
-//             // TODO
-// //            sol::meta_function::to_string,
-// //            &IslandFinderComponent::to_string
-// );
-//     }
-
-    // void registerQuadGridComponent(sol::state& lua)
-    // {
-
-    // }
-
-    // void registeDataGridComponent(sol::state& lua)
-    // {
-
-    // }
-
     void registerQuadComponent(auto& lua)
     {
         lua->template new_usertype<QuadComponent>("QuadComponent",
@@ -1166,6 +1126,13 @@ bool Scene::init(const v2i& windowSize)
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
+
+        // SERIALIZATION TEST
+
+        {
+            serialization_test(lua);
+
+        }
 
         // Dump Lua game & engine states
         {

@@ -184,6 +184,12 @@ struct ScriptedBehaviorComponent
 
 static_assert(std::is_move_constructible_v<ScriptedBehaviorComponent>);
 
+namespace sol
+{
+    class state;
+}
+void serialization_test(std::shared_ptr<sol::state>& lua);
+
 // === Meta registration ======================================================
 
 template<>

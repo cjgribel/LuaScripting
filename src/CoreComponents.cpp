@@ -650,6 +650,90 @@ namespace {
         return true;
     }
 
+    void print_table(const sol::table& tbl, int depth = 0) {
+        auto indent = [](int d) { return std::string(d * 2, ' '); }; // Indentation function
+
+        if (is_array_table(tbl)) {
+            // Handle array-style table
+            for (auto kv : tbl) {
+                std::cout << indent(depth) << "- ";
+                auto value_type = kv.second.get_type();
+                switch (value_type) {
+                case sol::type::table:
+                    std::cout << "{\n";
+                    print_table(kv.second.as<sol::table>(), depth + 1); // Recursive call
+                    std::cout << indent(depth) << "}\n";
+                    break;
+                case sol::type::string:
+                    std::cout << kv.second.as<std::string>() << "\n";
+                    break;
+                case sol::type::number:
+                    std::cout << kv.second.as<double>() << "\n";
+                    break;
+                case sol::type::boolean:
+                    std::cout << (kv.second.as<bool>() ? "true" : "false") << "\n";
+                    break;
+                case sol::type::userdata:
+                    std::cout << "<userdata>\n";
+                    break;
+                case sol::type::lightuserdata:
+                    std::cout << "<lightuserdata>\n";
+                    break;
+                case sol::type::lua_nil:
+                    std::cout << "nil\n";
+                    break;
+                case sol::type::function:
+                    std::cout << "<function>\n";
+                    break;
+                default:
+                    std::cout << "<unknown>\n";
+                    break;
+                }
+            }
+        }
+        else {
+            // Handle map-style table
+            for (const auto& kv : tbl) {
+                auto key = kv.first.as<std::string>();
+                auto value_type = kv.second.get_type();
+
+                std::cout << indent(depth) << key << ": ";
+
+                switch (value_type) {
+                case sol::type::table:
+                    std::cout << "{\n";
+                    print_table(kv.second.as<sol::table>(), depth + 1); // Recursive call
+                    std::cout << indent(depth) << "}\n";
+                    break;
+                case sol::type::string:
+                    std::cout << kv.second.as<std::string>() << "\n";
+                    break;
+                case sol::type::number:
+                    std::cout << kv.second.as<double>() << "\n";
+                    break;
+                case sol::type::boolean:
+                    std::cout << (kv.second.as<bool>() ? "true" : "false") << "\n";
+                    break;
+                case sol::type::userdata:
+                    std::cout << "<userdata>\n";
+                    break;
+                case sol::type::lightuserdata:
+                    std::cout << "<lightuserdata>\n";
+                    break;
+                case sol::type::lua_nil:
+                    std::cout << "nil\n";
+                    break;
+                case sol::type::function:
+                    std::cout << "<function>\n";
+                    break;
+                default:
+                    std::cout << "<unknown>\n";
+                    break;
+                }
+            }
+        }
+    }
+
     bool check_field_tag(const sol::table& tbl, const sol::object& key, const std::string& tag_name)
     {
         // Ensure the key is a string (assuming only string keys are tagged)
@@ -1239,7 +1323,6 @@ namespace {
 
     void table_from_json(sol::table& tbl, const nlohmann::json& j);
 
-    // Helper function to handle usertype deserialization
     void usertype_from_json(sol::object usertype_obj, const nlohmann::json& json_value)
     {
         if (json_value.is_object())
@@ -1266,41 +1349,94 @@ namespace {
         }
     }
 
+
     // Function to handle JSON arrays and populate a Lua table
     void arrayjson_to_table(sol::table& tbl, const nlohmann::json& j)
     {
+        // Ensure the Lua table is array-like before proceeding
+        if (!is_array_table(tbl))
+        {
+            return; // Skip processing if the table is not sequential
+        }
+
         size_t index = 1; // Lua arrays are 1-indexed
         for (const auto& element : j)
         {
-            if (element.is_object())
+            sol::object existing_value = tbl[index];
+
+            if (existing_value.valid())
             {
-                sol::table nested_tbl = tbl.create(index++);
-                table_from_json(nested_tbl, element); // Recursively handle nested tables
+                // Check type consistency for existing Lua table elements
+                if (existing_value.get_type() == sol::type::string && element.is_string())
+                {
+                    tbl[index++] = element.get<std::string>();
+                }
+                else if (existing_value.get_type() == sol::type::number && element.is_number())
+                {
+                    tbl[index++] = element.get<double>();
+                }
+                else if (existing_value.get_type() == sol::type::boolean && element.is_boolean())
+                {
+                    tbl[index++] = element.get<bool>();
+                }
+                else if (existing_value.get_type() == sol::type::table && element.is_object())
+                {
+                    // Recursively handle nested tables
+                    sol::table nested_tbl = tbl[index++];
+                    table_from_json(nested_tbl, element);
+                }
+                else if (existing_value.get_type() == sol::type::table && element.is_array())
+                {
+                    // Recursively handle nested arrays
+                    sol::table nested_tbl = tbl[index++];
+                    arrayjson_to_table(nested_tbl, element);
+                }
+                else
+                {
+                    // Skip mismatched types
+                    ++index;
+                    continue;
+                }
             }
-            else if (element.is_array())
+            else
             {
-                sol::table nested_tbl = tbl.create(index++);
-                arrayjson_to_table(nested_tbl, element); // Recursively handle nested arrays
-            }
-            else if (element.is_string())
-            {
-                tbl[index++] = element.get<std::string>();
-            }
-            else if (element.is_number_float())
-            {
-                tbl[index++] = element.get<double>();
-            }
-            else if (element.is_number_integer())
-            {
-                tbl[index++] = element.get<int>();
-            }
-            else if (element.is_boolean())
-            {
-                tbl[index++] = element.get<bool>();
-            }
-            else if (element.is_null())
-            {
-                tbl[index++] = sol::lua_nil; // Represent null values as Lua nil
+                // If no existing value, assign new element based on its type
+                if (element.is_string())
+                {
+                    tbl[index++] = element.get<std::string>();
+                }
+                else if (element.is_number_float())
+                {
+                    tbl[index++] = element.get<double>();
+                }
+                else if (element.is_number_integer())
+                {
+                    tbl[index++] = element.get<int>();
+                }
+                else if (element.is_boolean())
+                {
+                    tbl[index++] = element.get<bool>();
+                }
+                else if (element.is_object())
+                {
+                    sol::table nested_tbl = tbl.create(index++);
+                    table_from_json(nested_tbl, element);
+                }
+                else if (element.is_array())
+                {
+                    sol::table nested_tbl = tbl.create(index++);
+                    arrayjson_to_table(nested_tbl, element);
+                }
+                else if (element.is_null())
+                {
+                    tbl[index++] = sol::lua_nil; // Represent null values as Lua nil
+                }
+                else
+                {
+                    // Skip unsupported types
+                    ++index;
+                    continue;
+                }
             }
         }
     }
@@ -1316,46 +1452,91 @@ namespace {
             {
                 const auto& json_value = j[key_str];
 
-                if (default_value.get_type() == sol::type::userdata)
+                if (json_value.is_array())
                 {
+                    // Check if the Lua table is truly an array
+                    if (default_value.get_type() == sol::type::table && is_array_table(tbl[key_str]))
+                    {
+                        sol::table nested_tbl = tbl[key_str];
+                        arrayjson_to_table(nested_tbl, json_value);
+                    }
+                    else
+                    {
+                        continue; // Ignore JSON array if the Lua table is not array-like
+                    }
+                }
+                else if (default_value.get_type() == sol::type::userdata)
+                {
+                    // Handle usertype deserialization without consistency checks
                     usertype_from_json(tbl[key_str], json_value);
                 }
-                else if (default_value.get_type() == sol::type::table)
+                else if (json_value.is_object())
                 {
-                    // Handle nested table deserialization
-                    sol::table nested_tbl = tbl[key_str];
-                    table_from_json(nested_tbl, json_value);
-                }
-                else if (json_value.is_array())
-                {
-                    // Handle array deserialization
-                    sol::table nested_tbl = tbl[key_str];
-                    arrayjson_to_table(nested_tbl, json_value);
+                    // Check if the Lua table is a nested table
+                    if (default_value.get_type() == sol::type::table)
+                    {
+                        sol::table nested_tbl = tbl[key_str];
+                        table_from_json(nested_tbl, json_value);
+                    }
+                    else
+                    {
+                        continue; // Ignore mismatched JSON type
+                    }
                 }
                 else if (json_value.is_string())
                 {
-                    tbl[key_str] = json_value.get<std::string>();
+                    if (default_value.get_type() == sol::type::string)
+                    {
+                        tbl[key_str] = json_value.get<std::string>();
+                    }
+                    else
+                    {
+                        continue; // Ignore mismatched JSON type
+                    }
                 }
                 else if (json_value.is_number_float())
                 {
-                    tbl[key_str] = json_value.get<double>();
+                    if (default_value.get_type() == sol::type::number)
+                    {
+                        tbl[key_str] = json_value.get<double>();
+                    }
+                    else
+                    {
+                        continue; // Ignore mismatched JSON type
+                    }
                 }
                 else if (json_value.is_number_integer())
                 {
-                    tbl[key_str] = json_value.get<int>();
+                    if (default_value.get_type() == sol::type::number)
+                    {
+                        tbl[key_str] = json_value.get<int>();
+                    }
+                    else
+                    {
+                        continue; // Ignore mismatched JSON type
+                    }
                 }
                 else if (json_value.is_boolean())
                 {
-                    tbl[key_str] = json_value.get<bool>();
+                    if (default_value.get_type() == sol::type::boolean)
+                    {
+                        tbl[key_str] = json_value.get<bool>();
+                    }
+                    else
+                    {
+                        continue; // Ignore mismatched JSON type
+                    }
                 }
                 else if (json_value.is_null())
                 {
-                    tbl[key_str] = sol::lua_nil;
+                    tbl[key_str] = sol::lua_nil; // Allow null values to reset the Lua value to nil
                 }
             }
             // If the key does not exist in JSON, leave the default value intact
         }
     }
+
+
 
 
     // + Context
@@ -1369,6 +1550,53 @@ namespace {
 
         *script = BehaviorScript{};
     }
+}
+
+void serialization_test(std::shared_ptr<sol::state>& lua)
+{
+    auto load_lua = [&]() {
+        const std::string script_path = "../../LuaGame/lua/bounce_behavior.lua";
+        // sol::load_result behavior_script = lua.load_file(script_file);
+        sol::load_result behavior_script = lua->load_file(script_path);
+
+        assert(behavior_script.valid());
+        sol::protected_function script_function = behavior_script;
+        sol::table tbl = script_function();
+        assert(tbl.valid());
+        return tbl;
+        };
+
+    nlohmann::json j;
+    {
+        std::cout << "\n\n--- SERIALIZE BEGIN\n\n";
+        std::cout << "\n\n--- SERIALIZE load table\n\n";
+        sol::table tbl = load_lua();
+        print_table(tbl, 0);
+        std::cout << "\n\n--- SERIALIZE edit table\n\n";
+        
+        // Editing = make changes to table
+        // ...
+        tbl["VELOCITY_MIN"] = 10.0;
+        tbl["NEW_FIELD"] = "NewField";
+        print_table(tbl, 0);
+
+        // SAVE
+        table_to_json(j, tbl);
+        std::cout << "\n\n--- SERIALIZE->JSON " << j.dump() << std::endl << std::endl;
+    }
+#if 1
+    // LOAD
+    {
+        std::cout << "\n\n--- SERIALIZE load table\n\n";
+        sol::table tbl = load_lua();
+        
+        std::cout << "\n\n--- DESERIALIZED table\n\n";
+        table_from_json(tbl, j);
+        print_table(tbl, 0);
+    }
+#endif
+
+    std::cout << "\n\n--- SERIALIZE DONE \n\n";
 }
 
 template<>
