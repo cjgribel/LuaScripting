@@ -1323,31 +1323,42 @@ namespace {
 
     void table_from_json(sol::table& tbl, const nlohmann::json& j);
 
+    // TODO: usertypes are expected to remain unchanged when scripts are edited,
+    // so the serialized JSON 
     void usertype_from_json(sol::object usertype_obj, const nlohmann::json& json_value)
     {
-        if (json_value.is_object())
+        // Ensure the JSON value is an object (as expected for usertypes)
+        if (!json_value.is_object())
         {
-            for (const auto& [subkey, subvalue] : json_value.items())
+            return; // Skip if the JSON does not match the expected structure
+        }
+
+        for (const auto& [subkey, subvalue] : json_value.items())
+        {
+            if (subvalue.is_number_float())
             {
-                if (subvalue.is_number_float())
-                {
-                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<double>();
-                }
-                else if (subvalue.is_number_integer())
-                {
-                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<int>();
-                }
-                else if (subvalue.is_string())
-                {
-                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<std::string>();
-                }
-                else if (subvalue.is_boolean())
-                {
-                    usertype_obj.as<sol::table>()[subkey] = subvalue.get<bool>();
-                }
+                usertype_obj.as<sol::table>()[subkey] = subvalue.get<double>();
+            }
+            else if (subvalue.is_number_integer())
+            {
+                usertype_obj.as<sol::table>()[subkey] = subvalue.get<int>();
+            }
+            else if (subvalue.is_string())
+            {
+                usertype_obj.as<sol::table>()[subkey] = subvalue.get<std::string>();
+            }
+            else if (subvalue.is_boolean())
+            {
+                usertype_obj.as<sol::table>()[subkey] = subvalue.get<bool>();
+            }
+            else
+            {
+                // Skip unsupported types
+                continue;
             }
         }
     }
+
 
 
     // Function to handle JSON arrays and populate a Lua table
@@ -1467,8 +1478,15 @@ namespace {
                 }
                 else if (default_value.get_type() == sol::type::userdata)
                 {
-                    // Handle usertype deserialization without consistency checks
-                    usertype_from_json(tbl[key_str], json_value);
+                    // Ensure JSON is an object before calling usertype_from_json
+                    if (json_value.is_object())
+                    {
+                        usertype_from_json(tbl[key_str], json_value);
+                    }
+                    else
+                    {
+                        continue; // Skip if JSON does not match expected structure
+                    }
                 }
                 else if (json_value.is_object())
                 {
@@ -1537,8 +1555,6 @@ namespace {
     }
 
 
-
-
     // + Context
     void BehaviorScript_from_json(const nlohmann::json& j, void* ptr)
     {
@@ -1568,35 +1584,43 @@ void serialization_test(std::shared_ptr<sol::state>& lua)
 
     nlohmann::json j;
     {
-        std::cout << "\n\n--- SERIALIZE BEGIN\n\n";
-        std::cout << "\n\n--- SERIALIZE load table\n\n";
+        std::cout << "\n\n--- SER TEST BEGIN\n\n";
+        std::cout << "\n\n--- load % edit table \n\n";
         sol::table tbl = load_lua();
-        print_table(tbl, 0);
-        std::cout << "\n\n--- SERIALIZE edit table\n\n";
-        
+        // print_table(tbl, 0);
+        // std::cout << "\n\n--- SERIALIZE edit table\n\n";
+
         // Editing = make changes to table
         // ...
-        tbl["VELOCITY_MIN"] = 10.0;
-        tbl["NEW_FIELD"] = "NewField";
+        tbl["VELOCITY_MIN"] = "ChangedInEditor";
+        tbl["FieldAddedInEditor"] = "FieldAddedInEditor";
         print_table(tbl, 0);
 
         // SAVE
         table_to_json(j, tbl);
         std::cout << "\n\n--- SERIALIZE->JSON " << j.dump() << std::endl << std::endl;
     }
+
+    // Change script
+    sol::table tbl = load_lua();
+    tbl["VELOCITY_MIN"] = Transform{};  // change to usertype
+    tbl["HEADER"] = 15.0f;              // change from to usertype
+
+    tbl["FieldAddedInScript"] = "FieldAddedInScript";
+
 #if 1
     // LOAD
     {
-        std::cout << "\n\n--- SERIALIZE load table\n\n";
-        sol::table tbl = load_lua();
-        
-        std::cout << "\n\n--- DESERIALIZED table\n\n";
+        // std::cout << "\n\n--- SERIALIZE load table\n\n";
+        // sol::table tbl = load_lua();
+
+        std::cout << "\n\n--- LOAD & DESERIALIZE table\n\n";
         table_from_json(tbl, j);
         print_table(tbl, 0);
     }
 #endif
 
-    std::cout << "\n\n--- SERIALIZE DONE \n\n";
+    std::cout << "\n\n--- SER TEST DONE \n\n";
 }
 
 template<>
