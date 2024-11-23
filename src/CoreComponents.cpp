@@ -1585,7 +1585,7 @@ void serialization_test(std::shared_ptr<sol::state>& lua)
     nlohmann::json j;
     {
         std::cout << "\n\n--- SER TEST BEGIN\n\n";
-        std::cout << "\n\n--- load % edit table \n\n";
+        std::cout << "\n\n--- load & edit table \n\n";
         sol::table tbl = load_lua();
         // print_table(tbl, 0);
         // std::cout << "\n\n--- SERIALIZE edit table\n\n";
@@ -1603,8 +1603,14 @@ void serialization_test(std::shared_ptr<sol::state>& lua)
 
     // Change script
     sol::table tbl = load_lua();
+
     tbl["VELOCITY_MIN"] = Transform{};  // change to usertype
-    tbl["HEADER"] = 15.0f;              // change from to usertype
+    tbl["HEADER"] = 15.0f;              // change from usertype
+
+    sol::table array_table = lua->create_table(); array_table[1] = 10; array_table[2] = 20; array_table[3] = 30;
+    tbl["VELOCITY_MAX"] = array_table;  // change to array table
+    
+    tbl["inventory"] = 35.0f;              // change from array table
 
     tbl["FieldAddedInScript"] = "FieldAddedInScript";
 
