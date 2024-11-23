@@ -1316,8 +1316,8 @@ namespace {
         table_to_json(self_json, script->self);
         j["self"] = self_json;
 
-        // TODO identifier
-        // TODO path
+        j["identifier"] = script->identifier;
+        j["path"] = script->path;
     }
 
 }
@@ -1559,28 +1559,33 @@ namespace {
 
     // + Context (registry)
     // + dst_entity
-    void BehaviorScript_from_json(const nlohmann::json& j, void* ptr)
+    void BehaviorScript_from_json(
+        const nlohmann::json& j,
+        void* ptr,
+        entt::entity entity,
+        Editor::Context& context)
     {
         std::cout << "BehaviorScript_from_json\n";
 
         auto script = static_cast<BehaviorScript*>(ptr);
+        std::string identifier = j["identifier"];
+        std::string path = j["path"];
 
         // self sol::table
         // LOAD + copy Lua meta fields
-        // auto script_cpy = BehaviorScriptFactory::create_from_file(
-        //     *registry_ptr,
-        //     dst_entity,
-        //     self.lua_state(),
-        //     script->path,
-        //     script->identifier);
+        *script = BehaviorScriptFactory::create_from_file(
+            *context.registry,
+            entity,
+            *context.lua, // self.lua_state() <- nothing here
+            path,
+            identifier);
 
-        //table_from_json(script.self, j["self"]);
-        // deep_copy_table(self, script_cpy.self);
+        table_from_json(script->self, j["self"]);
 
-        // TODO identifier
-        // TODO path
+        //script->identifier = j["identifier"];
+        //script->path = j["path"];
 
-        *script = BehaviorScript{};
+        // *script = BehaviorScript{};
     }
 }
 
@@ -1704,7 +1709,7 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         // to_json
         .func<&BehaviorScript_to_json>(to_json_hs)
 
-        // to_json
+        // from_json
         .func<&BehaviorScript_from_json>(from_json_hs)
         ;
 

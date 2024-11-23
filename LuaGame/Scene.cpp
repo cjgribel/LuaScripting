@@ -58,7 +58,7 @@ namespace {
             {
                 j = *static_cast<const T*>(ptr);
             };
-        const auto from_json = [](const nlohmann::json& j, void* ptr)
+        const auto from_json = [](const nlohmann::json& j, void* ptr, entt::entity entity, Editor::Context& context)
             {
                 *static_cast<T*>(ptr) = j;
             };
@@ -874,6 +874,7 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 entt::entity Scene::create_entity_and_attach_to_scenegraph(entt::entity parent_entity)
 {
     auto entity = registry->create();
+    std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
     if (parent_entity == entt::null)
     {
         scenegraph.create_node(entity);
@@ -1472,9 +1473,13 @@ void Scene::renderUI()
         std::cout << "JSON dump" << std::endl << jser.dump(4) << std::endl;
 
         // Deserialize
-        // std::cout << "\nDeserialization" << std::endl;
-        // registry.clear();
-        // deserialize_registry(jser, registry);
+        std::cout << "\nDeserialization" << std::endl;
+        destroy_pending_entities();
+        registry->clear();
+        entities_pending_destruction.clear();
+        //auto registry_tmp = std::make_shared<entt::registry>();
+        auto context = Editor::Context{ registry, lua };
+        Meta::deserialize_registry(jser, context);
     }
 
     static Editor::InspectorState inspector{};

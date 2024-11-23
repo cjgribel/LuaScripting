@@ -190,7 +190,7 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
     //     f(script.self);
     // inspect_script(script);
     assert(script.self["init"].valid());
-    script.self["init"](script.self);
+    // script.self["init"](script.self);
 
     return script;
 

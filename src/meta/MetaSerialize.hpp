@@ -12,15 +12,25 @@
 // #include <nlohmann/json_fwd.hpp> // Use nlohmann::json& as references instead
 #include <nlohmann/json.hpp>
 
+#include "Context.hpp"
+
 namespace Meta {
 
-    nlohmann::json serialize_any(const entt::meta_any& meta_any);
+    nlohmann::json serialize_any(
+        const entt::meta_any& meta_any);
 
-    nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry);
+    nlohmann::json serialize_registry(
+        std::shared_ptr<entt::registry>& registry);
 
-    void deserialize_any(const nlohmann::json& object_json, entt::meta_any& meta_any);
+    void deserialize_any(
+        const nlohmann::json& json,
+        entt::meta_any& meta_any, 
+        entt::entity entity,
+        Editor::Context& context);
 
-    void deserialize_registry(const nlohmann::json& json, auto& registry);
+    void deserialize_registry(
+        const nlohmann::json& json, 
+        Editor::Context& context);
 
 } // namespace Meta
 

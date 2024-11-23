@@ -172,7 +172,11 @@ namespace Meta {
         return json;
     }
 
-    void deserialize_any(const nlohmann::json& json, entt::meta_any& any)
+    void deserialize_any(
+        const nlohmann::json& json,
+        entt::meta_any& any,
+        entt::entity entity,
+        Editor::Context& context)
     {
         assert(any);
 
@@ -185,7 +189,13 @@ namespace Meta {
                 //      which and will hold a copy of it.
 #if 1
             // Call from_json using alias of json node
-                auto res = meta_func.invoke({}, entt::forward_as_meta(json), any.data());
+                // auto res = meta_func.invoke({}, entt::forward_as_meta(json), any.data());
+                auto res = meta_func.invoke(
+                    {},
+                    entt::forward_as_meta(json),
+                    any.data(),
+                    entity,
+                    entt::forward_as_meta(context));
 #else
             // json node is possibly copied to an entt::meta_any here
                 auto res = meta_func.invoke({}, json, any.data());
@@ -226,7 +236,7 @@ namespace Meta {
                     std::string key_name = meta_data_name(id, meta_data);
 
                     entt::meta_any field_any = meta_data.get(any);
-                    deserialize_any(json[key_name], field_any);
+                    deserialize_any(json[key_name], field_any, entity, context);
                     meta_data.set(any, field_any);
                 }
             }
@@ -255,7 +265,7 @@ namespace Meta {
             {
 #ifndef SEQDESER_ALT
                 entt::meta_any elem_any = view.value_type().construct();
-                deserialize_any(json[i], elem_any);
+                deserialize_any(json[i], elem_any, entity, context);
                 view.insert(view.end(), elem_any);
 #else
                 entt::meta_any elem_any = view[i]; // view[i].as_ref() works too
@@ -284,14 +294,14 @@ namespace Meta {
                 {
                     entt::meta_any key_any = view.key_type().construct();
                     entt::meta_any mapped_any = view.mapped_type().construct();
-                    deserialize_any(json_elem[0], key_any);
-                    deserialize_any(json_elem[1], mapped_any);
+                    deserialize_any(json_elem[0], key_any, entity, context);
+                    deserialize_any(json_elem[1], mapped_any, entity, context);
                     view.insert(key_any, mapped_any);
                 }
                 else // Just key
                 {
                     entt::meta_any key_any = view.key_type().construct();
-                    deserialize_any(json_elem, key_any);
+                    deserialize_any(json_elem, key_any, entity, context);
                     view.insert(key_any);
                 }
             }
@@ -312,15 +322,28 @@ namespace Meta {
         }
     }
 
-    void deserialize_registry(const nlohmann::json& json, auto& registry)
+    void deserialize_registry(
+        const nlohmann::json& json,
+        Editor::Context& context)
     {
         assert(json.is_array());
         for (const auto& entity_json : json)
         {
             assert(entity_json.contains("entity"));
             entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
-            auto entity = registry.create(entity_hint);
+            assert(!context.registry->valid(entity_hint));
+            auto entity = context.registry->create(entity_hint);
             assert(entity_hint == entity);
+            //
+            // if (entity_hint != entity) {
+            //     assert(context.registry->valid(entity));
+            //     assert(!context.registry->valid(entity_hint));
+            //     auto view = context.registry->template view<entt::entity>();
+            //     bool f = false;
+            //     for (auto entity : view) f |= (entity == entity_hint);
+            //     std::cout << "entity_hint != entity, entity_hint exists: " << f << std::endl;
+            //     assert(0);
+            // }
 
             std::cout << "Deserializing entity " << entt::to_integral(entity) << std::endl;
 
@@ -335,9 +358,9 @@ namespace Meta {
                     // Default-construct component component
                     entt::meta_any any = meta_type.construct();
                     // Deserialize component
-                    deserialize_any(component_json.value(), any);
+                    deserialize_any(component_json.value(), any, entity, context);
                     // Add component to entity storage
-                    registry.storage(id)->push(entity, any.data());
+                    context.registry->storage(id)->push(entity, any.data());
                 }
                 else
                 {
