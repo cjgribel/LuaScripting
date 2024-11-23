@@ -1138,7 +1138,9 @@ namespace {
         entt::registry* registry_ptr = *registry_opt;
 
         //entt::registry& registry_ptr = lua_registry.get<entt::registry&>(); // REPLACES REBIND?
-        std::cout << registry_ptr->valid(dst_entity) << std::endl; //
+        assert(registry_ptr);
+        assert(registry_ptr->valid(dst_entity));
+        //std::cout << registry_ptr->valid(dst_entity) << std::endl; //
 
         // Do for the copied table
         //auto rebind_func = lua_registry.operator[]("rebind");  assert(rebind_func.valid());
@@ -1229,6 +1231,7 @@ namespace {
         }
     }
 
+    // TODO
     void userdata_to_json(nlohmann::json& j, const sol::userdata& userdata)
     {
         // Use fields defined by the type's entt::meta
@@ -1308,12 +1311,13 @@ namespace {
 
         auto script = static_cast<const BehaviorScript*>(ptr);
 
-        // TODO identifier
-        // TODO path
-
+        // self sol::table
         nlohmann::json self_json;
         table_to_json(self_json, script->self);
         j["self"] = self_json;
+
+        // TODO identifier
+        // TODO path
     }
 
 }
@@ -1358,8 +1362,6 @@ namespace {
             }
         }
     }
-
-
 
     // Function to handle JSON arrays and populate a Lua table
     void arrayjson_to_table(sol::table& tbl, const nlohmann::json& j)
@@ -1555,14 +1557,28 @@ namespace {
     }
 
 
-    // + Context
+    // + Context (registry)
+    // + dst_entity
     void BehaviorScript_from_json(const nlohmann::json& j, void* ptr)
     {
         std::cout << "BehaviorScript_from_json\n";
 
         auto script = static_cast<BehaviorScript*>(ptr);
 
+        // self sol::table
         // LOAD + copy Lua meta fields
+        // auto script_cpy = BehaviorScriptFactory::create_from_file(
+        //     *registry_ptr,
+        //     dst_entity,
+        //     self.lua_state(),
+        //     script->path,
+        //     script->identifier);
+
+        //table_from_json(script.self, j["self"]);
+        // deep_copy_table(self, script_cpy.self);
+
+        // TODO identifier
+        // TODO path
 
         *script = BehaviorScript{};
     }
@@ -1609,7 +1625,7 @@ void serialization_test(std::shared_ptr<sol::state>& lua)
 
     sol::table array_table = lua->create_table(); array_table[1] = 10; array_table[2] = 20; array_table[3] = 30;
     tbl["VELOCITY_MAX"] = array_table;  // change to array table
-    
+
     tbl["inventory"] = 35.0f;              // change from array table
 
     tbl["FieldAddedInScript"] = "FieldAddedInScript";
