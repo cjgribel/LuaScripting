@@ -1474,9 +1474,10 @@ void Scene::renderUI()
 
         // Deserialize
         std::cout << "\nDeserialization" << std::endl;
-        destroy_pending_entities();
+        // destroy_pending_entities();
         registry->clear();
         entities_pending_destruction.clear();
+        // NOTE: SG is left unchanged
         //auto registry_tmp = std::make_shared<entt::registry>();
         auto context = Editor::Context{ registry, lua };
         Meta::deserialize_registry(jser, context);

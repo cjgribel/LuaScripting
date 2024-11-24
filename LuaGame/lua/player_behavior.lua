@@ -60,7 +60,9 @@ function node:update(dt)
             local transform = self.owner:get(self.id(), Transform)
             local dir_x = engine.input.axis_right_x/axis_right_len
             local dir_y = engine.input.axis_right_y/axis_right_len
-            self.projectile_pool:fire(transform.x, transform.y, dir_x * 12.0, dir_y * -12.0)
+            if self.projectile_pool then
+                self.projectile_pool:fire(transform.x, transform.y, dir_x * 12.0, dir_y * -12.0)
+            end
 
             self.projectiles_fired = self.projectiles_fired + 1
             self.fire_delay = 0.0

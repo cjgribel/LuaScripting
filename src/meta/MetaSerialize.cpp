@@ -153,12 +153,9 @@ namespace Meta {
 
                 if (entt::meta_type meta_type = entt::resolve(id); meta_type)
                 {
-                    // string_view ok ???
                     auto key_name = std::string{ meta_type.info().name() }; // Better for serialization?
                     // auto type_name = meta_type_name(meta_type); // Inspector-friendly version
 
-                    //entt::meta_any comp_any = meta_type.from_void(type.value(entity));
-                    //entity_json["components"][key_name] = serialize_any(comp_any);
                     entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
                 }
                 else
@@ -250,13 +247,16 @@ namespace Meta {
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
 
-            //#define SEQDESER_ALT // Resize and then deserialize in-place, seems to work also
+// Resize and then deserialize in-place
+// Note: This approach is necessary to make fixed-size containers without insertion to work (std::array)
+#define SEQDESER_ALT
 
 #ifndef SEQDESER_ALT
-        // Clear before adding deserialized elements one by one
+            // Clear before adding deserialized elements one by one
             view.clear();
 #else
-        // Resize meta container to fit json array
+            // Resize meta container to fit json array
+            // As expected, seems to do nothing for fixed-size containers such as std::array
             view.resize(json.size());
 #endif
             assert(json.is_array());
@@ -269,7 +269,7 @@ namespace Meta {
                 view.insert(view.end(), elem_any);
 #else
                 entt::meta_any elem_any = view[i]; // view[i].as_ref() works too
-                deserialize_any(json[i], elem_any); // TODO: view[i] here if &&
+                deserialize_any(json[i], elem_any, entity, context); // TODO: view[i] here if &&
 #endif
             }
         }

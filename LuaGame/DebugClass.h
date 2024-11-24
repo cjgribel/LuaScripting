@@ -141,7 +141,8 @@ struct DebugClass
     bool flag = true;
     debugvec3 position;
     std::string somestring = "Hello";
-    std::vector<int> vector1 = { 1, 2, 3 };
+    // std::vector<int> vector1 = { 1, 2, 3 };
+    std::array<int, 3> vector1 = { 1, 2, 3 };
     std::vector<ElementType> vector2 = { {4.0f}, {5.0f}, {6.0f} };
     std::map<int, float> map1 = { {7, 7.5f}, {8, 8.5f} };
     std::map<int, ElementType> map2 = { {9, {9.5f}}, {10, {10.5f}} };

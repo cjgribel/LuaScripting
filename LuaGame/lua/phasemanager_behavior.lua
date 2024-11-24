@@ -33,6 +33,10 @@ end
 
 function behavior:update(dt)
 
+    --self.current_phase = phase1
+    --current_phase_index = 1
+    --print("behavior:update")
+
     if self.current_phase then
         
         self.current_phase:update(dt)
