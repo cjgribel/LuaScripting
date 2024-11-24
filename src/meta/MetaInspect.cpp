@@ -191,8 +191,14 @@ namespace Editor {
 #ifdef INSPECTION_DEBUG_PRINT
                     std::cout << "inspecting data field: " << key_name << std::endl;
 #endif
-                    // if (inspector.is_disabled())
+                    // Open the next node unless it is a container
                     ImGui::SetNextItemOpen(true);
+                    // {
+                    //     bool data_is_container = false;
+                    //     data_is_container |= meta_data.type().is_associative_container();
+                    //     data_is_container |= meta_data.type().is_sequence_container();
+                    //     ImGui::SetNextItemOpen(!data_is_container);
+                    // }
 
                     if (inspector.begin_node(key_name.c_str()))
                     {
@@ -224,10 +230,10 @@ namespace Editor {
 #ifdef INSPECTION_DEBUG_PRINT
                     std::cout << "DONE inspecting data field" << key_name << std::endl;
 #endif
+                    }
                 }
-            }
             return mod;
-        }
+            }
 
         // any is not a meta type
 
@@ -241,6 +247,7 @@ namespace Editor {
             int count = 0;
             for (auto&& v : view)
             {
+                ImGui::SetNextItemOpen(true);
                 inspector.begin_leaf((std::string("#") + std::to_string(count)).c_str());
                 {
 #ifdef USE_COMMANDS
@@ -347,14 +354,14 @@ namespace Editor {
                 });
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
-        }
+                }
         // else { /* cref */ }
 
 #ifdef INSPECTION_DEBUG_PRINT
         std::cout << "DONE inspect_any " << meta_type_name(any.type()) << std::endl;
 #endif
         return mod;
-    }
+        }
 
     bool inspect_entity(
         entt::entity entity,
@@ -443,7 +450,7 @@ namespace Editor {
 #endif
         }
         return mod;
-    }
+        }
 #endif
 
-} // namespace Editor
+    } // namespace Editor
