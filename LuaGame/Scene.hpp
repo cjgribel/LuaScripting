@@ -18,9 +18,34 @@
 
 class Scene : public eeng::SceneBase
 {
+public:
+    bool init(const v2i& windowSize) override;
+
+    void update(float time_s, float deltaTime_s) override;
+
+    void renderUI() override;
+
+    void render(float time_s, ShapeRendererPtr renderer) override;
+
+    void destroy() override;
+
+    class PlayStateManager
+    {
+        enum class PlayState : int { Play, Stop, Pause } play_state = PlayState::Stop;
+    public:
+        void play() { play_state = PlayState::Play; }
+        void stop() { play_state = PlayState::Stop; }
+        void pause() { play_state = PlayState::Pause; }
+        bool is_play() { return play_state == PlayState::Play; }
+        bool is_stop() { return play_state == PlayState::Stop; }
+        bool is_pause() { return play_state == PlayState::Pause; }
+        bool is_play_or_pause() { return play_state == PlayState::Play || play_state == PlayState::Pause; }
+    };
+
+private:
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
- 
+
     const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 
     std::vector<entt::entity> entities_pending_destruction;
@@ -37,27 +62,18 @@ class Scene : public eeng::SceneBase
 
     // Particle buffer
     ParticleBuffer particleBuffer{};
-    
+
     // Observer
     ConditionalObserver observer{};
 
     // (Editor) Command queue
-    std::shared_ptr<Editor::CommandQueue> cmd_queue {};
+    std::shared_ptr<Editor::CommandQueue> cmd_queue{};
 
     entt::entity create_entity_and_attach_to_scenegraph(entt::entity parent_entity = entt::null);
 
     void destroy_pending_entities();
 
-public:
-    bool init(const v2i& windowSize) override;
-
-    void update(float time_s, float deltaTime_s) override;
-
-    void renderUI() override;
-
-    void render(float time_s, ShapeRendererPtr renderer) override;
-
-    void destroy() override;
+    PlayStateManager play_state{};
 };
 
 #endif

@@ -859,6 +859,45 @@ namespace Inspector
 
         ImGui::End(); // Window
     }
+
+    void inspect_playstate(Scene::PlayStateManager& play_state)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Play / Stop", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        // ISSUE EVENT RATHER THAN CHANGING STATE DIRECTLY
+
+        // Fetch state
+        bool can_play = !play_state.is_play();
+        bool can_stop = !play_state.is_stop();
+        bool can_pause = play_state.is_play();
+
+        // Play button
+        if (!can_play) ImGui::BeginDisabled();
+        if (ImGui::Button("Play##playpause")) play_state.play();
+        if (!can_play) ImGui::EndDisabled();
+
+        // Pause button
+        ImGui::SameLine();
+        if (!can_pause) ImGui::BeginDisabled();
+        if (ImGui::Button("Pause##playpause")) play_state.pause();
+        if (!can_pause) ImGui::EndDisabled();
+
+        // Stop button
+        ImGui::SameLine();
+        if (!can_stop) ImGui::BeginDisabled();
+        if (ImGui::Button("Stop##playpause")) play_state.stop();
+        if (!can_stop) ImGui::EndDisabled();
+
+        ImGui::End(); // Window
+    }
 } // Inspector
 
 inline void lua_panic_func(sol::optional<std::string> maybe_msg)
@@ -1498,6 +1537,8 @@ void Scene::renderUI()
 
     // Before inspect_entity ???
     Inspector::inspect_scenegraph(scenegraph, inspector);
+
+    Inspector::inspect_playstate(play_state);
 
     // float available_width = ImGui::GetContentRegionAvail().x;
     // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
