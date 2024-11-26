@@ -860,7 +860,7 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_playstate(Scene::PlayStateManager& play_state)
+    void inspect_playstate(const Scene::GamePlayState& play_state, ConditionalObserver& observer)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -872,28 +872,29 @@ namespace Inspector
             return;
         }
 
-        // ISSUE EVENT RATHER THAN CHANGING STATE DIRECTLY
-
         // Fetch state
-        bool can_play = !play_state.is_play();
-        bool can_stop = !play_state.is_stop();
-        bool can_pause = play_state.is_play();
+        bool can_play = play_state != Scene::GamePlayState::Play;
+        bool can_stop = play_state != Scene::GamePlayState::Stop;
+        bool can_pause = play_state == Scene::GamePlayState::Play;
 
         // Play button
         if (!can_play) ImGui::BeginDisabled();
-        if (ImGui::Button("Play##playpause")) play_state.play();
+        if (ImGui::Button("Play##playpause"))
+            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Play });
         if (!can_play) ImGui::EndDisabled();
 
         // Pause button
         ImGui::SameLine();
         if (!can_pause) ImGui::BeginDisabled();
-        if (ImGui::Button("Pause##playpause")) play_state.pause();
+        if (ImGui::Button("Pause##playpause"))
+            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Pause });
         if (!can_pause) ImGui::EndDisabled();
 
         // Stop button
         ImGui::SameLine();
         if (!can_stop) ImGui::BeginDisabled();
-        if (ImGui::Button("Stop##playpause")) play_state.stop();
+        if (ImGui::Button("Stop##playpause"))
+            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Stop });
         if (!can_stop) ImGui::EndDisabled();
 
         ImGui::End(); // Window
@@ -980,6 +981,11 @@ bool Scene::init(const v2i& windowSize)
     registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>(); // Or, rely on RAII to unload scripts?
 
     cmd_queue = std::make_shared<Editor::CommandQueue>();
+
+    // Hook up Scene events
+    observer.register_callback([&](const GamePlayStateEvent& event) {
+        this->OnGamePlayStateChanged(event);
+        });
 
     try
     {
@@ -1484,6 +1490,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
+    observer.dispatch_all_events();
 }
 
 void Scene::renderUI()
@@ -1538,48 +1545,10 @@ void Scene::renderUI()
     // Before inspect_entity ???
     Inspector::inspect_scenegraph(scenegraph, inspector);
 
-    Inspector::inspect_playstate(play_state);
+    Inspector::inspect_playstate(play_state, observer);
 
-    // float available_width = ImGui::GetContentRegionAvail().x;
-    // if (ImGui::Button("Reload scripts", ImVec2(available_width, 0.0f)))
-    // {
-    //     reload_scripts();
-    // }
-
-    // if (ImGui::ColorEdit3("Light color",
-    //     glm::value_ptr(lightColor),
-    //     ImGuiColorEditFlags_NoInputs))
-    // {
-    // }
-
-    // // Combo (drop-down) for animation clip
-    // if (characterMesh)
-    // {
-    //     int curAnimIndex = characterAnimIndex;
-    //     std::string label = (curAnimIndex == -1 ? "Bind pose" : characterMesh->getAnimationName(curAnimIndex));
-    //     if (ImGui::BeginCombo("Character animation##animclip", label.c_str()))
-    //     {
-    //         // Bind pose item
-    //         const bool isSelected = (curAnimIndex == -1);
-    //         if (ImGui::Selectable("Bind pose", isSelected))
-    //             curAnimIndex = -1;
-    //         if (isSelected)
-    //             ImGui::SetItemDefaultFocus();
-
-    //         // Clip items
-    //         for (int i = 0; i < characterMesh->getNbrAnimations(); i++)
-    //         {
-    //             const bool isSelected = (curAnimIndex == i);
-    //             const auto label = characterMesh->getAnimationName(i) + "##" + std::to_string(i);
-    //             if (ImGui::Selectable(label.c_str(), isSelected))
-    //                 curAnimIndex = i;
-    //             if (isSelected)
-    //                 ImGui::SetItemDefaultFocus();
-    //         }
-    //         ImGui::EndCombo();
-    //         characterAnimIndex = curAnimIndex;
-    //     }
-    // }
+    // Dispatch events queued during UI phase
+    observer.dispatch_all_events();
 }
 
 void Scene::render(float time_s, ShapeRendererPtr renderer)
@@ -1760,4 +1729,9 @@ void Scene::destroy()
 
     is_initialized = false;
     std::cout << "Done: Scene::destroy()" << std::endl;
+}
+
+void Scene::OnGamePlayStateChanged(const GamePlayStateEvent& event)
+{
+    play_state = event.play_state;
 }

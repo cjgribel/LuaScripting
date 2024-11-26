@@ -29,18 +29,11 @@ public:
 
     void destroy() override;
 
-    class PlayStateManager
-    {
-        enum class PlayState : int { Play, Stop, Pause } play_state = PlayState::Stop;
-    public:
-        void play() { play_state = PlayState::Play; }
-        void stop() { play_state = PlayState::Stop; }
-        void pause() { play_state = PlayState::Pause; }
-        bool is_play() { return play_state == PlayState::Play; }
-        bool is_stop() { return play_state == PlayState::Stop; }
-        bool is_pause() { return play_state == PlayState::Pause; }
-        bool is_play_or_pause() { return play_state == PlayState::Play || play_state == PlayState::Pause; }
-    };
+    enum class GamePlayState : int { Play, Stop, Pause };
+
+    struct GamePlayStateEvent { GamePlayState play_state; };
+
+    void OnGamePlayStateChanged(const GamePlayStateEvent& event);
 
 private:
     std::shared_ptr<entt::registry> registry{};
@@ -73,7 +66,7 @@ private:
 
     void destroy_pending_entities();
 
-    PlayStateManager play_state{};
+    GamePlayState play_state { GamePlayState::Stop };
 };
 
 #endif
