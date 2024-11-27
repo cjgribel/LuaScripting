@@ -921,7 +921,10 @@ namespace Inspector
 
         // Undo button
         // if (!can_undo) ImGui::BeginDisabled();
-        // if (ImGui::Button("Undo")) cmd_queue->undo_last();
+        if (ImGui::Button("Destroy chunk"))
+        {
+            observer.enqueue_event(Scene::DestroyChunkEvent{ "hello" });
+        };
         // if (!can_undo) ImGui::EndDisabled();
 
         // Redo button
@@ -942,8 +945,6 @@ namespace Inspector
 
         // Command list
         ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
-
-        // observer.enqueue_event(Scene::DestroyChunkEvent { "hello"; });
 
         for (auto& entity : chunk_registry.all_chunks())
         {
@@ -1055,6 +1056,9 @@ bool Scene::init(const v2i& windowSize)
     // Hook up Scene events
     observer.register_callback([&](const SetGamePlayStateEvent& event) {
         this->OnSetGamePlayStateEvent(event);
+        });
+    observer.register_callback([&](const DestroyChunkEvent& event) {
+        this->OnDestroyChunkEvent(event);
         });
 
     try
@@ -1318,9 +1322,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1553,9 +1557,9 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
-            }
         }
-    } // anon
+    }
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1747,7 +1751,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
@@ -1857,9 +1861,9 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 
     // Pause
 
-    if (event.play_state == Scene::GamePlayState::Play) std::cout << "new state: Play";
-    else if (event.play_state == Scene::GamePlayState::Stop) std::cout << "new state: Stop";
-    else if (event.play_state == Scene::GamePlayState::Pause) std::cout << "new state: Pause";
+    if (event.play_state == Scene::GamePlayState::Play) std::cout << "new state: Play" << std::endl;
+    else if (event.play_state == Scene::GamePlayState::Stop) std::cout << "new state: Stop" << std::endl;
+    else if (event.play_state == Scene::GamePlayState::Pause) std::cout << "new state: Pause" << std::endl;
     else { assert(0); }
 
     play_state = event.play_state;
