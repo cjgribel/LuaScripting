@@ -58,8 +58,8 @@ struct Transform
 struct HeaderComponent
 {
     std::string name;
-    // std::string name2;
-    // std::string name3;
+    std::string chunk_tag;
+    unsigned int guid;
 
     std::string to_string() const;
 };

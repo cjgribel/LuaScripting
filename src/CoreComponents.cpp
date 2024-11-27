@@ -128,7 +128,10 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
 
     entt::meta<HeaderComponent>()
         .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
+
         .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
+        .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag")
+        .data<&HeaderComponent::guid>("guid"_hs).prop(display_name_hs, "guid").prop(readonly_hs, true)
 
         // Optional meta functions
 
@@ -166,8 +169,8 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
             "type_id", &entt::type_hash<HeaderComponent>::value,
 
             "name", &HeaderComponent::name,
-            // "name2", &HeaderComponent::name2,
-            // "name3", &HeaderComponent::name3,
+            "chunk_tag", &HeaderComponent::chunk_tag,
+            "guid", &HeaderComponent::guid,
 
             // clone
             "copy",
