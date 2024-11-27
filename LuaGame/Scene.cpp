@@ -1731,7 +1731,59 @@ void Scene::destroy()
     std::cout << "Done: Scene::destroy()" << std::endl;
 }
 
+void Scene::remove_chunk(const std::string& chunk_tag)
+{
+    for (auto& entity : chunk_registry.chunk(chunk_tag))
+    {
+        // Either, 
+        // 1) rely on entt's onDestroy event for calling destroy() on scripts
+        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+
+        registry->destroy(entity);
+    }
+}
+
 void Scene::OnGamePlayStateChanged(const GamePlayStateEvent& event)
 {
+    // Save open tags
+
+    // Play
+    //      scripts: run init()/run()
+
+            //std::cout << "update" << std::endl;
+        // auto view = registry->template view<ScriptedBehaviorComponent>();
+        // for (auto entity : view)
+        // {
+        //     assert(entity != entt::null);
+        //     assert(registry->valid(entity));
+
+        //     auto& script_comp = view.template get<ScriptedBehaviorComponent>(entity);
+        //     for (auto& script : script_comp.scripts)
+        //     {
+        //         assert(script.self.valid());
+        //         // std::cout << script.identifier << std::endl;
+        //         script.update(script.self, delta_time);
+        //     }
+        // }
+
+    // Stop
+
+    // Pause
+
     play_state = event.play_state;
+}
+
+void Scene::load_json(const std::string& path)
+{
+
+}
+
+void Scene::save_chunk(const std::string& chunk_tag)
+{
+
+}
+
+void Scene::save_all_chunks()
+{
+
 }
