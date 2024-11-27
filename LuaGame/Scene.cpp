@@ -880,22 +880,92 @@ namespace Inspector
         // Play button
         if (!can_play) ImGui::BeginDisabled();
         if (ImGui::Button("Play##playpause"))
-            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Play });
+            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Play });
         if (!can_play) ImGui::EndDisabled();
 
         // Pause button
         ImGui::SameLine();
         if (!can_pause) ImGui::BeginDisabled();
         if (ImGui::Button("Pause##playpause"))
-            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Pause });
+            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Pause });
         if (!can_pause) ImGui::EndDisabled();
 
         // Stop button
         ImGui::SameLine();
         if (!can_stop) ImGui::BeginDisabled();
         if (ImGui::Button("Stop##playpause"))
-            observer.enqueue_event(Scene::GamePlayStateEvent{ Scene::GamePlayState::Stop });
+            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Stop });
         if (!can_stop) ImGui::EndDisabled();
+
+        ImGui::End(); // Window
+    }
+
+    void inspect_chunkregistry(ChunkRegistry& chunk_registry, ConditionalObserver& observer)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Scene Chunks", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        // Fetch state
+        // assert(!inspector.cmd_queue.expired());
+        // auto cmd_queue = inspector.cmd_queue.lock();
+        // bool can_undo = cmd_queue->can_undo();
+        // bool can_redo = cmd_queue->commands_pending();
+        // bool has_commands = cmd_queue->size();
+
+        // Undo button
+        // if (!can_undo) ImGui::BeginDisabled();
+        // if (ImGui::Button("Undo")) cmd_queue->undo_last();
+        // if (!can_undo) ImGui::EndDisabled();
+
+        // Redo button
+        // ImGui::SameLine();
+        // if (!can_redo) ImGui::BeginDisabled();
+        // if (ImGui::Button("Redo")) cmd_queue->execute_next();
+        // if (!can_redo) ImGui::EndDisabled();
+
+        // Clear button
+        // ImGui::SameLine();
+        // if (!has_commands) ImGui::BeginDisabled();
+        // if (ImGui::Button("Clear")) cmd_queue->clear();
+        // if (!has_commands) ImGui::EndDisabled();
+
+        // Command count
+        // ImGui::SameLine();
+        // ImGui::Text("%zu", cmd_queue->size());
+
+        // Command list
+        ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
+
+        // observer.enqueue_event(Scene::DestroyChunkEvent { "hello"; });
+
+        for (auto& entity : chunk_registry.all_chunks())
+        {
+            // Either, 
+            // 1) rely on entt's onDestroy event for calling destroy() on scripts
+            // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+
+            //registry->destroy(entity);
+        }
+        // for (int i = 0; i < cmd_queue->size(); ++i)
+        // {
+        //     // Auto-scroll
+        //     if (i == cmd_queue->get_current_index() - 1)
+        //         ImGui::SetScrollHereY(0.5f);
+
+        //     bool is_pending = !cmd_queue->is_executed(i);
+        //     if (is_pending)
+        //         ImGui::TextDisabled("%s", cmd_queue->get_name(i).c_str());
+        //     else
+        //         ImGui::Text("%s", cmd_queue->get_name(i).c_str());
+        // }
+        ImGui::EndChild(); // Command list window
 
         ImGui::End(); // Window
     }
@@ -983,8 +1053,8 @@ bool Scene::init(const v2i& windowSize)
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
     // Hook up Scene events
-    observer.register_callback([&](const GamePlayStateEvent& event) {
-        this->OnGamePlayStateChanged(event);
+    observer.register_callback([&](const SetGamePlayStateEvent& event) {
+        this->OnSetGamePlayStateEvent(event);
         });
 
     try
@@ -1547,6 +1617,8 @@ void Scene::renderUI()
 
     Inspector::inspect_playstate(play_state, observer);
 
+    Inspector::inspect_chunkregistry(chunk_registry, observer);
+
     // Dispatch events queued during UI phase
     observer.dispatch_all_events();
 }
@@ -1731,7 +1803,7 @@ void Scene::destroy()
     std::cout << "Done: Scene::destroy()" << std::endl;
 }
 
-void Scene::remove_chunk(const std::string& chunk_tag)
+void Scene::destroy_chunk(const std::string& chunk_tag)
 {
     for (auto& entity : chunk_registry.chunk(chunk_tag))
     {
@@ -1743,7 +1815,22 @@ void Scene::remove_chunk(const std::string& chunk_tag)
     }
 }
 
-void Scene::OnGamePlayStateChanged(const GamePlayStateEvent& event)
+void Scene::save_chunk(const std::string& chunk_tag)
+{
+
+}
+
+void Scene::save_all_chunks()
+{
+
+}
+
+void Scene::load_json(const std::string& path)
+{
+
+}
+
+void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 {
     // Save open tags
 
@@ -1770,20 +1857,15 @@ void Scene::OnGamePlayStateChanged(const GamePlayStateEvent& event)
 
     // Pause
 
+    if (event.play_state == Scene::GamePlayState::Play) std::cout << "new state: Play";
+    else if (event.play_state == Scene::GamePlayState::Stop) std::cout << "new state: Stop";
+    else if (event.play_state == Scene::GamePlayState::Pause) std::cout << "new state: Pause";
+    else { assert(0); }
+
     play_state = event.play_state;
 }
 
-void Scene::load_json(const std::string& path)
+void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
 {
-
-}
-
-void Scene::save_chunk(const std::string& chunk_tag)
-{
-
-}
-
-void Scene::save_all_chunks()
-{
-
+    std::cout << "destroy chunk: " << event.chunk_tag << std::endl;
 }
