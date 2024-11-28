@@ -16,12 +16,27 @@
 
 #include "ParticleBuffer.hpp"
 
+// TODO --> ChunkRegistry.HPP/CPP
 class ChunkRegistry
 {
 public:
     using EntityVector = std::vector<entt::entity>;
 
-    // Adapter for a single chunk
+    // Adapter for chunks
+    class ChunkIterator
+    {
+    public:
+        using MapType = std::unordered_map<std::string, EntityVector>;
+        using iterator = MapType::iterator;
+        ChunkIterator(MapType& registry) : registry(registry) {}
+        iterator begin() { return registry.begin(); }
+        iterator end() { return registry.end(); }
+
+    private:
+        MapType& registry;
+    };
+
+    // Adapter for entities in a chunk
     class EntityIterator {
     public:
         using iterator = EntityVector::iterator;
@@ -32,35 +47,54 @@ public:
         EntityVector& entities;
     };
 
-    // Adapter for the entire unordered_map
-    class ChunkIterator
+    bool chunk_exists(const std::string& chunk_id) const
     {
-    public:
-        using MapType = std::unordered_map<std::string, EntityVector>;
-        using iterator = MapType::iterator;
-
-        ChunkIterator(MapType& registry) : registry(registry) {}
-
-        iterator begin() { return registry.begin(); }
-        iterator end() { return registry.end(); }
-
-    private:
-        MapType& registry;
-    };
-
-    EntityIterator chunk(const std::string& chunk_id) {
-        auto it = registry.find(chunk_id);
-        if (it == registry.end()) {
-            throw std::runtime_error("Chunk not found: " + chunk_id);
-        }
-        return EntityIterator(it->second);
+        return registry.find(chunk_id) != registry.end();
     }
 
-    ChunkIterator all_chunks() { return ChunkIterator(registry); }
+    EntityIterator chunk(const std::string& chunk_id) 
+    {
+        assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+        return EntityIterator(registry.at(chunk_id));
+    }
+
+    ChunkIterator chunks() { return ChunkIterator(registry); }
 
     // Add an entity to a specific chunk
-    void addEntity(const std::string& chunk_id, entt::entity entity) {
+    void addEntity(const std::string& chunk_id, entt::entity entity) 
+    {
+        assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+        assert(!entity_exists(entity) && "Entity already exists in a chunk!");
+
         registry[chunk_id].push_back(entity);
+    }
+
+    // Check if an entity exists in a specific chunk
+    bool entity_exists_in_chunk(const std::string& chunk_id, entt::entity entity) const 
+    {
+        assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+        const auto& entities = registry.at(chunk_id);
+        return std::find(entities.begin(), entities.end(), entity) != entities.end();
+    }
+
+    // Check if an entity exists in any chunk
+    bool entity_exists(entt::entity entity) const 
+    {
+        for (const auto& [chunk_id, entities] : registry) 
+        {
+            if (std::find(entities.begin(), entities.end(), entity) != entities.end()) 
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Create a new chunk
+    void create_chunk(const std::string& chunk_id) 
+    {
+        assert(!chunk_exists(chunk_id) && "Chunk already exists!");
+        registry[chunk_id] = {};
     }
 
 private:
@@ -89,10 +123,13 @@ public:
 private:
 
     // Content management
+    // void assign_entity_to_chunk(entt::registry& registry, entt::entity);
     void destroy_chunk(const std::string& chunk_tag);
     void save_chunk(const std::string& chunk_tag);
     void save_all_chunks();
     void load_json(const std::string& path);
+
+
 
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     void OnDestroyChunkEvent(const DestroyChunkEvent& event);

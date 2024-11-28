@@ -162,7 +162,9 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
                 },
                 [](const std::string& name) {
                     return HeaderComponent{
-                        .name = name
+                        .name = name,
+                        .chunk_tag = "default_chunk",
+                        .guid = 0
                     };
                 }),
 

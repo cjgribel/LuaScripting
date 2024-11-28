@@ -946,7 +946,7 @@ namespace Inspector
         // Command list
         ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
 
-        for (auto& entity : chunk_registry.all_chunks())
+        for (auto& entity : chunk_registry.chunks())
         {
             // Either, 
             // 1) rely on entt's onDestroy event for calling destroy() on scripts
@@ -1050,6 +1050,26 @@ bool Scene::init(const v2i& windowSize)
 
     registry = std::make_shared<entt::registry>();
     registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>(); // Or, rely on RAII to unload scripts?
+    
+    //registry->on_construct<HeaderComponent>().connect <&assign_entity_to_chunk>();
+    //registry->on_update<HeaderComponent>().connect<[&](){}>();
+
+// [&](entt::registry& registry, entt::entity entity) {
+//             std::cout << "on_construct<HeaderComponent>()" << std::endl;
+
+//             //         void release_script(entt::registry& registry, entt::entity entity)
+//             // {
+//                  auto& header_comp = registry.get<HeaderComponent>(entity);
+                
+//             //     for (auto& script : script_comp.scripts)
+//             //     {
+//             //         // auto& script = registry.get<ScriptedBehaviorComponent>(entity);
+//             //         if (auto&& f = script.self["destroy"]; f.valid())
+//             //             f(script.self);
+//             //         script.self.abandon();
+//             //     }
+//             // }
+//             } 
 
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
@@ -1322,9 +1342,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1557,9 +1577,9 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
+            }
         }
-    }
-} // anon
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1751,7 +1771,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
