@@ -155,6 +155,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
             // If the type has defined ctors
             //sol::constructors<HeaderComponent(), HeaderComponent(const std::string&)>(),
 
+#if 0
             sol::call_constructor,
             sol::factories(
                 []() -> HeaderComponent {  // Default constructor
@@ -167,6 +168,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
                         .guid = 0
                     };
                 }),
+#endif
 
             "type_id", &entt::type_hash<HeaderComponent>::value,
 
@@ -174,6 +176,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
             "chunk_tag", &HeaderComponent::chunk_tag,
             "guid", &HeaderComponent::guid,
 
+#if 0
             // clone
             "copy",
             [](sol::userdata userdata)
@@ -181,6 +184,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
                 // TODO: check fields
                 return HeaderComponent{ userdata.get<std::string>("name") };
             },
+#endif
 
             // Needed for value-copying
             "construct",

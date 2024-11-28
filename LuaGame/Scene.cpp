@@ -946,6 +946,17 @@ namespace Inspector
         // Command list
         ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
 
+        // for (const auto& [chunkName, entityVector] : chunk_registry) {
+        // }
+        for (auto& [chunk_tag, entities] : chunk_registry.chunks()) 
+        {
+             ImGui::Text("%s (%d)", chunk_tag.c_str(), static_cast<int>(entities.size()));
+            //std::cout << "Chunk ID: " << chunk_id << "\n";
+            // for (auto& entity : entities) {
+            //     std::cout << "  Entity: " << static_cast<uint32_t>(entity) << "\n";
+            // }
+        }
+
         for (auto& entity : chunk_registry.chunks())
         {
             // Either, 
@@ -982,9 +993,19 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
     // When this function exits, Lua will exhibit default behavior and abort()
 }
 
-entt::entity Scene::create_entity_and_attach_to_scenegraph(entt::entity parent_entity)
+entt::entity Scene::create_entity(
+    const std::string& chunk_tag,
+    const std::string& name,
+    entt::entity parent_entity)
 {
     auto entity = registry->create();
+
+    std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
+    std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk_tag";
+    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, 0);
+
+    chunk_registry.addEntity(used_chunk_tag, entity);
+
     std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
     if (parent_entity == entt::null)
     {
@@ -1006,12 +1027,16 @@ void Scene::destroy_pending_entities()
         auto entity = entities_pending_destruction.back();
         entities_pending_destruction.pop_back();
 
-        // Destroy entity. May lead to additional entities being added to the queue.
-        registry->destroy(entity);
+        // Remove from chunk registry
+        assert(registry->all_of<HeaderComponent>(entity));
+        chunk_registry.removeEntity(registry->get<HeaderComponent>(entity).chunk_tag, entity);
 
         // Remove from scene graph
         if (scenegraph.tree.contains(entity))
             scenegraph.erase_node(entity);
+
+        // Destroy entity. May lead to additional entities being added to the queue.
+        registry->destroy(entity);
 
         count++;
     }
@@ -1050,7 +1075,7 @@ bool Scene::init(const v2i& windowSize)
 
     registry = std::make_shared<entt::registry>();
     registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>(); // Or, rely on RAII to unload scripts?
-    
+
     //registry->on_construct<HeaderComponent>().connect <&assign_entity_to_chunk>();
     //registry->on_update<HeaderComponent>().connect<[&](){}>();
 
@@ -1060,7 +1085,7 @@ bool Scene::init(const v2i& windowSize)
 //             //         void release_script(entt::registry& registry, entt::entity entity)
 //             // {
 //                  auto& header_comp = registry.get<HeaderComponent>(entity);
-                
+
 //             //     for (auto& script : script_comp.scripts)
 //             //     {
 //             //         // auto& script = registry.get<ScriptedBehaviorComponent>(entity);
@@ -1103,8 +1128,12 @@ bool Scene::init(const v2i& windowSize)
 
         // Create entity
         //
-        lua->operator[]("engine")["create_entity"] = [&](entt::entity parent_entity) {
-            return create_entity_and_attach_to_scenegraph(parent_entity);
+        lua->operator[]("engine")["create_entity"] = [&](
+            const std::string& chunk_tag,
+            const std::string& name,
+            entt::entity parent_entity) {
+                // return create_entity_and_attach_to_scenegraph(parent_entity);
+                return create_entity(chunk_tag, name, parent_entity);
             };
 
         // Destroy entity
@@ -1285,7 +1314,8 @@ bool Scene::init(const v2i& windowSize)
         }
 
         // Debugging inspection
-        auto debug_entity = create_entity_and_attach_to_scenegraph();// registry.create();
+        // auto debug_entity = create_entity_and_attach_to_scenegraph();
+        auto debug_entity = create_entity();// registry.create();
         registry->template emplace<DebugClass>(debug_entity);
 
 #if 0
@@ -1342,9 +1372,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1576,16 +1606,16 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
+                    }
                 }
             }
-        }
-    } // anon
+        } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-}
+    }
 
 void Scene::renderUI()
 {
@@ -1780,7 +1810,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-}
+        }
 
 void Scene::destroy()
 {

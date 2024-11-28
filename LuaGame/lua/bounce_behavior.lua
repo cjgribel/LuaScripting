@@ -21,7 +21,7 @@ local node = {
     },
 
     -- usertype tests: these types are defined as usertypes via sol
-    HEADER = HeaderComponent("Hello123"),
+    --HEADER = HeaderComponent("Hello123"), <- Update sol constructor
     TRANSFORM = Transform(1.0, 2.0, 3.0),
     --QUADGRID = QuadGridComponent(1,1,false),
 
@@ -30,7 +30,7 @@ local node = {
         VELOCITY_MAX = {inspectable = true, serializable = true},
         inventory = {inspectable = true, serializable = true},
         velocity = {inspectable = true, serializable = true},
-        HEADER = {inspectable = true, serializable = true}
+        --HEADER = {inspectable = true, serializable = true}
     }
 }
 

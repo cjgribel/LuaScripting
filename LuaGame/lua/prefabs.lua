@@ -2,10 +2,10 @@ local prefabloaders = {}
 
 function prefabloaders.projectile(size, projectile_pool)
     
-        local entity = engine.create_entity(projectile_pool.id())
+        local entity = engine.create_entity("", "Projectile", projectile_pool.id())
 
         -- Header
-        engine.registry:emplace(entity, HeaderComponent("Projectile"))
+        --engine.registry:emplace(entity, HeaderComponent("Projectile"))
 
         -- Transform
         engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
@@ -31,11 +31,11 @@ end
 
 function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
 
-    local entity = engine.create_entity(engine.entity_null)
+    local entity = engine.create_entity("", "BlockEnemy", engine.entity_null)
     print("Created entity ID:", entity)
     
     -- Header
-    engine.registry:emplace(entity, HeaderComponent("BlockEnemy"))
+    --engine.registry:emplace(entity, HeaderComponent("BlockEnemy"))
 
     -- Transform
     engine.registry:emplace(entity, Transform(0.0, 0.0, math.pi*0.5))
@@ -90,11 +90,11 @@ end
 
 function prefabloaders.bouncing_enemy_cross(color)
 
-    local entity = engine.create_entity(engine.entity_null)
+    local entity = engine.create_entity("", "CrossEnemy", engine.entity_null)
     print("prefabloaders.bouncing_enemy_cross(): created entity ID:", entity)
     
     -- Header
-    engine.registry:emplace(entity, HeaderComponent("CrossEnemy"))
+    --engine.registry:emplace(entity, HeaderComponent("CrossEnemy"))
 
     -- Transform
     engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))

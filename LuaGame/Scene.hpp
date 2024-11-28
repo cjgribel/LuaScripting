@@ -52,7 +52,7 @@ public:
         return registry.find(chunk_id) != registry.end();
     }
 
-    EntityIterator chunk(const std::string& chunk_id) 
+    EntityIterator chunk(const std::string& chunk_id)
     {
         assert(chunk_exists(chunk_id) && "Chunk does not exist!");
         return EntityIterator(registry.at(chunk_id));
@@ -61,16 +61,36 @@ public:
     ChunkIterator chunks() { return ChunkIterator(registry); }
 
     // Add an entity to a specific chunk
-    void addEntity(const std::string& chunk_id, entt::entity entity) 
+    void addEntity(const std::string& chunk_id, entt::entity entity)
     {
-        assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+        //assert(chunk_exists(chunk_id) && "Chunk does not exist!");
         assert(!entity_exists(entity) && "Entity already exists in a chunk!");
 
         registry[chunk_id].push_back(entity);
     }
 
+    void removeEntity(const std::string& chunk_id, entt::entity entity) {
+        assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+
+        auto& entities = registry.at(chunk_id);
+        auto it = std::find(entities.begin(), entities.end(), entity);
+        if (it != entities.end()) {
+            entities.erase(it);
+        }
+    }
+
+    void removeEntity(entt::entity entity) {
+        for (auto& [chunk_id, entities] : registry) {
+            auto it = std::find(entities.begin(), entities.end(), entity);
+            if (it != entities.end()) {
+                entities.erase(it);
+                return;
+            }
+        }
+    }
+
     // Check if an entity exists in a specific chunk
-    bool entity_exists_in_chunk(const std::string& chunk_id, entt::entity entity) const 
+    bool entity_exists_in_chunk(const std::string& chunk_id, entt::entity entity) const
     {
         assert(chunk_exists(chunk_id) && "Chunk does not exist!");
         const auto& entities = registry.at(chunk_id);
@@ -78,11 +98,11 @@ public:
     }
 
     // Check if an entity exists in any chunk
-    bool entity_exists(entt::entity entity) const 
+    bool entity_exists(entt::entity entity) const
     {
-        for (const auto& [chunk_id, entities] : registry) 
+        for (const auto& [chunk_id, entities] : registry)
         {
-            if (std::find(entities.begin(), entities.end(), entity) != entities.end()) 
+            if (std::find(entities.begin(), entities.end(), entity) != entities.end())
             {
                 return true;
             }
@@ -91,7 +111,7 @@ public:
     }
 
     // Create a new chunk
-    void create_chunk(const std::string& chunk_id) 
+    void create_chunk(const std::string& chunk_id)
     {
         assert(!chunk_exists(chunk_id) && "Chunk already exists!");
         registry[chunk_id] = {};
@@ -160,7 +180,10 @@ private:
     // (Editor) Command queue
     std::shared_ptr<Editor::CommandQueue> cmd_queue{};
 
-    entt::entity create_entity_and_attach_to_scenegraph(entt::entity parent_entity = entt::null);
+    entt::entity create_entity(
+        const std::string& chunk_tag = "",
+        const std::string& name = "",
+        entt::entity parent_entity = entt::null);
 
     void destroy_pending_entities();
 

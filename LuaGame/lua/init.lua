@@ -77,12 +77,12 @@ function game:init()
     engine.audio:setEffectVolume(sounds.element_explode, 32)
 
     -- Debug hierarchy entitity (not destroyed when game is destroyed)
-    local node1 = engine.create_entity(engine.entity_null)
-    local node2 = engine.create_entity(node1)
-    local node3 = engine.create_entity(node2)
-    engine.registry:emplace(node1, HeaderComponent("Node1"))
-    engine.registry:emplace(node2, HeaderComponent("Node2"))
-    engine.registry:emplace(node3, HeaderComponent("Node3"))
+    local node1 = engine.create_entity("", "Node1", engine.entity_null)
+    local node2 = engine.create_entity("", "Node2", node1)
+    local node3 = engine.create_entity("", "Node3", node2)
+    --engine.registry:emplace(node1, HeaderComponent("Node1"))
+    --engine.registry:emplace(node2, HeaderComponent("Node2"))
+    --engine.registry:emplace(node3, HeaderComponent("Node3"))
     engine.registry:emplace(node1, Transform(0.0, 0.0, 0.0))
     engine.registry:emplace(node2, Transform(1.0, 0.0, 0.0))
     engine.registry:emplace(node3, Transform(1.0, 0.0, 0.0))
@@ -98,9 +98,9 @@ function game:init()
 
     -- Game root entity
     -- TODO: init() should be a behavior, so this and other 'global' entities can be removed from the SG in destroy()
-    self.game_entity = engine.create_entity(engine.entity_null) -- engine.registry:create() -- global for now so it's reachable to phases
+    self.game_entity = engine.create_entity("", "GameRoot", engine.entity_null) -- engine.registry:create() -- global for now so it's reachable to phases
     -- Header
-    engine.registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
+    --engine.registry:emplace(self.game_entity, HeaderComponent("GameRoot"))
     -- Transform
     engine.registry:emplace(self.game_entity, Transform(0.0, 0.0, 0.0))
 
@@ -134,10 +134,10 @@ end
 function game:create_projectile_pool_entity(parent_entity)
 
     --local entity = engine.registry:create()
-    local entity = engine.create_entity(parent_entity)
+    local entity = engine.create_entity("", "ProjectilePool", parent_entity)
 
     -- Header
-    engine.registry:emplace(entity, HeaderComponent("ProjectilePool"))
+    --engine.registry:emplace(entity, HeaderComponent("ProjectilePool"))
 
     -- Behavior
     engine.add_script(engine.registry, entity, "projectile_pool_behavior")
@@ -146,10 +146,10 @@ end
 
 function game:create_player_entity(size, color, projectile_pool, parent_entity)
     
-    local entity = engine.create_entity(parent_entity)
+    local entity = engine.create_entity("", "Player", parent_entity)
 
     -- Header
-    engine.registry:emplace(entity, HeaderComponent("Player"))
+    --engine.registry:emplace(entity, HeaderComponent("Player"))
 
     -- Transform
     engine.registry:emplace(entity, Transform(0.0, 0.0, 0.0))
@@ -192,10 +192,10 @@ end
 
 function game:create_phasemanager_entity(parent_entity)
 
-    local entity = engine.create_entity(parent_entity)
+    local entity = engine.create_entity("", "PhaseManager", parent_entity)
 
     -- Header
-    engine.registry:emplace(entity, HeaderComponent("PhaseManager"))
+    --engine.registry:emplace(entity, HeaderComponent("PhaseManager"))
 
     -- Behavior
     engine.add_script(engine.registry, entity, "phasemanager_behavior")

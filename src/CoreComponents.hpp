@@ -59,7 +59,15 @@ struct HeaderComponent
 {
     std::string name;
     std::string chunk_tag;
-    unsigned int guid;
+    uint32_t guid;
+
+    HeaderComponent() = default;
+    HeaderComponent(
+        const std::string& name,
+        const std::string& chunk_tag,
+        uint32_t guid
+    ) : name(name), chunk_tag(chunk_tag), guid(guid)
+    {}
 
     std::string to_string() const;
 };
