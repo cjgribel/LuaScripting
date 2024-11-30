@@ -7,6 +7,7 @@
 
 #include <entt/entt.hpp>
 
+#include "config.h"
 #include "vec.h"
 #include "Log.hpp"
 #include "SceneBase.h"
@@ -128,6 +129,7 @@ public:
     enum class GamePlayState : int { Play, Stop, Pause };
     struct SetGamePlayStateEvent { GamePlayState play_state; };
     struct DestroyChunkEvent { std::string chunk_tag; };
+    struct LoadFileEvent { std::string path; };
 
     bool init(const v2i& windowSize) override;
 
@@ -144,7 +146,7 @@ private:
 
     // Content management
     // void assign_entity_to_chunk(entt::registry& registry, entt::entity);
-    void destroy_chunk(const std::string& chunk_tag);
+    // void destroy_chunk(const std::string& chunk_tag);
     void save_chunk(const std::string& chunk_tag);
     void save_all_chunks();
     void load_json(const std::string& path);
@@ -153,6 +155,7 @@ private:
 
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     void OnDestroyChunkEvent(const DestroyChunkEvent& event);
+    void OnLoadFileEvent(const LoadFileEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
@@ -184,7 +187,7 @@ private:
         const std::string& chunk_tag = "",
         const std::string& name = "",
         entt::entity parent_entity = entt::null);
-
+    void queue_entity_for_destruction(entt::entity entity);
     void destroy_pending_entities();
 
     ChunkRegistry chunk_registry{};

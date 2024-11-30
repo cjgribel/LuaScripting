@@ -9,7 +9,7 @@
 #define MetaSerialize_hpp
 
 #include <entt/entt.hpp>
-// #include <nlohmann/json_fwd.hpp> // Use nlohmann::json& as references instead
+//#include <nlohmann/json_fwd.hpp> // Use nlohmann::json& as references instead
 #include <nlohmann/json.hpp>
 
 #include "Context.hpp"

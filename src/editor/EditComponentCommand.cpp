@@ -7,12 +7,15 @@
 
 #include <iostream>
 #include <cassert>
+//#include <nlohmann/json.hpp>
 #include "meta_literals.h"
 #include "MetaSerialize.hpp"
 #include "EditComponentCommand.hpp"
 
 namespace
 {
+    // bool is_ref(const entt::meta_any& any)
+
     bool is_ref(const entt::meta_any& any)
     {
         return any.policy() == entt::meta_any_policy::ref; // as_ref_t::value(); // entt::meta_any::policy::reference;

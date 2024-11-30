@@ -9,6 +9,7 @@
 #include <sstream>
 #include <cassert>
 // #include <nlohmann/json_fwd.hpp> //
+#include <nlohmann/json.hpp>
 #include "config.h"
 #include "MetaSerialize.hpp"
 #include "meta_literals.h"

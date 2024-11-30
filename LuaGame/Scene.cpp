@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <execution>
 
+//#include <nlohmann/json.hpp> // to serialize 
+
 #include "imgui.h"
 #include "mat.h"
 
@@ -23,6 +25,8 @@
 
 #include "InspectType.hpp"
 // #include "BehaviorScript.hpp"
+
+//#include "meta_aux.h" // enum -> string
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
@@ -905,79 +909,41 @@ namespace Inspector
         static bool open = true;
         bool* p_open = &open;
 
-        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        static std::string selected_chunk_tag;
+        static std::string load_json_path = "/Users/ag1498/GitHub/LuaScripting/LuaGame/lua/init.lua"; //
+
+        ImGui::SetNextWindowBgAlpha(0.35f);
         if (!ImGui::Begin("Scene Chunks", p_open))
         {
             ImGui::End();
             return;
         }
 
-        // Fetch state
-        // assert(!inspector.cmd_queue.expired());
-        // auto cmd_queue = inspector.cmd_queue.lock();
-        // bool can_undo = cmd_queue->can_undo();
-        // bool can_redo = cmd_queue->commands_pending();
-        // bool has_commands = cmd_queue->size();
+        ImGui::InputText("##loadjson", &load_json_path, 0, nullptr, nullptr);
 
-        // Undo button
-        // if (!can_undo) ImGui::BeginDisabled();
+        // Load JSON
+        if (ImGui::Button("Load file"))
+        {
+            observer.enqueue_event(Scene::LoadFileEvent{ load_json_path });
+        };
+
+        // Chunk list
+        static std::string label;
+        ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
+        for (auto& [chunk_tag, entities] : chunk_registry.chunks())
+        {
+            bool is_selected = (selected_chunk_tag == chunk_tag);
+            label = chunk_tag + " (" + std::to_string(entities.size()) + ")";
+
+            if (ImGui::Selectable(label.c_str(), is_selected))
+                selected_chunk_tag = chunk_tag;
+        }
+        ImGui::EndChild(); // Chunk list window
+
         if (ImGui::Button("Destroy chunk"))
         {
-            observer.enqueue_event(Scene::DestroyChunkEvent{ "hello" });
+            observer.enqueue_event(Scene::DestroyChunkEvent{ selected_chunk_tag });
         };
-        // if (!can_undo) ImGui::EndDisabled();
-
-        // Redo button
-        // ImGui::SameLine();
-        // if (!can_redo) ImGui::BeginDisabled();
-        // if (ImGui::Button("Redo")) cmd_queue->execute_next();
-        // if (!can_redo) ImGui::EndDisabled();
-
-        // Clear button
-        // ImGui::SameLine();
-        // if (!has_commands) ImGui::BeginDisabled();
-        // if (ImGui::Button("Clear")) cmd_queue->clear();
-        // if (!has_commands) ImGui::EndDisabled();
-
-        // Command count
-        // ImGui::SameLine();
-        // ImGui::Text("%zu", cmd_queue->size());
-
-        // Command list
-        ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
-
-        // for (const auto& [chunkName, entityVector] : chunk_registry) {
-        // }
-        for (auto& [chunk_tag, entities] : chunk_registry.chunks()) 
-        {
-             ImGui::Text("%s (%d)", chunk_tag.c_str(), static_cast<int>(entities.size()));
-            //std::cout << "Chunk ID: " << chunk_id << "\n";
-            // for (auto& entity : entities) {
-            //     std::cout << "  Entity: " << static_cast<uint32_t>(entity) << "\n";
-            // }
-        }
-
-        for (auto& entity : chunk_registry.chunks())
-        {
-            // Either, 
-            // 1) rely on entt's onDestroy event for calling destroy() on scripts
-            // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
-
-            //registry->destroy(entity);
-        }
-        // for (int i = 0; i < cmd_queue->size(); ++i)
-        // {
-        //     // Auto-scroll
-        //     if (i == cmd_queue->get_current_index() - 1)
-        //         ImGui::SetScrollHereY(0.5f);
-
-        //     bool is_pending = !cmd_queue->is_executed(i);
-        //     if (is_pending)
-        //         ImGui::TextDisabled("%s", cmd_queue->get_name(i).c_str());
-        //     else
-        //         ImGui::Text("%s", cmd_queue->get_name(i).c_str());
-        // }
-        ImGui::EndChild(); // Command list window
 
         ImGui::End(); // Window
     }
@@ -1001,7 +967,7 @@ entt::entity Scene::create_entity(
     auto entity = registry->create();
 
     std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
-    std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk_tag";
+    std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
     registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, 0);
 
     chunk_registry.addEntity(used_chunk_tag, entity);
@@ -1017,6 +983,11 @@ entt::entity Scene::create_entity(
         scenegraph.create_node(entity, parent_entity);
     }
     return entity;
+}
+
+void Scene::queue_entity_for_destruction(entt::entity entity)
+{
+    entities_pending_destruction.push_back(entity);
 }
 
 void Scene::destroy_pending_entities()
@@ -1073,28 +1044,19 @@ bool Scene::init(const v2i& windowSize)
     register_basic_type<std::string>();
     registerDebugClass();
 
+    // Register meta for Scene related stuff
+    entt::meta<GamePlayState>()
+        .type("GamePlayState"_hs)
+        .prop(display_name_hs, "GamePlayState")
+        .prop("underlying_meta_type"_hs, entt::resolve<std::underlying_type_t<GamePlayState>>())
+
+        .data<GamePlayState::Play>("Play"_hs).prop(display_name_hs, "Play")
+        .data<GamePlayState::Stop>("Stop"_hs).prop(display_name_hs, "Stop")
+        .data<GamePlayState::Pause>("Pause"_hs).prop(display_name_hs, "Pause");
+
+    // Create registry
     registry = std::make_shared<entt::registry>();
-    registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>(); // Or, rely on RAII to unload scripts?
-
-    //registry->on_construct<HeaderComponent>().connect <&assign_entity_to_chunk>();
-    //registry->on_update<HeaderComponent>().connect<[&](){}>();
-
-// [&](entt::registry& registry, entt::entity entity) {
-//             std::cout << "on_construct<HeaderComponent>()" << std::endl;
-
-//             //         void release_script(entt::registry& registry, entt::entity entity)
-//             // {
-//                  auto& header_comp = registry.get<HeaderComponent>(entity);
-
-//             //     for (auto& script : script_comp.scripts)
-//             //     {
-//             //         // auto& script = registry.get<ScriptedBehaviorComponent>(entity);
-//             //         if (auto&& f = script.self["destroy"]; f.valid())
-//             //             f(script.self);
-//             //         script.self.abandon();
-//             //     }
-//             // }
-//             } 
+    registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
@@ -1104,6 +1066,9 @@ bool Scene::init(const v2i& windowSize)
         });
     observer.register_callback([&](const DestroyChunkEvent& event) {
         this->OnDestroyChunkEvent(event);
+        });
+    observer.register_callback([&](const LoadFileEvent& event) {
+        this->OnLoadFileEvent(event);
         });
 
     try
@@ -1140,7 +1105,7 @@ bool Scene::init(const v2i& windowSize)
         //
         lua->operator[]("engine")["destroy_entity"] = [&](entt::entity entity) {
             assert(registry->valid(entity));
-            entities_pending_destruction.push_back(entity);
+            queue_entity_for_destruction(entity);
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
@@ -1372,9 +1337,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1606,16 +1571,16 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
-                    }
                 }
             }
-        } // anon
+        }
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-    }
+}
 
 void Scene::renderUI()
 {
@@ -1810,7 +1775,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-        }
+}
 
 void Scene::destroy()
 {
@@ -1857,17 +1822,17 @@ void Scene::destroy()
     std::cout << "Done: Scene::destroy()" << std::endl;
 }
 
-void Scene::destroy_chunk(const std::string& chunk_tag)
-{
-    for (auto& entity : chunk_registry.chunk(chunk_tag))
-    {
-        // Either, 
-        // 1) rely on entt's onDestroy event for calling destroy() on scripts
-        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+// void Scene::destroy_chunk(const std::string& chunk_tag)
+// {
+//     for (auto& entity : chunk_registry.chunk(chunk_tag))
+//     {
+//         // Either, 
+//         // 1) rely on entt's onDestroy event for calling destroy() on scripts
+//         // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
 
-        registry->destroy(entity);
-    }
-}
+//         registry->destroy(entity);
+//     }
+// }
 
 void Scene::save_chunk(const std::string& chunk_tag)
 {
@@ -1886,6 +1851,10 @@ void Scene::load_json(const std::string& path)
 
 void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 {
+    auto j_play_state = Meta::serialize_any(event.play_state);
+    assert(!j_play_state.is_null());
+    eeng::Log("SetGamePlayStateEvent: %s", j_play_state.dump().c_str());
+
     // Save open tags
 
     // Play
@@ -1911,15 +1880,26 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 
     // Pause
 
-    if (event.play_state == Scene::GamePlayState::Play) std::cout << "new state: Play" << std::endl;
-    else if (event.play_state == Scene::GamePlayState::Stop) std::cout << "new state: Stop" << std::endl;
-    else if (event.play_state == Scene::GamePlayState::Pause) std::cout << "new state: Pause" << std::endl;
-    else { assert(0); }
 
     play_state = event.play_state;
 }
 
 void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
 {
-    std::cout << "destroy chunk: " << event.chunk_tag << std::endl;
+    eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
+
+    for (auto& entity : chunk_registry.chunk(event.chunk_tag))
+    {
+        // Either, 
+        // 1) rely on entt's onDestroy event for calling destroy() on scripts
+        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+
+        queue_entity_for_destruction(entity);
+        // registry->destroy(entity);
+    }
+}
+
+void Scene::OnLoadFileEvent(const LoadFileEvent& event)
+{
+    eeng::Log("LoadFileEvent: %s", event.path.c_str());
 }
