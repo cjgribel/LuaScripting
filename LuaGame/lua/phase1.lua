@@ -15,7 +15,7 @@ function phase1:init()
     -- Add entities
     for i = 1, self.nbr_enemies do
 
-        local entity = prefabloaders.bouncing_enemy_cross(0xffffffff)
+        local entity = prefabloaders.bouncing_enemy_cross("level1", 0xffffffff)
 
         table.insert(self.entities, entity)
     end

@@ -1,8 +1,8 @@
 local prefabloaders = {}
 
-function prefabloaders.projectile(size, projectile_pool)
+function prefabloaders.projectile(chunk_tag, size, projectile_pool)
     
-        local entity = engine.create_entity("", "Projectile", projectile_pool.id())
+        local entity = engine.create_entity(chunk_tag, "Projectile", projectile_pool.id())
 
         -- Header
         --engine.registry:emplace(entity, HeaderComponent("Projectile"))
@@ -88,9 +88,9 @@ function prefabloaders.bouncing_enemy_block(W, H, D, armor, color)
 
 end
 
-function prefabloaders.bouncing_enemy_cross(color)
+function prefabloaders.bouncing_enemy_cross(chunk_tag, color)
 
-    local entity = engine.create_entity("", "CrossEnemy", engine.entity_null)
+    local entity = engine.create_entity(chunk_tag, "CrossEnemy", engine.entity_null)
     print("prefabloaders.bouncing_enemy_cross(): created entity ID:", entity)
     
     -- Header

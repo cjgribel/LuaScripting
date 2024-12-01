@@ -15,7 +15,7 @@ function ProjectilePool:init()
     -- Create projectiles
     for i = 1, self.poolSize do
 
-        local entity = prefabloaders.projectile(0.2, self)
+        local entity = prefabloaders.projectile("game_chunk", 0.2, self)
 
         table.insert(self.pool, entity)
         self.entityToIndex[entity] = i

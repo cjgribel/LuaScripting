@@ -130,7 +130,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
         .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
 
         .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
-        .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag")
+        .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag").prop(readonly_hs, true)
         .data<&HeaderComponent::guid>("guid"_hs).prop(display_name_hs, "guid").prop(readonly_hs, true)
 
         // Optional meta functions
