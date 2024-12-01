@@ -130,7 +130,7 @@ public:
     struct SetGamePlayStateEvent { GamePlayState play_state; };
     struct DestroyChunkEvent { std::string chunk_tag; };
     struct LoadFileEvent { std::string path; };
-    struct CreateEntityEvent { entt::entity parent_entity; std::string chunk_id; std::string name; };
+    struct CreateEntityEvent { entt::entity parent_entity; };
     struct DestroyEntityEvent { entt::entity entity; };
     struct CopyEntityEvent { entt::entity entity; };
 

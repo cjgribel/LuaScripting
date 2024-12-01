@@ -993,7 +993,8 @@ entt::entity Scene::create_entity(
 
     std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
     std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
-    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, 0);
+    uint32_t guid = 0;
+    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid);
 
     chunk_registry.addEntity(used_chunk_tag, entity);
 
@@ -1929,6 +1930,8 @@ void Scene::OnLoadFileEvent(const LoadFileEvent& event)
 void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 {
     eeng::Log("CreateEntityEvent");
+
+    create_entity("", "", event.parent_entity);
 }
 
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
