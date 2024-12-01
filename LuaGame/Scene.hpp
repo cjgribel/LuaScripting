@@ -132,6 +132,7 @@ public:
     struct LoadFileEvent { std::string path; };
     struct CreateEntityEvent { entt::entity parent_entity; std::string chunk_id; std::string name; };
     struct DestroyEntityEvent { entt::entity entity; };
+    struct CopyEntityEvent { entt::entity entity; };
 
     bool init(const v2i& windowSize) override;
 
@@ -160,6 +161,7 @@ private:
     void OnLoadFileEvent(const LoadFileEvent& event);
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
+    void OnCopyEntityEvent(const CopyEntityEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};

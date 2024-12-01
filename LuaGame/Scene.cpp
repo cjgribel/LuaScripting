@@ -658,7 +658,10 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
 
 namespace Inspector
 {
-    void inspect_scene_graph_node(SceneGraph& scenegraph, Editor::InspectorState& inspector, size_t index = 0)
+    void inspect_scene_graph_node(
+        SceneGraph& scenegraph, 
+        Editor::InspectorState& inspector,
+         size_t index = 0)
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
@@ -704,21 +707,21 @@ namespace Inspector
         bool* p_open = &open;
 
         // ImGui window
-        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        ImGui::SetNextWindowBgAlpha(0.35f);
         if (!ImGui::Begin("Scene graph", p_open))
         {
             ImGui::End();
             return;
         }
 
-        // + Reparent, Unparent
-
+        // New entity
         if (ImGui::Button("New"))
         {
             Scene::CreateEntityEvent event{ .parent_entity = inspector.selected_entity };
             observer.enqueue_event(event);
         }
 
+        // Destroy selected entity
         if (inspector.selected_entity == entt::null) inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Delete"))
@@ -728,32 +731,22 @@ namespace Inspector
         }
         if (inspector.selected_entity == entt::null) inspector.end_disabled();
 
+        // Copy selected entity
         if (inspector.selected_entity == entt::null) inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Copy"))
         {
-            bool selected_entity_valid =
-                inspector.selected_entity != entt::null &&
-                registry->valid(inspector.selected_entity);
-            if (selected_entity_valid)
-            {
-                auto entity_clone = registry->create();
-                scenegraph.create_node(entity_clone);
-
-                auto entity_src = inspector.selected_entity; // entt::entity{ 109 };
-                Editor::clone_entity(registry, entity_src, entity_clone);
-
-                // Deep-copy entire entity
-                //Copier copier{ *scene };
-                //active_entity = copier.CopyPrimaryEntity(active_entity, components);
-                //scene->issue_reload_render_entities();
-            }
+            Scene::CopyEntityEvent event{ .entity = inspector.selected_entity };
+            observer.enqueue_event(event);
         }
         if (inspector.selected_entity == entt::null) inspector.end_disabled();
 
+        // TODO: Parent
         inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Parent")) {}
+        
+        // TODO: Unparent
         ImGui::SameLine();
         if (ImGui::Button("Unparent")) {}
         inspector.end_disabled();
@@ -765,7 +758,7 @@ namespace Inspector
             scenegraph.traverse(registry);
         }
 
-        //
+        // Scene graph
         if (scenegraph.size())
         {
             // For all roots ...
@@ -1093,21 +1086,12 @@ bool Scene::init(const v2i& windowSize)
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
     // Hook up Scene events
-    observer.register_callback([&](const SetGamePlayStateEvent& event) {
-        this->OnSetGamePlayStateEvent(event);
-        });
-    observer.register_callback([&](const DestroyChunkEvent& event) {
-        this->OnDestroyChunkEvent(event);
-        });
-    observer.register_callback([&](const LoadFileEvent& event) {
-        this->OnLoadFileEvent(event);
-        });
-    observer.register_callback([&](const CreateEntityEvent& event) {
-        this->OnCreateEntityEvent(event);
-        });
-    observer.register_callback([&](const DestroyEntityEvent& event) {
-        this->OnDestroyEntityEvent(event);
-        });
+    observer.register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
+    observer.register_callback([&](const DestroyChunkEvent& event) { this->OnDestroyChunkEvent(event); });
+    observer.register_callback([&](const LoadFileEvent& event) { this->OnLoadFileEvent(event); });
+    observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
+    observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
+    observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
 
     try
     {
@@ -1813,7 +1797,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-}
+    }
 
 void Scene::destroy()
 {
@@ -1950,4 +1934,25 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+}
+
+void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
+{
+    eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+
+    bool entity_valid =
+        event.entity != entt::null &&
+        registry->valid(event.entity);
+    if (entity_valid)
+    {
+        auto entity_copy = registry->create();
+        scenegraph.create_node(entity_copy);
+
+        Editor::clone_entity(registry, event.entity, entity_copy);
+
+        // Deep-copy entire entity
+        //Copier copier{ *scene };
+        //active_entity = copier.CopyPrimaryEntity(active_entity, components);
+        //scene->issue_reload_render_entities();
+    }
 }
