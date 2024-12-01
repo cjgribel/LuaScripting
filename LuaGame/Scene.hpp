@@ -130,6 +130,8 @@ public:
     struct SetGamePlayStateEvent { GamePlayState play_state; };
     struct DestroyChunkEvent { std::string chunk_tag; };
     struct LoadFileEvent { std::string path; };
+    struct CreateEntityEvent { entt::entity parent_entity; std::string chunk_id; std::string name; };
+    struct DestroyEntityEvent { entt::entity entity; };
 
     bool init(const v2i& windowSize) override;
 
@@ -156,6 +158,8 @@ private:
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     void OnDestroyChunkEvent(const DestroyChunkEvent& event);
     void OnLoadFileEvent(const LoadFileEvent& event);
+    void OnCreateEntityEvent(const CreateEntityEvent& event);
+    void OnDestroyEntityEvent(const DestroyEntityEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};

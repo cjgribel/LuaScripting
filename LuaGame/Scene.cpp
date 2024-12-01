@@ -26,6 +26,8 @@
 #include "InspectType.hpp"
 // #include "BehaviorScript.hpp"
 
+#include "GuiCommands.hpp" // -> GUI
+
 //#include "meta_aux.h" // enum -> string
 
 #define AUTO_ARG(x) decltype(x), x
@@ -691,7 +693,11 @@ namespace Inspector
         }
     }
 
-    void inspect_scenegraph(SceneGraph& scenegraph, Editor::InspectorState& inspector)
+    // Or a "window" function that does SG + buttons for New, Copy etc
+    void inspect_scenegraph(
+        SceneGraph& scenegraph,
+        Editor::InspectorState& inspector,
+        ConditionalObserver& observer)
     {
         auto& registry = inspector.context.registry;
         static bool open = true;
@@ -705,8 +711,26 @@ namespace Inspector
             return;
         }
 
+        // + Reparent, Unparent
+
+        if (ImGui::Button("New"))
+        {
+            Scene::CreateEntityEvent event{ .parent_entity = inspector.selected_entity };
+            observer.enqueue_event(event);
+        }
+
+        if (inspector.selected_entity == entt::null) inspector.begin_disabled();
         ImGui::SameLine();
-        if (ImGui::Button("Copy Selected"))
+        if (ImGui::Button("Delete"))
+        {
+            Scene::DestroyEntityEvent event{ .entity = inspector.selected_entity };
+            observer.enqueue_event(event);
+        }
+        if (inspector.selected_entity == entt::null) inspector.end_disabled();
+
+        if (inspector.selected_entity == entt::null) inspector.begin_disabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Copy"))
         {
             bool selected_entity_valid =
                 inspector.selected_entity != entt::null &&
@@ -725,6 +749,14 @@ namespace Inspector
                 //scene->issue_reload_render_entities();
             }
         }
+        if (inspector.selected_entity == entt::null) inspector.end_disabled();
+
+        inspector.begin_disabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Parent")) {}
+        ImGui::SameLine();
+        if (ImGui::Button("Unparent")) {}
+        inspector.end_disabled();
 
         // Explicit traverse button
         ImGui::SameLine();
@@ -1069,6 +1101,12 @@ bool Scene::init(const v2i& windowSize)
         });
     observer.register_callback([&](const LoadFileEvent& event) {
         this->OnLoadFileEvent(event);
+        });
+    observer.register_callback([&](const CreateEntityEvent& event) {
+        this->OnCreateEntityEvent(event);
+        });
+    observer.register_callback([&](const DestroyEntityEvent& event) {
+        this->OnDestroyEntityEvent(event);
         });
 
     try
@@ -1632,7 +1670,7 @@ void Scene::renderUI()
     Inspector::inspect_command_queue(inspector);
 
     // Before inspect_entity ???
-    Inspector::inspect_scenegraph(scenegraph, inspector);
+    Inspector::inspect_scenegraph(scenegraph, inspector, observer);
 
     Inspector::inspect_playstate(play_state, observer);
 
@@ -1902,4 +1940,14 @@ void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
 void Scene::OnLoadFileEvent(const LoadFileEvent& event)
 {
     eeng::Log("LoadFileEvent: %s", event.path.c_str());
+}
+
+void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
+{
+    eeng::Log("CreateEntityEvent");
+}
+
+void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
+{
+    eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 }
