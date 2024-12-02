@@ -23,17 +23,21 @@ namespace Editor {
 
     class CommandQueue
     {
-        // std::vector<CommandPtr> queue;
         std::vector<std::unique_ptr<Command>> queue;
 
         int current_index = 0; // Index awaiting execution
+        bool has_new_ = false; // ???
 
     public:
         void add(CommandPtr&& command)
         {
-            remove_pending();
+            remove_pending(); // Might not work if multiple commands are added between executions
             queue.push_back(std::move(command));
+            has_new_ = true;
         }
+
+        // ???
+        bool has_new() { return has_new_; }
 
         size_t size() { return queue.size(); }
 
@@ -73,6 +77,7 @@ namespace Editor {
         void execute_pending()
         {
             while (commands_pending()) execute_next();
+            has_new_ = false /* ??? */;
         }
 
         bool can_undo()

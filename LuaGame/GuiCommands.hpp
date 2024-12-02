@@ -18,17 +18,49 @@ namespace Editor {
     class CreateEntityCommand : public Command
     {
         //std::weak_ptr<Scene> scene;
-        std::weak_ptr<entt::registry>   registry;
-        entt::entity entity = entt::null;;
-        std::string display_name;
+        // std::weak_ptr<entt::registry>   registry;
+        entt::entity created_entity = entt::null;
+        entt::entity parent_entity = entt::null;
+        std::string display_name = "Create Entity";
+
+        using CreateFunc = std::function<entt::entity(entt::entity)>;
+        using DestroyFunc = std::function<void(entt::entity)>;
+
+        CreateFunc create_func;
+        DestroyFunc destroy_func;
+
+        // friend class Builder;
+
+    public:
+        CreateEntityCommand(
+            const CreateFunc&& create_func,
+            const DestroyFunc&& destroy_func,
+            entt::entity parent_entity) :
+            create_func(create_func),
+            destroy_func(destroy_func),
+            parent_entity(parent_entity) { }
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
+    class DestroyEntityCommand : public Command
+    {
+        //std::weak_ptr<Scene> scene;
+        // std::weak_ptr<entt::registry>   registry;
+        entt::entity entity = entt::null;
+        std::string display_name = "Create Entity";
 
         using CreateFunc = std::function<entt::entity(entt::entity, const std::string&, const std::string&)>;
         CreateFunc create_func;
 
-        friend class Builder;
+        // friend class Builder;
 
     public:
-        CreateEntityCommand(const CreateFunc&& create_func)
+        DestroyEntityCommand(const CreateFunc&& create_func)
             : create_func(create_func)
         {
 
@@ -41,19 +73,6 @@ namespace Editor {
         std::string get_name() const override;
     };
 
-    class CreateEntityCommandBuilder
-    {
-        CreateEntityCommand command;
-
-    public:
-        CreateEntityCommandBuilder& registry(std::weak_ptr<entt::registry> registry) { return *this; }
-
-        CreateEntityCommandBuilder& entity(entt::entity entity) { return *this; }
-
-        CreateEntityCommandBuilder& reset() { return *this; }
-
-        CreateEntityCommand build() { return command; }
-    };
 } // namespace Editor
 
 #endif /* EditComponentCommand_hpp */

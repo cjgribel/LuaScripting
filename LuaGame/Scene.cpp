@@ -1011,6 +1011,12 @@ entt::entity Scene::create_entity(
     return entity;
 }
 
+entt::entity Scene::create_entity(
+    entt::entity parent_entity)
+{
+    return create_entity("", "", parent_entity);
+}
+
 void Scene::queue_entity_for_destruction(entt::entity entity)
 {
     entities_pending_destruction.push_back(entity);
@@ -1303,7 +1309,7 @@ bool Scene::init(const v2i& windowSize)
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
-        auto debug_entity = create_entity();// registry.create();
+        auto debug_entity = create_entity(entt::null);// registry.create();
         registry->template emplace<DebugClass>(debug_entity);
 
 #if 0
@@ -1649,7 +1655,7 @@ void Scene::renderUI()
     if (Inspector::inspect_entity(inspector))
     {
         //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
-        cmd_queue->execute_pending();
+         cmd_queue->execute_pending();
     }
 
     Inspector::inspect_command_queue(inspector);
@@ -1661,8 +1667,11 @@ void Scene::renderUI()
 
     Inspector::inspect_chunkregistry(chunk_registry, observer);
 
-    // Dispatch events queued during UI phase
     observer.dispatch_all_events();
+    std::cout << cmd_queue->has_new() << std::endl;
+    if (cmd_queue->has_new())
+        cmd_queue->execute_pending();
+    destroy_pending_entities();
 }
 
 void Scene::render(float time_s, ShapeRendererPtr renderer)
@@ -1931,12 +1940,30 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 {
     eeng::Log("CreateEntityEvent");
 
-    create_entity("", "", event.parent_entity);
+    //create_entity("", "", event.parent_entity);
+
+    const auto create_entity = [&](entt::entity entity) -> entt::entity { return this->create_entity(entity); };
+    const auto destroy_entity = [&](entt::entity entity) -> void { this->queue_entity_for_destruction(entity); };
+    
+    using namespace Editor;
+    //auto command = CreateEntityCommand {create_entity, destroy_entity};
+    //auto command_ptr = Editor::CommandFactory::Create<Editor::CreateEntityCommand>(command);
+    //cmd_queue->add(std::move(command_ptr));
+    cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(create_entity, destroy_entity, event.parent_entity));
+    
+        //     void generate_command(auto& cmd_queue_wptr, auto& cmd_builder)
+        // {
+        //     assert(!cmd_queue_wptr.expired());
+        //     auto cmd_queue_sptr = cmd_queue_wptr.lock();
+        //     cmd_queue_sptr->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
+        // }
 }
 
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+
+    queue_entity_for_destruction(event.entity);
 }
 
 void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
