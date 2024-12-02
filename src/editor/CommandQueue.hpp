@@ -26,18 +26,27 @@ namespace Editor {
         std::vector<std::unique_ptr<Command>> queue;
 
         int current_index = 0; // Index awaiting execution
-        bool has_new_ = false; // ???
+        int latest_index = 0; //
+        // bool has_new_ = false; // ???
 
     public:
         void add(CommandPtr&& command)
         {
-            remove_pending(); // Might not work if multiple commands are added between executions
+            //remove_pending(); // Might not work if multiple commands are added between executions
+
+            // Remove current_index -> latest_index
+            if (current_index < latest_index)
+            {
+                queue.erase(queue.begin() + current_index, queue.begin() + latest_index);
+                latest_index = current_index;
+            }
+
             queue.push_back(std::move(command));
-            has_new_ = true;
+            // has_new_ = true;
         }
 
         // ???
-        bool has_new() { return has_new_; }
+        // bool has_new() { return has_new_; }
 
         size_t size() { return queue.size(); }
 
@@ -57,6 +66,12 @@ namespace Editor {
             return queue[index]->get_name();
         }
 
+        //
+        bool new_commands_pending()
+        {
+            return latest_index >= 0 && latest_index < queue.size();
+        }
+
         bool commands_pending()
         {
             return current_index >= 0 && current_index < queue.size();
@@ -72,12 +87,12 @@ namespace Editor {
         {
             if (!commands_pending()) return;
             queue[current_index++]->execute();
+            latest_index = std::max(current_index, latest_index);
         }
 
         void execute_pending()
         {
             while (commands_pending()) execute_next();
-            has_new_ = false /* ??? */;
         }
 
         bool can_undo()
@@ -96,6 +111,7 @@ namespace Editor {
         {
             queue.clear();
             current_index = 0;
+            latest_index = 0;
         }
     };
 

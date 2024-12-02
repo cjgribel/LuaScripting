@@ -17,19 +17,10 @@ namespace Editor {
     {
         Context context;
         std::weak_ptr<CommandQueue> cmd_queue;
-
-        bool imgui_disabled = false;
+        // + observer (perhaps all that is needed)
         entt::entity selected_entity = entt::null;
 
-        // int id = 0;
-        // void push_id()
-        // {
-        //     ImGui::PushID(id++);
-        // }
-        // void pop_id()
-        // {
-        //     ImGui::PopID();
-        // }
+        bool imgui_disabled = false;
 
         void begin_disabled()
         {

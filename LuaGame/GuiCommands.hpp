@@ -17,8 +17,6 @@ namespace Editor {
 
     class CreateEntityCommand : public Command
     {
-        //std::weak_ptr<Scene> scene;
-        // std::weak_ptr<entt::registry>   registry;
         entt::entity created_entity = entt::null;
         entt::entity parent_entity = entt::null;
         std::string display_name = "Create Entity";
@@ -28,8 +26,6 @@ namespace Editor {
 
         CreateFunc create_func;
         DestroyFunc destroy_func;
-
-        // friend class Builder;
 
     public:
         CreateEntityCommand(

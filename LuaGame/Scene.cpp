@@ -1628,34 +1628,36 @@ void Scene::renderUI()
 
     ImGui::Text("Particles %i/%i", particleBuffer.size(), particleBuffer.capacity());
 
+    // Placeholder serialize
     if (ImGui::Button("Serialize"))
     {
         // Serialize
-// std::cout << "\nSerialization" << std::endl;
         nlohmann::json jser = Meta::serialize_registry(registry);
-        // Dump JSON
         std::cout << "JSON dump" << std::endl << jser.dump(4) << std::endl;
 
         // Deserialize
         std::cout << "\nDeserialization" << std::endl;
-        // destroy_pending_entities();
+        // destroy_pending_entities(); this?
         registry->clear();
         entities_pending_destruction.clear();
         // NOTE: SG is left unchanged
-        //auto registry_tmp = std::make_shared<entt::registry>();
         auto context = Editor::Context{ registry, lua };
         Meta::deserialize_registry(jser, context);
+        // + clear command buffer
     }
 
+    // Set inspector
+    // Note: does not properly track what happens to the selected entity, so check its validity here
     static Editor::InspectorState inspector{};
     inspector.context = Editor::Context{ registry, lua };
     inspector.cmd_queue = cmd_queue;
+    if (!registry->valid(inspector.selected_entity)) inspector.selected_entity = entt::null;
     // + cmd_queue + CommandBuilder ???
 
     if (Inspector::inspect_entity(inspector))
     {
         //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
-         cmd_queue->execute_pending();
+         //cmd_queue->execute_pending();
     }
 
     Inspector::inspect_command_queue(inspector);
@@ -1668,8 +1670,10 @@ void Scene::renderUI()
     Inspector::inspect_chunkregistry(chunk_registry, observer);
 
     observer.dispatch_all_events();
-    std::cout << cmd_queue->has_new() << std::endl;
-    if (cmd_queue->has_new())
+    //std::cout << cmd_queue->has_new() << std::endl;
+    //std::cout << cmd_queue->has_new() << " " << cmd_queue->new_commands_pending() << std::endl;
+    // if (cmd_queue->has_new())
+    if (cmd_queue->new_commands_pending())
         cmd_queue->execute_pending();
     destroy_pending_entities();
 }
@@ -1969,6 +1973,8 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 {
     eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+
+    // -> COMMAND
 
     bool entity_valid =
         event.entity != entt::null &&
