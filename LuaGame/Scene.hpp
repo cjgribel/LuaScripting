@@ -192,9 +192,16 @@ private:
     entt::entity create_entity(
         const std::string& chunk_tag,
         const std::string& name,
-        entt::entity parent_entity);
-    entt::entity create_entity(
-        entt::entity parent_entity);
+        entt::entity parent_entity,
+        entt::entity entity_hint);
+
+    // entt::entity create_entity_hint(
+    //     entt::entity hint_entity,
+    //     entt::entity parent_entity);
+
+    // entt::entity create_entity(
+    //     entt::entity parent_entity);
+
     void queue_entity_for_destruction(entt::entity entity);
     void destroy_pending_entities();
 

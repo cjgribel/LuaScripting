@@ -659,9 +659,9 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
 namespace Inspector
 {
     void inspect_scene_graph_node(
-        SceneGraph& scenegraph, 
+        SceneGraph& scenegraph,
         Editor::InspectorState& inspector,
-         size_t index = 0)
+        size_t index = 0)
     {
         assert(index >= 0 && index < scenegraph.tree.size());
 
@@ -745,7 +745,7 @@ namespace Inspector
         inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Parent")) {}
-        
+
         // TODO: Unparent
         ImGui::SameLine();
         if (ImGui::Button("Unparent")) {}
@@ -987,9 +987,19 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 entt::entity Scene::create_entity(
     const std::string& chunk_tag,
     const std::string& name,
-    entt::entity parent_entity)
+    entt::entity entity_parent,
+    entt::entity entity_hint)
 {
-    auto entity = registry->create();
+    entt::entity entity;
+    if (entity_hint == entt::null)
+    {
+        entity = registry->create();
+    }
+    else
+    {
+        entity = registry->create(entity_hint);
+        assert(entity == entity_hint);
+    }
 
     std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
     std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
@@ -998,24 +1008,33 @@ entt::entity Scene::create_entity(
 
     chunk_registry.addEntity(used_chunk_tag, entity);
 
-    std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
-    if (parent_entity == entt::null)
+    // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
+    if (entity_parent == entt::null)
     {
         scenegraph.create_node(entity);
     }
     else
     {
-        assert(scenegraph.tree.contains(parent_entity));
-        scenegraph.create_node(entity, parent_entity);
+        assert(scenegraph.tree.contains(entity_parent));
+        scenegraph.create_node(entity, entity_parent);
     }
+
+    std::cout << "Scene::create_entity " << entt::to_integral(entity) << std::endl;
     return entity;
 }
 
-entt::entity Scene::create_entity(
-    entt::entity parent_entity)
-{
-    return create_entity("", "", parent_entity);
-}
+// entt::entity Scene::create_entity_hint(
+//     entt::entity hint_entity,
+//     entt::entity parent_entity)
+// {
+//     return create_entity("", "", parent_entity, hint_entity);
+// }
+
+// entt::entity Scene::create_entity(
+//     entt::entity parent_entity)
+// {
+//     return create_entity("", "", parent_entity, entt::null);
+// }
 
 void Scene::queue_entity_for_destruction(entt::entity entity)
 {
@@ -1127,7 +1146,7 @@ bool Scene::init(const v2i& windowSize)
             const std::string& name,
             entt::entity parent_entity) {
                 // return create_entity_and_attach_to_scenegraph(parent_entity);
-                return create_entity(chunk_tag, name, parent_entity);
+                return create_entity(chunk_tag, name, parent_entity, entt::null);
             };
 
         // Destroy entity
@@ -1309,7 +1328,7 @@ bool Scene::init(const v2i& windowSize)
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
-        auto debug_entity = create_entity(entt::null);// registry.create();
+        auto debug_entity = create_entity("", "", entt::null, entt::null);// registry.create();
         registry->template emplace<DebugClass>(debug_entity);
 
 #if 0
@@ -1811,7 +1830,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-    }
+}
 
 void Scene::destroy()
 {
@@ -1944,23 +1963,18 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 {
     eeng::Log("CreateEntityEvent");
 
-    //create_entity("", "", event.parent_entity);
+    const auto create_entity = [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity
+        {
+            return this->create_entity("", "", entity_parent, entity_hint);
+        };
+    const auto destroy_entity = [&](entt::entity entity) -> void
+        {
+            this->queue_entity_for_destruction(entity);
+        };
 
-    const auto create_entity = [&](entt::entity entity) -> entt::entity { return this->create_entity(entity); };
-    const auto destroy_entity = [&](entt::entity entity) -> void { this->queue_entity_for_destruction(entity); };
-    
     using namespace Editor;
-    //auto command = CreateEntityCommand {create_entity, destroy_entity};
-    //auto command_ptr = Editor::CommandFactory::Create<Editor::CreateEntityCommand>(command);
-    //cmd_queue->add(std::move(command_ptr));
-    cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(create_entity, destroy_entity, event.parent_entity));
-    
-        //     void generate_command(auto& cmd_queue_wptr, auto& cmd_builder)
-        // {
-        //     assert(!cmd_queue_wptr.expired());
-        //     auto cmd_queue_sptr = cmd_queue_wptr.lock();
-        //     cmd_queue_sptr->add(CommandFactory::Create<ComponentCommand>(cmd_builder.build()));
-        // }
+    auto command = CreateEntityCommand{ create_entity, destroy_entity, event.parent_entity };
+    cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(command));
 }
 
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)

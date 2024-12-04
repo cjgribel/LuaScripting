@@ -14,15 +14,26 @@ namespace Editor {
 
     void CreateEntityCommand::execute()
     {
-        assert(created_entity == entt::null);
-        created_entity = create_func(parent_entity);
+        if (created_entity == entt::null)
+        {
+            created_entity = create_func(parent_entity, entt::null);
+        }
+        else
+        {
+            auto entity = create_func(parent_entity, created_entity);
+            assert(entity == created_entity);
+            created_entity = entity;
+        }
+
+        // std::cout << "CreateEntityCommand::execute() " << entt::to_integral(created_entity) << std::endl;
     }
 
     void CreateEntityCommand::undo()
     {
         assert(created_entity != entt::null);
         destroy_func(created_entity);
-        created_entity = entt::null;
+
+        // std::cout << "CreateEntityCommand::undo() " << entt::to_integral(created_entity) << std::endl;
     }
 
     std::string CreateEntityCommand::get_name() const

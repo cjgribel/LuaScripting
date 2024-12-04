@@ -21,16 +21,16 @@ namespace Editor {
         entt::entity parent_entity = entt::null;
         std::string display_name = "Create Entity";
 
-        using CreateFunc = std::function<entt::entity(entt::entity)>;
-        using DestroyFunc = std::function<void(entt::entity)>;
+        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        CreateFunc create_func;
-        DestroyFunc destroy_func;
+        CreateEntityFunc create_func;
+        DestroyEntityFunc destroy_func;
 
     public:
         CreateEntityCommand(
-            const CreateFunc&& create_func,
-            const DestroyFunc&& destroy_func,
+            const CreateEntityFunc&& create_func,
+            const DestroyEntityFunc&& destroy_func,
             entt::entity parent_entity) :
             create_func(create_func),
             destroy_func(destroy_func),
