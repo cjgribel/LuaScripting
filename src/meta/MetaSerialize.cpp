@@ -357,6 +357,41 @@ namespace Meta {
         }
     }
 
+    void deserialize_entity(
+        const nlohmann::json& json,
+        Editor::Context& context
+    )
+    {
+        assert(json.contains("entity"));
+        entt::entity entity_hint = json["entity"].get<entt::entity>();
+        assert(!context.registry->valid(entity_hint));
+        auto entity = context.registry->create(entity_hint);
+        assert(entity_hint == entity);
+
+        std::cout << "Deserializing entity " << entt::to_integral(entity) << std::endl;
+
+        assert(json.contains("components"));
+        for (const auto& component_json : json["components"].items())
+        {
+            auto key_str = component_json.key().c_str();
+            auto id = entt::hashed_string::value(key_str);
+
+            if (entt::meta_type meta_type = entt::resolve(id); meta_type)
+            {
+                // Default-construct component component
+                entt::meta_any any = meta_type.construct();
+                // Deserialize component
+                deserialize_any(component_json.value(), any, entity, context);
+                // Add component to entity storage
+                context.registry->storage(id)->push(entity, any.data());
+            }
+            else
+            {
+                assert(false && "Deserialized component is not a meta-type");
+            }
+        }
+    }
+
     void deserialize_registry(
         const nlohmann::json& json,
         Editor::Context& context)
@@ -364,6 +399,9 @@ namespace Meta {
         assert(json.is_array());
         for (const auto& entity_json : json)
         {
+#if 1
+            deserialize_entity(entity_json, context);
+#else
             assert(entity_json.contains("entity"));
             entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
             assert(!context.registry->valid(entity_hint));
@@ -402,6 +440,7 @@ namespace Meta {
                     assert(false && "Deserialized component is not a meta-type");
                 }
             }
+#endif
         }
     }
 
