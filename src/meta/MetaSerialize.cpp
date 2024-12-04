@@ -134,6 +134,36 @@ namespace Meta {
         return json;
     }
 
+    nlohmann::json serialize_entity(
+        entt::entity entity,
+        std::shared_ptr<entt::registry>& registry)
+    {
+        std::cout << "Serializing entity "
+            << entt::to_integral(entity) << std::endl;
+
+        nlohmann::json entity_json;
+        entity_json["entity"] = entt::to_integral(entity);
+
+        // For all component types
+        for (auto&& [id, type] : registry->storage())
+        {
+            if (!type.contains(entity)) continue;
+
+            if (entt::meta_type meta_type = entt::resolve(id); meta_type)
+            {
+                auto key_name = std::string{ meta_type.info().name() }; // Better for serialization?
+                // auto type_name = meta_type_name(meta_type); // Inspector-friendly version
+
+                entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
+            }
+            else
+            {
+                assert(false && "No meta type for component");
+            }
+        }
+        return entity_json;
+    }
+
     nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry)
     {
         nlohmann::json json;
@@ -141,6 +171,9 @@ namespace Meta {
         auto view = registry->template view<entt::entity>();
         for (auto entity : view)
         {
+#if 1
+            json.push_back(serialize_entity(entity, registry));
+#else
             std::cout << "Serializing entity "
                 << entt::to_integral(entity) << std::endl;
 
@@ -165,6 +198,7 @@ namespace Meta {
                 }
             }
             json.push_back(entity_json);
+#endif
         }
 
         return json;
@@ -248,8 +282,8 @@ namespace Meta {
             auto view = any.as_sequence_container();
             assert(view && "as_sequence_container() failed");
 
-// Resize and then deserialize in-place
-// Note: This approach is necessary to make fixed-size containers without insertion to work (std::array)
+            // Resize and then deserialize in-place
+            // Note: This approach is necessary to make fixed-size containers without insertion to work (std::array)
 #define SEQDESER_ALT
 
 #ifndef SEQDESER_ALT

@@ -1981,6 +1981,8 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
+    // -> COMMAND
+
     queue_entity_for_destruction(event.entity);
 }
 

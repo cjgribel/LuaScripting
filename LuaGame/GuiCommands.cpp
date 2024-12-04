@@ -12,6 +12,14 @@
 
 namespace Editor {
 
+    namespace
+    {
+        entt::entity create_entity_from_hint(entt::entity entity_parent, entt::entity entity_hint)
+        {
+            return entt::entity {};
+        }
+    }
+
     void CreateEntityCommand::execute()
     {
         if (created_entity == entt::null)
@@ -43,16 +51,18 @@ namespace Editor {
 
     void DestroyEntityCommand::execute()
     {
+        // 1. Serialize entity -> nlohmann::json
+        
+        // 2. 
         // queue_entity_for_destruction(event.entity);
     }
 
     void DestroyEntityCommand::undo()
     {
-        // assert(entity_json.contains("entity"));
-        // entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
-        // assert(!context.registry->valid(entity_hint));
-        // auto entity = context.registry->create(entity_hint);
-        // assert(entity_hint == entity);
+        // 1. Recreate entity
+        // Similar to CreateEntityCommand::execute()
+
+        // 2. Deserialize nlohmann::json -> entity
     }
 
     std::string DestroyEntityCommand::get_name() const

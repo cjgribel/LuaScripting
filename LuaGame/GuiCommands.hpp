@@ -13,6 +13,8 @@
 #include "Command.hpp"
 #include "EditComponentCommand.hpp"
 
+#include "MetaSerialize.hpp"
+
 namespace Editor {
 
     class CreateEntityCommand : public Command
@@ -47,20 +49,20 @@ namespace Editor {
     {
         //std::weak_ptr<Scene> scene;
         // std::weak_ptr<entt::registry>   registry;
-        entt::entity entity = entt::null;
-        std::string display_name = "Create Entity";
+        entt::entity entity_destroyed = entt::null;
+        nlohmann::json entity_serialized;
+        std::string display_name = "Destroy Entity";
 
-        using CreateFunc = std::function<entt::entity(entt::entity, const std::string&, const std::string&)>;
-        CreateFunc create_func;
+        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        // friend class Builder;
+        CreateEntityFunc create_func;
+        DestroyEntityFunc destroy_func;
 
     public:
-        DestroyEntityCommand(const CreateFunc&& create_func)
+        DestroyEntityCommand(const CreateEntityFunc&& create_func)
             : create_func(create_func)
-        {
-
-        }
+        { }
 
         void execute() override;
 
