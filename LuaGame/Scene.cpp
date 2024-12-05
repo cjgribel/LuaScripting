@@ -1006,6 +1006,9 @@ entt::entity Scene::create_entity(
     uint32_t guid = 0;
     registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid);
 
+    // --> register_entity ???
+    // + have parent_entity in Header, so it is serialized
+
     chunk_registry.addEntity(used_chunk_tag, entity);
 
     // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
@@ -1983,7 +1986,17 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 
     // -> COMMAND
 
-    queue_entity_for_destruction(event.entity);
+    // queue_entity_for_destruction(event.entity);
+
+    const auto destroy_entity = [&](entt::entity entity) -> void
+        {
+            this->queue_entity_for_destruction(entity);
+        };
+
+    auto context = Editor::Context{ registry, lua };
+    using namespace Editor;
+    auto command = DestroyEntityCommand{ event.entity, context, destroy_entity };
+    cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
 }
 
 void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)

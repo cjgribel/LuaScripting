@@ -9,6 +9,7 @@
 #include <cassert>
 //#include "MetaSerialize.hpp"
 #include "GuiCommands.hpp"
+// #include "meta_aux.h"
 
 namespace Editor {
 
@@ -49,17 +50,29 @@ namespace Editor {
         return display_name;
     }
 
+    DestroyEntityCommand::DestroyEntityCommand(
+        entt::entity entity,
+        const Context& context,
+        const DestroyEntityFunc&& destroy_func) :
+        entity(entity),
+        context(context),
+        destroy_func(destroy_func)
+    {
+        display_name = std::string("Destroy Entity ") + std::to_string(entt::to_integral(entity));
+    }
+
     void DestroyEntityCommand::execute()
     {
         // 1. Serialize entity -> nlohmann::json
 
-        // nlohmann::json serialize_entity(
-        //     entt::entity,
-        //     std::shared_ptr<entt::registry>&registry);
+        assert(entity != entt::null);
+        entity_json = Meta::serialize_entity(entity, context.registry);
 
         // 2. 
 
-        // queue_entity_for_destruction(event.entity);
+        destroy_func(entity);
+
+        std::cout << entity_json.dump() << std::endl;
     }
 
     void DestroyEntityCommand::undo()
@@ -67,12 +80,10 @@ namespace Editor {
         // 1. Recreate entity
         // Done by deserialize_entity (entity stored in json) --> Similar to CreateEntityCommand::execute()
 
-        // 2. Deserialize nlohmann::json -> entity
+        Meta::deserialize_entity(entity_json, context);
+        // ^ Entity not added to SG (parent needed)
 
-        // void deserialize_entity(
-        //     const nlohmann::json & json,
-        //     Editor::Context & context
-        // );
+        entity_json = nlohmann::json {};
     }
 
     std::string DestroyEntityCommand::get_name() const

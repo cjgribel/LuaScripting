@@ -14,6 +14,7 @@
 #include "EditComponentCommand.hpp"
 
 #include "MetaSerialize.hpp"
+#include "Context.hpp"
 
 namespace Editor {
 
@@ -21,7 +22,7 @@ namespace Editor {
     {
         entt::entity created_entity = entt::null;
         entt::entity parent_entity = entt::null;
-        std::string display_name = "Create Entity";
+        std::string display_name;
 
         using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
         using DestroyEntityFunc = std::function<void(entt::entity)>;
@@ -36,7 +37,8 @@ namespace Editor {
             entt::entity parent_entity) :
             create_func(create_func),
             destroy_func(destroy_func),
-            parent_entity(parent_entity) { }
+            parent_entity(parent_entity),
+            display_name("Create Entity") { }
 
         void execute() override;
 
@@ -49,20 +51,22 @@ namespace Editor {
     {
         //std::weak_ptr<Scene> scene;
         // std::weak_ptr<entt::registry>   registry;
-        entt::entity entity_destroyed = entt::null;
-        nlohmann::json entity_serialized;
-        std::string display_name = "Destroy Entity";
+        entt::entity entity = entt::null;
+        nlohmann::json entity_json {};
+        Context context;
+        std::string display_name;
 
-        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
         using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        CreateEntityFunc create_func;
+        // CreateEntityFunc create_func;
         DestroyEntityFunc destroy_func;
 
     public:
-        DestroyEntityCommand(const CreateEntityFunc&& create_func)
-            : create_func(create_func)
-        { }
+        DestroyEntityCommand(
+            entt::entity entity, 
+            const Context& context, 
+            const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
 
