@@ -166,7 +166,7 @@ namespace Meta {
 
     nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry)
     {
-        nlohmann::json json;
+        nlohmann::json json = nlohmann::json::array();
 
         auto view = registry->template view<entt::entity>();
         for (auto entity : view)
@@ -402,14 +402,14 @@ namespace Meta {
         const nlohmann::json& json,
         Editor::Context& context)
     {
-        std::vector<entt::entity> entities_pending_registration;
+        std::vector<entt::entity> entity_buffer;
 
         assert(json.is_array());
         for (const auto& entity_json : json)
         {
 #if 1
             auto entity = deserialize_entity(entity_json, context);
-            entities_pending_registration.push_back(entity);
+            entity_buffer.push_back(entity);
 #else
             assert(entity_json.contains("entity"));
             entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
@@ -452,22 +452,24 @@ namespace Meta {
 #endif
         }
 
-        //
+        // Iterative Dependency Resolution
+        // Parent-Child Registration Loop
+        // Deferred Scene Graph Registration
+        int max_size = entity_buffer.size();
         int i = 0;
-        while (entities_pending_registration.size())
+        while (entity_buffer.size())
         {
-            int j = i % entities_pending_registration.size();
-            auto& entity = entities_pending_registration.at(j);
+            int j = i % entity_buffer.size();
+            auto& entity = entity_buffer.at(j);
             if (context.entity_parent_registered_func(entity))
             {
-                // std::cout << "Registering " << entt::to_entity(entity) << std::endl;
                 context.register_entity_func(entity);
-                entities_pending_registration.erase(entities_pending_registration.begin() + j);
+                entity_buffer.erase(entity_buffer.begin() + j);
             }
             else
             {
-                // std::cout << "Skipping " << entt::to_entity(entity) << std::endl;
                 i++;
+                assert(i < max_size*max_size && "Entity parent-child relationships corrupt");
             }
         }
     }
