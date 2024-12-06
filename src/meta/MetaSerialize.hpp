@@ -32,7 +32,7 @@ namespace Meta {
         entt::entity entity,
         Editor::Context& context);
 
-    void deserialize_entity(
+    entt::entity deserialize_entity(
         const nlohmann::json& json,
         Editor::Context& context
     );

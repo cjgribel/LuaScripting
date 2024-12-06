@@ -132,6 +132,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
         .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
         .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag").prop(readonly_hs, true)
         .data<&HeaderComponent::guid>("guid"_hs).prop(display_name_hs, "guid").prop(readonly_hs, true)
+        .data<&HeaderComponent::entity_parent>("entity_parent"_hs).prop(display_name_hs, "entity_parent").prop(readonly_hs, true)
 
         // Optional meta functions
 
@@ -175,6 +176,7 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
             "name", &HeaderComponent::name,
             "chunk_tag", &HeaderComponent::chunk_tag,
             "guid", &HeaderComponent::guid,
+            "entity_parent", &HeaderComponent::entity_parent,
 
 #if 0
             // clone

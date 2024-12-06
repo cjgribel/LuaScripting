@@ -60,13 +60,18 @@ struct HeaderComponent
     std::string name;
     std::string chunk_tag;
     uint32_t guid;
+    uint32_t entity_parent;
 
     HeaderComponent() = default;
     HeaderComponent(
         const std::string& name,
         const std::string& chunk_tag,
-        uint32_t guid
-    ) : name(name), chunk_tag(chunk_tag), guid(guid)
+        uint32_t guid,
+        uint32_t entity_parent) : 
+        name(name), 
+        chunk_tag(chunk_tag), 
+        guid(guid),
+        entity_parent(entity_parent)
     {}
 
     std::string to_string() const;

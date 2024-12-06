@@ -357,7 +357,7 @@ namespace Meta {
         }
     }
 
-    void deserialize_entity(
+    entt::entity deserialize_entity(
         const nlohmann::json& json,
         Editor::Context& context
     )
@@ -390,17 +390,26 @@ namespace Meta {
                 assert(false && "Deserialized component is not a meta-type");
             }
         }
+
+        // Register to scene graph and chunk
+        // assert(context.register_entity_func);
+        // context.register_entity_func(entity);
+
+        return entity;
     }
 
     void deserialize_registry(
         const nlohmann::json& json,
         Editor::Context& context)
     {
+        std::vector<entt::entity> entities_pending_registration;
+
         assert(json.is_array());
         for (const auto& entity_json : json)
         {
 #if 1
-            deserialize_entity(entity_json, context);
+            auto entity = deserialize_entity(entity_json, context);
+            entities_pending_registration.push_back(entity);
 #else
             assert(entity_json.contains("entity"));
             entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
@@ -441,6 +450,25 @@ namespace Meta {
                 }
             }
 #endif
+        }
+
+        //
+        int i = 0;
+        while (entities_pending_registration.size())
+        {
+            int j = i % entities_pending_registration.size();
+            auto& entity = entities_pending_registration.at(j);
+            if (context.entity_parent_registered_func(entity))
+            {
+                // std::cout << "Registering " << entt::to_entity(entity) << std::endl;
+                context.register_entity_func(entity);
+                entities_pending_registration.erase(entities_pending_registration.begin() + j);
+            }
+            else
+            {
+                // std::cout << "Skipping " << entt::to_entity(entity) << std::endl;
+                i++;
+            }
         }
     }
 

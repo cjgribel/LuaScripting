@@ -984,6 +984,40 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
     // When this function exits, Lua will exhibit default behavior and abort()
 }
 
+bool Scene::entity_parent_registered(
+    entt::entity entity)
+{
+    assert(registry->all_of<HeaderComponent>(entity));
+    auto& header = registry->get<HeaderComponent>(entity);
+    auto entity_parent = entt::entity{ header.entity_parent };
+
+    if (entity_parent == entt::null) return true;
+    return scenegraph.tree.contains(entity_parent);
+}
+
+void Scene::register_entity(
+    entt::entity entity)
+{
+    assert(registry->all_of<HeaderComponent>(entity));
+
+    auto& header = registry->get<HeaderComponent>(entity);
+    auto& chunk_tag = header.chunk_tag;
+    auto entity_parent = entt::entity{ header.entity_parent };
+
+    chunk_registry.addEntity(header.chunk_tag, entity);
+
+    // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
+    if (entity_parent == entt::null)
+    {
+        scenegraph.create_node(entity);
+    }
+    else
+    {
+        assert(scenegraph.tree.contains(entity_parent));
+        scenegraph.create_node(entity, entity_parent);
+    }
+}
+
 entt::entity Scene::create_entity(
     const std::string& chunk_tag,
     const std::string& name,
@@ -1004,11 +1038,11 @@ entt::entity Scene::create_entity(
     std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
     std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
     uint32_t guid = 0;
-    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid);
+    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid, entt::to_integral(entity_parent));
 
-    // --> register_entity ???
-    // + have parent_entity in Header, so it is serialized
-
+#if 1
+    register_entity(entity);
+#else
     chunk_registry.addEntity(used_chunk_tag, entity);
 
     // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
@@ -1021,6 +1055,7 @@ entt::entity Scene::create_entity(
         assert(scenegraph.tree.contains(entity_parent));
         scenegraph.create_node(entity, entity_parent);
     }
+#endif
 
     std::cout << "Scene::create_entity " << entt::to_integral(entity) << std::endl;
     return entity;
@@ -1663,7 +1698,17 @@ void Scene::renderUI()
         registry->clear();
         entities_pending_destruction.clear();
         // NOTE: SG is left unchanged
-        auto context = Editor::Context{ registry, lua };
+
+        scenegraph.tree.nodes.clear(); // visibility ...
+
+        chunk_registry.clear();
+
+        auto context = Editor::Context{
+        registry,
+        lua,
+        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
+        [&](entt::entity entity) { this->register_entity(entity); }
+        };
         Meta::deserialize_registry(jser, context);
         // + clear command buffer
     }
@@ -1671,7 +1716,13 @@ void Scene::renderUI()
     // Set inspector
     // Note: does not properly track what happens to the selected entity, so check its validity here
     static Editor::InspectorState inspector{};
-    inspector.context = Editor::Context{ registry, lua };
+    inspector.context = Editor::Context
+    {
+        registry,
+        lua,
+        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
+        [&](entt::entity entity) { this->register_entity(entity); }
+    };
     inspector.cmd_queue = cmd_queue;
     if (!registry->valid(inspector.selected_entity)) inspector.selected_entity = entt::null;
     // + cmd_queue + CommandBuilder ???
@@ -1993,7 +2044,12 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
             this->queue_entity_for_destruction(entity);
         };
 
-    auto context = Editor::Context{ registry, lua };
+    auto context = Editor::Context{
+        registry,
+        lua,
+        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
+        [&](entt::entity entity) { this->register_entity(entity); }
+    };
     using namespace Editor;
     auto command = DestroyEntityCommand{ event.entity, context, destroy_entity };
     cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));

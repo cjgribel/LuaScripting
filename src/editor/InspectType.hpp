@@ -65,6 +65,21 @@ namespace Editor {
         return false;
     }
 
+        /// Inspect uint32_t
+    template<>
+    inline bool inspect_type<uint32_t>(uint32_t& value, InspectorState& inspector)
+    {
+        return ImGui::InputScalar("Input uint32_t", ImGuiDataType_U32, &value);
+    }
+
+    /// Inspect const uint32_t
+    template<>
+    inline bool inspect_type<const uint32_t>(const uint32_t& t, InspectorState& inspector)
+    {
+        ImGui::TextDisabled("%u", t);
+        return false;
+    }
+
     /// Inspect bool
     template<>
     inline bool inspect_type<bool>(bool& t, InspectorState& inspector)

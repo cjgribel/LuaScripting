@@ -118,6 +118,11 @@ public:
         registry[chunk_id] = {};
     }
 
+    void clear()
+    {
+        registry.clear();
+    }
+
 private:
     std::unordered_map<std::string, EntityVector> registry;
 };
@@ -188,6 +193,12 @@ private:
 
     // (Editor) Command queue
     std::shared_ptr<Editor::CommandQueue> cmd_queue{};
+
+    bool entity_parent_registered (
+        entt::entity entity);
+
+    void register_entity(
+        entt::entity entity);
 
     entt::entity create_entity(
         const std::string& chunk_tag,

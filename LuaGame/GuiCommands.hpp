@@ -38,7 +38,8 @@ namespace Editor {
             create_func(create_func),
             destroy_func(destroy_func),
             parent_entity(parent_entity),
-            display_name("Create Entity") { }
+            display_name("Create Entity") {
+        }
 
         void execute() override;
 
@@ -52,11 +53,12 @@ namespace Editor {
         //std::weak_ptr<Scene> scene;
         // std::weak_ptr<entt::registry>   registry;
         entt::entity entity = entt::null;
-        nlohmann::json entity_json {};
+        nlohmann::json entity_json{};
         Context context;
         std::string display_name;
 
         // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
         using DestroyEntityFunc = std::function<void(entt::entity)>;
 
         // CreateEntityFunc create_func;
@@ -64,8 +66,8 @@ namespace Editor {
 
     public:
         DestroyEntityCommand(
-            entt::entity entity, 
-            const Context& context, 
+            entt::entity entity,
+            const Context& context,
             const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
