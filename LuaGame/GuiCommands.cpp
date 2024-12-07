@@ -63,26 +63,15 @@ namespace Editor {
 
     void DestroyEntityCommand::execute()
     {
-        // 1. Serialize entity -> nlohmann::json
-
         assert(entity != entt::null);
-        entity_json = Meta::serialize_entity(entity, context.registry);
-
-        // 2. 
-
+        entity_json = Meta::serialize_entities(&entity, 1, context.registry);
         destroy_func(entity);
-
-        std::cout << entity_json.dump() << std::endl;
     }
 
     void DestroyEntityCommand::undo()
     {
-        // 1. Recreate entity
-        // Done by deserialize_entity (entity stored in json) --> Similar to CreateEntityCommand::execute()
-
-        Meta::deserialize_entity(entity_json, context);
-        // ^ Entity not added to SG (parent needed)
-
+        Meta::deserialize_entities(entity_json, context);
+        
         entity_json = nlohmann::json {};
     }
 

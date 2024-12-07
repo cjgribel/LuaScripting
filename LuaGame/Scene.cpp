@@ -1709,7 +1709,7 @@ void Scene::renderUI()
         [&](entt::entity entity) { return this->entity_parent_registered(entity); },
         [&](entt::entity entity) { this->register_entity(entity); }
         };
-        Meta::deserialize_registry(jser, context);
+        Meta::deserialize_entities(jser, context);
         // + clear command buffer
     }
 

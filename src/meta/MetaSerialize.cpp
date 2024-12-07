@@ -17,6 +17,17 @@
 
 namespace Meta {
 
+    // class Serializer
+    // {
+    //     std::shared_ptr<entt::registry> registry;
+
+    //     Serializer(
+    //         std::shared_ptr<entt::registry>& registry) :
+    //         registry(registry) {}
+
+    //     ~Serializer() {}
+    // };
+
     nlohmann::json serialize_any(const entt::meta_any& any)
     {
         assert(any);
@@ -164,8 +175,31 @@ namespace Meta {
         return entity_json;
     }
 
+    nlohmann::json serialize_entities(
+        entt::entity* entity_first,
+        int count,
+        std::shared_ptr<entt::registry>& registry)
+    {
+        nlohmann::json json = nlohmann::json::array();
+
+        for (int i = 0; i < count; i++)
+            json.push_back(serialize_entity(*(entity_first + i), registry));
+
+        return json;
+    }
+
     nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry)
     {
+#if 1
+        std::vector<entt::entity> entities;
+
+        auto view = registry->view<entt::entity>();
+        entities.reserve(view.size_hint());
+        for (auto entity : view)
+            entities.push_back(entity);
+
+        return serialize_entities(entities.data(), entities.size(), registry);
+#else
         nlohmann::json json = nlohmann::json::array();
 
         auto view = registry->template view<entt::entity>();
@@ -202,6 +236,7 @@ namespace Meta {
         }
 
         return json;
+#endif
     }
 
     void deserialize_any(
@@ -398,7 +433,8 @@ namespace Meta {
         return entity;
     }
 
-    void deserialize_registry(
+    // TODO: RETURN ENTITIES
+    void deserialize_entities(
         const nlohmann::json& json,
         Editor::Context& context)
     {
@@ -469,7 +505,7 @@ namespace Meta {
             else
             {
                 i++;
-                assert(i < max_size*max_size && "Entity parent-child relationships corrupt");
+                assert(i < max_size * max_size && "Entity parent-child relationships corrupt");
             }
         }
     }

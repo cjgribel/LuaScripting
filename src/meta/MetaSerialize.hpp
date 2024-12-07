@@ -23,6 +23,11 @@ namespace Meta {
         entt::entity,
         std::shared_ptr<entt::registry>& registry);
 
+    nlohmann::json serialize_entities(
+        entt::entity* entity_first,
+        int count,
+        std::shared_ptr<entt::registry>& registry);
+
     nlohmann::json serialize_registry(
         std::shared_ptr<entt::registry>& registry);
 
@@ -37,7 +42,7 @@ namespace Meta {
         Editor::Context& context
     );
 
-    void deserialize_registry(
+    void deserialize_entities(
         const nlohmann::json& json,
         Editor::Context& context);
 
