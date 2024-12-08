@@ -433,64 +433,45 @@ namespace Meta {
         return entity;
     }
 
-    // TODO: RETURN ENTITIES
     void deserialize_entities(
         const nlohmann::json& json,
         Editor::Context& context)
     {
-        std::vector<entt::entity> entity_buffer;
-
         assert(json.is_array());
+        std::vector<entt::entity> entity_buffer;
+        entity_buffer.reserve(json.size());
+
         for (const auto& entity_json : json)
         {
-#if 1
             auto entity = deserialize_entity(entity_json, context);
             entity_buffer.push_back(entity);
-#else
-            assert(entity_json.contains("entity"));
-            entt::entity entity_hint = entity_json["entity"].get<entt::entity>();
-            assert(!context.registry->valid(entity_hint));
-            auto entity = context.registry->create(entity_hint);
-            assert(entity_hint == entity);
-            //
-            // if (entity_hint != entity) {
-            //     assert(context.registry->valid(entity));
-            //     assert(!context.registry->valid(entity_hint));
-            //     auto view = context.registry->template view<entt::entity>();
-            //     bool f = false;
-            //     for (auto entity : view) f |= (entity == entity_hint);
-            //     std::cout << "entity_hint != entity, entity_hint exists: " << f << std::endl;
-            //     assert(0);
-            // }
-
-            std::cout << "Deserializing entity " << entt::to_integral(entity) << std::endl;
-
-            assert(entity_json.contains("components"));
-            for (const auto& component_json : entity_json["components"].items())
-            {
-                auto key_str = component_json.key().c_str();
-                auto id = entt::hashed_string::value(key_str);
-
-                if (entt::meta_type meta_type = entt::resolve(id); meta_type)
-                {
-                    // Default-construct component component
-                    entt::meta_any any = meta_type.construct();
-                    // Deserialize component
-                    deserialize_any(component_json.value(), any, entity, context);
-                    // Add component to entity storage
-                    context.registry->storage(id)->push(entity, any.data());
-                }
-                else
-                {
-                    assert(false && "Deserialized component is not a meta-type");
-                }
-            }
-#endif
         }
 
-        // Iterative Dependency Resolution
-        // Parent-Child Registration Loop
-        // Deferred Scene Graph Registration
+        // Deferred scene graph registration since we're not expecting
+        // a certain entity deserialization order
+#if 1
+        int pivot = 0; // First unregistered entity index
+        while (pivot < entity_buffer.size())
+        {
+            bool swap_made = false;
+            for (int i = pivot; i < entity_buffer.size(); i++)
+            {
+                auto& entity = entity_buffer.at(i);
+                if (!context.entity_parent_registered_func(entity)) continue;
+                
+                context.register_entity_func(entity);
+                std::swap(entity, entity_buffer[pivot++]);
+                swap_made = true;
+            }
+            if (!swap_made)
+            {
+                std::cerr << "Corrupt hierarchy: Unable to register entities due to missing or circular dependencies.\n";
+                for (int i = pivot; i < entity_buffer.size(); ++i)
+                    std::cerr << "Unregistered entity: " << entt::to_integral(entity_buffer[i]) << "\n";
+                throw std::runtime_error("Entity parent-child relationships corrupt");
+            }
+        }
+#else
         int max_size = entity_buffer.size();
         int i = 0;
         while (entity_buffer.size())
@@ -508,6 +489,7 @@ namespace Meta {
                 assert(i < max_size * max_size && "Entity parent-child relationships corrupt");
             }
         }
+#endif
     }
 
-} // namespace Meta
+    } // namespace Meta
