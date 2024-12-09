@@ -1,7 +1,7 @@
 //
 //  VecTree.h
 //
-//  Created by Carl Johan Gribel on 2016-02-15.
+//  Created by Carl Johan Gribel 2024
 //
 //
 
@@ -34,7 +34,7 @@ struct TreeNode
 Sequential tree representation optimized for depth-first traversal.
 Nodes are organized in pre-order, which means that the first child of a node is located directly after the node.
 Each node has information about number children, branch stride and parent offset.
-The tree can be traversed both up and down.
+The tree can be traversed is different ways.
 */
 template <class PayloadType>
     requires EqualityComparable<PayloadType>
