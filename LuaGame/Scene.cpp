@@ -1703,12 +1703,7 @@ void Scene::renderUI()
 
         chunk_registry.clear();
 
-        auto context = Editor::Context{
-        registry,
-        lua,
-        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
-        [&](entt::entity entity) { this->register_entity(entity); }
-        };
+        auto context = create_context();
         Meta::deserialize_entities(jser, context);
         // + clear command buffer
     }
@@ -1716,13 +1711,7 @@ void Scene::renderUI()
     // Set inspector
     // Note: does not properly track what happens to the selected entity, so check its validity here
     static Editor::InspectorState inspector{};
-    inspector.context = Editor::Context
-    {
-        registry,
-        lua,
-        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
-        [&](entt::entity entity) { this->register_entity(entity); }
-    };
+    inspector.context = create_context();
     inspector.cmd_queue = cmd_queue;
     if (!registry->valid(inspector.selected_entity)) inspector.selected_entity = entt::null;
     // + cmd_queue + CommandBuilder ???
@@ -1943,6 +1932,16 @@ void Scene::destroy()
 //     }
 // }
 
+Editor::Context Scene::create_context()
+{
+    return Editor::Context{
+        registry,
+        lua,
+        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
+        [&](entt::entity entity) { this->register_entity(entity); }
+    };
+}
+
 void Scene::save_chunk(const std::string& chunk_tag)
 {
 
@@ -1963,6 +1962,8 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
     auto j_play_state = Meta::serialize_any(event.play_state);
     assert(!j_play_state.is_null());
     eeng::Log("SetGamePlayStateEvent: %s", j_play_state.dump().c_str());
+
+    
 
     // Save open tags
 
@@ -2035,18 +2036,12 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
+    // TODO: Validate event.entity
+
     const auto destroy_entity = [&](entt::entity entity) -> void
         {
             this->queue_entity_for_destruction(entity);
         };
-
-    // messy
-    auto context = Editor::Context{
-        registry,
-        lua,
-        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
-        [&](entt::entity entity) { this->register_entity(entity); }
-    };
 
     // Traverse scene graph branch and add destroy commands bottom-up
     std::stack<entt::entity> branch_stack;
@@ -2057,7 +2052,7 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
     using namespace Editor;
     while (branch_stack.size())
     {
-        auto command = DestroyEntityCommand{ branch_stack.top(), context, destroy_entity };
+        auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
         cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
         branch_stack.pop();
     }
@@ -2077,6 +2072,7 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
     bool entity_valid =
         event.entity != entt::null &&
         registry->valid(event.entity);
+
     if (entity_valid)
     {
         auto entity_copy = registry->create();

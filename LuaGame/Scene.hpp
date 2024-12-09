@@ -131,13 +131,6 @@ private:
 class Scene : public eeng::SceneBase
 {
 public:
-    enum class GamePlayState : int { Play, Stop, Pause };
-    struct SetGamePlayStateEvent { GamePlayState play_state; };
-    struct DestroyChunkEvent { std::string chunk_tag; };
-    struct LoadFileEvent { std::string path; };
-    struct CreateEntityEvent { entt::entity parent_entity; };
-    struct DestroyEntityEvent { entt::entity entity; };
-    struct CopyEntityEvent { entt::entity entity; };
 
     bool init(const v2i& windowSize) override;
 
@@ -149,8 +142,18 @@ public:
 
     void destroy() override;
 
+    enum class GamePlayState : int { Play, Stop, Pause };
+
+    struct SetGamePlayStateEvent { GamePlayState play_state; };
+    struct DestroyChunkEvent { std::string chunk_tag; };
+    struct LoadFileEvent { std::string path; };
+    struct CreateEntityEvent { entt::entity parent_entity; };
+    struct DestroyEntityEvent { entt::entity entity; };
+    struct CopyEntityEvent { entt::entity entity; };
 
 private:
+
+    Editor::Context create_context();
 
     // Content management
     // void assign_entity_to_chunk(entt::registry& registry, entt::entity);
@@ -158,8 +161,6 @@ private:
     void save_chunk(const std::string& chunk_tag);
     void save_all_chunks();
     void load_json(const std::string& path);
-
-
 
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     void OnDestroyChunkEvent(const DestroyChunkEvent& event);

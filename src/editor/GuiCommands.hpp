@@ -48,20 +48,18 @@ namespace Editor {
         std::string get_name() const override;
     };
 
+    // ------------------------------------------------------------------------
+
     class DestroyEntityCommand : public Command
     {
-        //std::weak_ptr<Scene> scene;
-        // std::weak_ptr<entt::registry>   registry;
         entt::entity entity = entt::null;
         nlohmann::json entity_json{};
         Context context;
         std::string display_name;
 
-        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
         using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
         using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        // CreateEntityFunc create_func;
         DestroyEntityFunc destroy_func;
 
     public:
@@ -69,6 +67,35 @@ namespace Editor {
             entt::entity entity,
             const Context& context,
             const DestroyEntityFunc&& destroy_func);
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
+    // ------------------------------------------------------------------------
+
+    class CopyEntityCommand : public Command
+    {
+        entt::entity entity = entt::null;
+        //     nlohmann::json entity_json{};
+        //     Context context;
+        std::string display_name;
+
+        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        using DestroyEntityFunc = std::function<void(entt::entity)>;
+        //     using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
+        //     using DestroyEntityFunc = std::function<void(entt::entity)>;
+
+        //     DestroyEntityFunc destroy_func;
+
+    public:
+        // CopyEntityCommand(
+    //         entt::entity entity,
+    //         const Context& context,
+    //         const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
 

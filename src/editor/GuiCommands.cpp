@@ -13,14 +13,6 @@
 
 namespace Editor {
 
-    namespace
-    {
-        entt::entity create_entity_from_hint(entt::entity entity_parent, entt::entity entity_hint)
-        {
-            return entt::entity{};
-        }
-    }
-
     void CreateEntityCommand::execute()
     {
         if (created_entity == entt::null)
@@ -50,6 +42,8 @@ namespace Editor {
         return display_name;
     }
 
+    // ------------------------------------------------------------------------
+
     DestroyEntityCommand::DestroyEntityCommand(
         entt::entity entity,
         const Context& context,
@@ -71,11 +65,32 @@ namespace Editor {
     void DestroyEntityCommand::undo()
     {
         Meta::deserialize_entities(entity_json, context);
-        
-        entity_json = nlohmann::json {};
+
+        entity_json = nlohmann::json{};
     }
 
     std::string DestroyEntityCommand::get_name() const
+    {
+        return display_name;
+    }
+
+    // ------------------------------------------------------------------------
+
+    void CopyEntityCommand::execute()
+    {
+        // assert(entity != entt::null);
+        // entity_json = Meta::serialize_entities(&entity, 1, context.registry);
+        // destroy_func(entity);
+    }
+
+    void CopyEntityCommand::undo()
+    {
+        // Meta::deserialize_entities(entity_json, context);
+
+        // entity_json = nlohmann::json{};
+    }
+
+    std::string CopyEntityCommand::get_name() const
     {
         return display_name;
     }

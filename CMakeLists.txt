@@ -227,7 +227,7 @@ message(STATUS "Creating executable target for LuaGame")
 add_executable(LuaGame 
     LuaGame/main.cpp
     LuaGame/Scene.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/LuaGame/GuiCommands.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/LuaGame/GuiCommands.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -239,7 +239,7 @@ add_executable(LuaGame
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaInspect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaClone.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaSerialize.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/src/editor/GuiCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/editor/GuiCommands.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/editor/EditComponentCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLDebugMessageCallback.cc
