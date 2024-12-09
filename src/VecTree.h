@@ -56,11 +56,7 @@ public:
             {
                 return payload == node.m_payload;
             });
-        // auto it = std::find_if(nodes.begin(),
-        //     nodes.end(),
-        //     [&node_name](const TreeNodeType& node)
-        //     { return !node.m_name.compare(node_name); });
-        if (it == nodes.end()) return -1;
+        if (it == nodes.end()) return VecTree_NullIndex;
         return std::distance(nodes.begin(), it);
     }
 
@@ -226,7 +222,7 @@ public:
     /// @brief Traverse depth-first in a per-level manner
     /// @param node_name Name of node to descend from
     /// Useful for hierarchical transformations. The tree is optimized for this type of traversal.
-    /// F is a function of type void(NodeType& node, NodeType& parent, size_t node_index, size_t parent_index)
+    /// F is a function of type void(PayloadType& node, PayloadType& parent, size_t node_index, size_t parent_index)
     template<class F>
         requires std::invocable<F, PayloadType*, PayloadType*>
     void traverse_progressive(
@@ -284,7 +280,7 @@ public:
     /// @brief Traverse tree depth-first without level information
     /// @param node_name Name of node to descend from
     /// The tree is optimized for this type of traversal.
-    /// F is a function of type void(NodeType&, size_t), where the second argument is node index
+    /// F is a function of type void(PayloadType&, size_t), where the second argument is node index
     template<class F>
         requires std::invocable<F, PayloadType&, size_t>
     void traverse_depthfirst(
@@ -325,7 +321,7 @@ public:
     /// @brief Traverse tree depth-first with level information
     /// @param node_name Name of node to descend from
     /// The tree is not optimized for this type of traversal.
-    /// F is a function of type void(NodeType&, size_t, size_t),
+    /// F is a function of type void(PayloadType&, size_t, size_t),
     /// where the second argument is node index, and the third argument is node level.
     template<class F>
         requires std::invocable<F, PayloadType&, size_t, size_t>
@@ -365,7 +361,9 @@ public:
 
     template<class F>
         requires std::invocable<F, PayloadType&, size_t, size_t>
-    void traverse_depthfirst(const PayloadType& start_payload, const F& func)
+    void traverse_depthfirst(
+        const PayloadType& start_payload,
+        const F& func)
     {
         traverse_depthfirst(find_node_index(start_payload), func);
     }
@@ -385,17 +383,20 @@ public:
     /// @brief Traverse tree breadth-first (level-order).
     /// @param node_name Name of node to descend from
     /// The tree is not optimized for this type of traversal.
-    /// F is a function of type void(NodeType&, size_t), where the second argument is node index
+    /// F is a function of type void(PayloadType&, size_t), where the second argument is node index
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t>
-    void traverse_breadthfirst(const std::string& node_name,
+        requires std::invocable<F, PayloadType&, size_t>
+    void traverse_breadthfirst(
+        size_t start_index,
         const F& func)
     {
-        auto node_index = find_node_index(node_name);
-        assert(node_index != VecTree_NullIndex);
+        if (!nodes.size()) return;
+        assert(start_index != VecTree_NullIndex);
+        assert(start_index >= 0);
+        assert(start_index < nodes.size());
 
         std::queue<size_t> queue;
-        queue.push(node_index);
+        queue.push(start_index);
 
         while (!queue.empty())
         {
@@ -403,7 +404,7 @@ public:
             queue.pop();
 
             auto& node = nodes[index];
-            func(node, index);
+            func(node.m_payload, index);
 
             size_t child_index = index + 1;
             for (int i = 0; i < node.m_nbr_children; i++)
@@ -412,6 +413,15 @@ public:
                 child_index += nodes[child_index].m_branch_stride;
             }
         }
+    }
+
+    template<class F>
+        requires std::invocable<F, PayloadType&, size_t>
+    void traverse_breadthfirst(
+        const PayloadType& start_payload,
+        const F& func)
+    {
+        traverse_breadthfirst(find_node_index(start_payload), func);
     }
 
     /// @brief Ascend to root.

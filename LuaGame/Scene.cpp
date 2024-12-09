@@ -2035,24 +2035,37 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
-    // -> COMMAND
-
-    // queue_entity_for_destruction(event.entity);
-
     const auto destroy_entity = [&](entt::entity entity) -> void
         {
             this->queue_entity_for_destruction(entity);
         };
 
+    // messy
     auto context = Editor::Context{
         registry,
         lua,
         [&](entt::entity entity) { return this->entity_parent_registered(entity); },
         [&](entt::entity entity) { this->register_entity(entity); }
     };
+
+    // Traverse scene graph branch and add destroy commands bottom-up
+    std::stack<entt::entity> branch_stack;
+    const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
+    scenegraph.tree.traverse_breadthfirst(event.entity, [&](auto& entity, size_t index) {
+        branch_stack.push(entity);
+        });
     using namespace Editor;
-    auto command = DestroyEntityCommand{ event.entity, context, destroy_entity };
-    cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
+    while (branch_stack.size())
+    {
+        auto command = DestroyEntityCommand{ branch_stack.top(), context, destroy_entity };
+        cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
+        branch_stack.pop();
+    }
+
+    // Single node destroy
+    // using namespace Editor;
+    // auto command = DestroyEntityCommand{ event.entity, context, destroy_entity };
+    // cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
 }
 
 void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
