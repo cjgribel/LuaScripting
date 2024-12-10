@@ -2048,23 +2048,36 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
     cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(command));
 }
 
+namespace
+{
+    auto stack_entity_branch(SceneGraph& sg, entt::entity entity)
+    {
+        std::stack<entt::entity> stack;
+        sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
+            stack.push(entity);
+            });
+        return stack;
+    }
+}
+
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
     // TODO: Validate event.entity
 
-    const auto destroy_entity = [&](entt::entity entity) -> void
-        {
-            this->queue_entity_for_destruction(entity);
-        };
+    // const auto destroy_entity = [&](entt::entity entity) -> void
+    //     {
+    //         this->queue_entity_for_destruction(entity);
+    //     };
 
     // Traverse scene graph branch and add destroy commands bottom-up
-    std::stack<entt::entity> branch_stack;
-    // const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
-    scenegraph.tree.traverse_breadthfirst(event.entity, [&](auto& entity, size_t index) {
-        branch_stack.push(entity);
-        });
+    auto branch_stack = stack_entity_branch(scenegraph, event.entity);
+    // std::stack<entt::entity> branch_stack;
+    // // const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
+    // scenegraph.tree.traverse_breadthfirst(event.entity, [&](auto& entity, size_t index) {
+    //     branch_stack.push(entity);
+    //     });
     using namespace Editor;
     while (branch_stack.size())
     {
@@ -2084,28 +2097,43 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 {
     eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
-    // -> COMMAND
+    assert(event.entity != entt::null);
+    assert(registry->valid(event.entity));
 
-    bool entity_valid =
-        event.entity != entt::null &&
-        registry->valid(event.entity);
+    // + REPARENT CHILDREN
 
-    if (entity_valid)
+    /*
+
+    - Node1
+        - Node2
+            - Node3
+
+    NOW ->
+
+    - Node1copy
+    - Node1
+        - Node2
+        - Node2copy
+            - Node3
+            - Node3copy
+
+    SHOULD BE ??? ->
+
+    - Node1copy
+        - Node2copy
+            - Node3copy
+    - Node1
+        - Node2
+            - Node3
+
+    */
+
+    auto branch_stack = stack_entity_branch(scenegraph, event.entity);
+    using namespace Editor;
+    while (branch_stack.size())
     {
-        using namespace Editor;
-        auto command = CopyEntityCommand{ event.entity, create_context() };
-        // auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
+        auto command = CopyEntityCommand{ branch_stack.top(), create_context() };
         cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
-
-        // auto entity_copy = registry->create();
-        // Editor::clone_entity(registry, event.entity, entity_copy);
-        // register_entity(entity_copy);
-
-        // scenegraph.create_node(entity_copy);
-        
-        // Deep-copy entire entity
-        //Copier copier{ *scene };
-        //active_entity = copier.CopyPrimaryEntity(active_entity, components);
-        //scene->issue_reload_render_entities();
+        branch_stack.pop();
     }
 }
