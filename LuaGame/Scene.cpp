@@ -1937,19 +1937,32 @@ Editor::Context Scene::create_context()
     return Editor::Context{
         registry,
         lua,
-        [&](entt::entity entity) { return this->entity_parent_registered(entity); },
-        [&](entt::entity entity) { this->register_entity(entity); }
+        // Create entity
+        [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity {
+            return this->create_entity("", "", entity_parent, entity_hint);
+        },
+        // Destroy_entity
+        [&](entt::entity entity) -> void {
+            this->queue_entity_for_destruction(entity);
+        },
+        // Can register entity
+        [&](entt::entity entity) -> bool {
+            return this->entity_parent_registered(entity);
+            },
+        // Register entity
+        [&](entt::entity entity) -> void {
+            this->register_entity(entity); }
     };
 }
 
 void Scene::save_chunk(const std::string& chunk_tag)
 {
-
+    // NOT A COMMAND
 }
 
 void Scene::save_all_chunks()
 {
-
+    // NOT A COMMAND
 }
 
 void Scene::load_json(const std::string& path)
@@ -1963,7 +1976,7 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
     assert(!j_play_state.is_null());
     eeng::Log("SetGamePlayStateEvent: %s", j_play_state.dump().c_str());
 
-    
+    // NOT A COMMAND
 
     // Save open tags
 
@@ -1998,14 +2011,16 @@ void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
 {
     eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
 
+    // NOT A COMMAND
+
     for (auto& entity : chunk_registry.chunk(event.chunk_tag))
     {
         // Either, 
         // 1) rely on entt's onDestroy event for calling destroy() on scripts
-        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
-
         queue_entity_for_destruction(entity);
-        // registry->destroy(entity);
+
+        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+        // ...
     }
 }
 
@@ -2018,17 +2033,18 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 {
     eeng::Log("CreateEntityEvent");
 
-    const auto create_entity = [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity
-        {
-            return this->create_entity("", "", entity_parent, entity_hint);
-        };
-    const auto destroy_entity = [&](entt::entity entity) -> void
-        {
-            this->queue_entity_for_destruction(entity);
-        };
+    // const auto create_entity = [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity
+    //     {
+    //         return this->create_entity("", "", entity_parent, entity_hint);
+    //     };
+    // const auto destroy_entity = [&](entt::entity entity) -> void
+    //     {
+    //         this->queue_entity_for_destruction(entity);
+    //     };
 
     using namespace Editor;
-    auto command = CreateEntityCommand{ create_entity, destroy_entity, event.parent_entity };
+    auto command = CreateEntityCommand{ event.parent_entity, create_context() };
+    // auto command = CreateEntityCommand{ create_entity, destroy_entity, event.parent_entity };
     cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(command));
 }
 
@@ -2045,14 +2061,15 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 
     // Traverse scene graph branch and add destroy commands bottom-up
     std::stack<entt::entity> branch_stack;
-    const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
+    // const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
     scenegraph.tree.traverse_breadthfirst(event.entity, [&](auto& entity, size_t index) {
         branch_stack.push(entity);
         });
     using namespace Editor;
     while (branch_stack.size())
     {
-        auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
+        auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
+        // auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
         cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
         branch_stack.pop();
     }

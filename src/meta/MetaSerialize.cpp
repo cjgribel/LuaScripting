@@ -457,9 +457,9 @@ namespace Meta {
             for (int i = pivot; i < entity_buffer.size(); i++)
             {
                 auto& entity = entity_buffer.at(i);
-                if (!context.entity_parent_registered_func(entity)) continue;
+                if (!context.can_register_entity(entity)) continue;
                 
-                context.register_entity_func(entity);
+                context.register_entity(entity);
                 std::swap(entity, entity_buffer[pivot++]);
                 swap_made = true;
             }

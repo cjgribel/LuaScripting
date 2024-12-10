@@ -13,15 +13,29 @@
 
 namespace Editor {
 
+    CreateEntityCommand::CreateEntityCommand(
+        // const CreateEntityFunc&& create_func,
+        // const DestroyEntityFunc&& destroy_func,
+        entt::entity parent_entity,
+        const Context& context) :
+        // create_func(create_func),
+        // destroy_func(destroy_func),
+        parent_entity(parent_entity),
+        context(context),
+        display_name("Create Entity") {
+    }
+
     void CreateEntityCommand::execute()
     {
         if (created_entity == entt::null)
         {
-            created_entity = create_func(parent_entity, entt::null);
+            created_entity = context.create_entity(parent_entity, entt::null);
+            // created_entity = create_func(parent_entity, entt::null);
         }
         else
         {
-            auto entity = create_func(parent_entity, created_entity);
+            auto entity = context.create_entity(parent_entity, created_entity);
+            // auto entity = create_func(parent_entity, created_entity);
             assert(entity == created_entity);
             created_entity = entity;
         }
@@ -32,7 +46,8 @@ namespace Editor {
     void CreateEntityCommand::undo()
     {
         assert(created_entity != entt::null);
-        destroy_func(created_entity);
+        context.destroy_entity(created_entity);
+        // destroy_func(created_entity);
 
         // std::cout << "CreateEntityCommand::undo() " << entt::to_integral(created_entity) << std::endl;
     }
@@ -46,11 +61,12 @@ namespace Editor {
 
     DestroyEntityCommand::DestroyEntityCommand(
         entt::entity entity,
-        const Context& context,
-        const DestroyEntityFunc&& destroy_func) :
+        const Context& context
+        // const DestroyEntityFunc&& destroy_func
+        ) :
         entity(entity),
-        context(context),
-        destroy_func(destroy_func)
+        context(context)
+        // destroy_func(destroy_func)
     {
         display_name = std::string("Destroy Entity ") + std::to_string(entt::to_integral(entity));
     }
@@ -59,7 +75,8 @@ namespace Editor {
     {
         assert(entity != entt::null);
         entity_json = Meta::serialize_entities(&entity, 1, context.registry);
-        destroy_func(entity);
+        context.destroy_entity(entity);
+        // destroy_func(entity);
     }
 
     void DestroyEntityCommand::undo()

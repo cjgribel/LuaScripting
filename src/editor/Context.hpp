@@ -14,17 +14,20 @@
 
 namespace Editor {
 
+    using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+    using DestroyEntityFunc = std::function<void(entt::entity)>;
     using EntityParentRegisteredFunc = std::function<bool(entt::entity)>;
     using RegisterEntityFunc = std::function<void(entt::entity)>;
 
     struct Context
     {
-
         std::shared_ptr<entt::registry> registry;
         std::shared_ptr<sol::state> lua;
 
-        EntityParentRegisteredFunc entity_parent_registered_func;
-        RegisterEntityFunc register_entity_func;
+        CreateEntityFunc create_entity;
+        DestroyEntityFunc destroy_entity;
+        EntityParentRegisteredFunc can_register_entity;
+        RegisterEntityFunc register_entity;
 
         // shared_ptr<Scene>
         // shared_ptr<Resources>

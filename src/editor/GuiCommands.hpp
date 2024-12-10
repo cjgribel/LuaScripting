@@ -22,24 +22,21 @@ namespace Editor {
     {
         entt::entity created_entity = entt::null;
         entt::entity parent_entity = entt::null;
+        Context context;
         std::string display_name;
 
-        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-        using DestroyEntityFunc = std::function<void(entt::entity)>;
+        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        // using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        CreateEntityFunc create_func;
-        DestroyEntityFunc destroy_func;
+        // CreateEntityFunc create_func;
+        // DestroyEntityFunc destroy_func;
 
     public:
         CreateEntityCommand(
-            const CreateEntityFunc&& create_func,
-            const DestroyEntityFunc&& destroy_func,
-            entt::entity parent_entity) :
-            create_func(create_func),
-            destroy_func(destroy_func),
-            parent_entity(parent_entity),
-            display_name("Create Entity") {
-        }
+            // const CreateEntityFunc&& create_func,
+            // const DestroyEntityFunc&& destroy_func,
+            entt::entity parent_entity,
+            const Context& context);
 
         void execute() override;
 
@@ -57,16 +54,17 @@ namespace Editor {
         Context context;
         std::string display_name;
 
-        using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
-        using DestroyEntityFunc = std::function<void(entt::entity)>;
+        // using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
+        // using DestroyEntityFunc = std::function<void(entt::entity)>;
 
-        DestroyEntityFunc destroy_func;
+        // DestroyEntityFunc destroy_func;
 
     public:
         DestroyEntityCommand(
             entt::entity entity,
-            const Context& context,
-            const DestroyEntityFunc&& destroy_func);
+            const Context& context
+            // const DestroyEntityFunc&& destroy_func
+            );
 
         void execute() override;
 
