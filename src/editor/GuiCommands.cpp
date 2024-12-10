@@ -7,7 +7,8 @@
 
 #include <iostream>
 #include <cassert>
-//#include "MetaSerialize.hpp"
+// #include "MetaSerialize.hpp"
+#include "MetaClone.hpp"
 #include "GuiCommands.hpp"
 // #include "meta_aux.h"
 
@@ -63,7 +64,7 @@ namespace Editor {
         entt::entity entity,
         const Context& context
         // const DestroyEntityFunc&& destroy_func
-        ) :
+    ) :
         entity(entity),
         context(context)
         // destroy_func(destroy_func)
@@ -93,8 +94,27 @@ namespace Editor {
 
     // ------------------------------------------------------------------------
 
+    CopyEntityCommand::CopyEntityCommand(
+        entt::entity entity,
+        const Context& context) :
+        entity_source(entity),
+        context(context)
+    {
+        display_name = std::string("Copy Entity ") + std::to_string(entt::to_integral(entity));
+    }
+
     void CopyEntityCommand::execute()
     {
+        assert(entity_copy == entt::null);
+        assert(entity_source != entt::null);
+        assert(context.registry->valid(entity_source)); // context.entity_valid
+
+        entity_copy = context.registry->create(); // context.create_empty_entity
+        Editor::clone_entity(context.registry, entity_source, entity_copy);
+
+        assert(context.can_register_entity(entity_copy));
+        context.register_entity(entity_copy);
+
         // assert(entity != entt::null);
         // entity_json = Meta::serialize_entities(&entity, 1, context.registry);
         // destroy_func(entity);
@@ -102,6 +122,12 @@ namespace Editor {
 
     void CopyEntityCommand::undo()
     {
+        assert(entity_copy != entt::null);
+        assert(context.registry->valid(entity_copy));
+
+        context.destroy_entity(entity_copy);
+        entity_copy = entt::null;
+
         // Meta::deserialize_entities(entity_json, context);
 
         // entity_json = nlohmann::json{};

@@ -2092,11 +2092,17 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 
     if (entity_valid)
     {
-        auto entity_copy = registry->create();
-        scenegraph.create_node(entity_copy);
+        using namespace Editor;
+        auto command = CopyEntityCommand{ event.entity, create_context() };
+        // auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
+        cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
 
-        Editor::clone_entity(registry, event.entity, entity_copy);
+        // auto entity_copy = registry->create();
+        // Editor::clone_entity(registry, event.entity, entity_copy);
+        // register_entity(entity_copy);
 
+        // scenegraph.create_node(entity_copy);
+        
         // Deep-copy entire entity
         //Copier copier{ *scene };
         //active_entity = copier.CopyPrimaryEntity(active_entity, components);

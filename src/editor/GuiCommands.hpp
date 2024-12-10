@@ -64,7 +64,7 @@ namespace Editor {
             entt::entity entity,
             const Context& context
             // const DestroyEntityFunc&& destroy_func
-            );
+        );
 
         void execute() override;
 
@@ -77,9 +77,10 @@ namespace Editor {
 
     class CopyEntityCommand : public Command
     {
-        entt::entity entity = entt::null;
+        entt::entity entity_source = entt::null;
+        entt::entity entity_copy = entt::null;
         //     nlohmann::json entity_json{};
-        //     Context context;
+        Context context;
         std::string display_name;
 
         using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
@@ -90,10 +91,10 @@ namespace Editor {
         //     DestroyEntityFunc destroy_func;
 
     public:
-        // CopyEntityCommand(
-    //         entt::entity entity,
-    //         const Context& context,
-    //         const DestroyEntityFunc&& destroy_func);
+        CopyEntityCommand(
+            entt::entity entity,
+            const Context& context);
+        //         const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
 
