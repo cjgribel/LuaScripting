@@ -672,15 +672,38 @@ namespace Inspector
         // Add entity nbr to start for clarity
         label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
 
+        //bool is_selected = inspector.selected_entity == entity;
+        auto& selected_entities = inspector.selected_entities;
+        bool is_selected = std::find(selected_entities.begin(), selected_entities.end(), entity) != selected_entities.end();
+
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
         if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf;
-        if (inspector.selected_entity == entity) flags |= ImGuiTreeNodeFlags_Selected;
+        if (is_selected) flags |= ImGuiTreeNodeFlags_Selected;
 
         ImGui::SetNextItemOpen(true);
         if (ImGui::TreeNodeEx(label.c_str(), flags))
         {
+            // if (ImGui::IsItemClicked())
+            //     inspector.selected_entity = entity;
+
             if (ImGui::IsItemClicked())
-                inspector.selected_entity = entity;
+            {
+                if (bool ctrl_pressed = ImGui::IsKeyDown(ImGuiKey_ModCtrl); ctrl_pressed)
+                {
+                    // Multi-selection with Ctrl: toggle selection state
+                    if (is_selected)
+                        // Deselect
+                        selected_entities.erase(std::remove(selected_entities.begin(), selected_entities.end(), entity), selected_entities.end());
+                    else
+                        // Add to selection
+                        selected_entities.push_back(entity);
+                }
+                else {
+                    // Single selection: clear previous selections and select this entity
+                    selected_entities.clear();
+                    selected_entities.push_back(entity);
+                }
+            }
 
             // Recursively display each child node
             int child_index = index + 1;
@@ -767,6 +790,13 @@ namespace Inspector
             {
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
+            }
+        }
+
+        if (!inspector.selected_entities.empty()) {
+            ImGui::Text("Selected Entities (in order):");
+            for (auto entity : inspector.selected_entities) {
+                ImGui::Text("Entity %d", static_cast<int>(entity));
             }
         }
 

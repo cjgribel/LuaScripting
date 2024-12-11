@@ -15,10 +15,12 @@ namespace Editor {
     /// @brief 
     struct InspectorState
     {
-        Context context;
+        Context context; // <- should use weak_ptr so this class does not have ownership
         std::weak_ptr<CommandQueue> cmd_queue;
         // + observer (perhaps all that is needed)
         entt::entity selected_entity = entt::null;
+
+        std::deque<entt::entity> selected_entities;
 
         bool imgui_disabled = false;
 
