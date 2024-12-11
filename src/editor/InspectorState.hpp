@@ -9,6 +9,7 @@
 
 #include "Context.hpp"
 #include "CommandQueue.hpp"
+#include "SelectionManager.hpp"
 
 namespace Editor {
 
@@ -20,7 +21,9 @@ namespace Editor {
         // + observer (perhaps all that is needed)
         entt::entity selected_entity = entt::null;
 
-        std::deque<entt::entity> selected_entities;
+        // std::deque<entt::entity> selected_entities;
+
+        Editor::SelectionManager<entt::entity> entity_selection;
 
         bool imgui_disabled = false;
 

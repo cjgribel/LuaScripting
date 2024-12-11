@@ -673,8 +673,8 @@ namespace Inspector
         label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
 
         //bool is_selected = inspector.selected_entity == entity;
-        auto& selected_entities = inspector.selected_entities;
-        bool is_selected = std::find(selected_entities.begin(), selected_entities.end(), entity) != selected_entities.end();
+        auto& entity_selection = inspector.entity_selection;
+        bool is_selected = entity_selection.contains(entity);
 
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
         if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf;
@@ -693,15 +693,15 @@ namespace Inspector
                     // Multi-selection with Ctrl: toggle selection state
                     if (is_selected)
                         // Deselect
-                        selected_entities.erase(std::remove(selected_entities.begin(), selected_entities.end(), entity), selected_entities.end());
+                        entity_selection.remove(entity);
                     else
                         // Add to selection
-                        selected_entities.push_back(entity);
+                        entity_selection.add(entity);
                 }
                 else {
                     // Single selection: clear previous selections and select this entity
-                    selected_entities.clear();
-                    selected_entities.push_back(entity);
+                    entity_selection.clear();
+                    entity_selection.add(entity);
                 }
             }
 
@@ -712,7 +712,7 @@ namespace Inspector
                 inspect_scene_graph_node(scenegraph, inspector, child_index);
 
                 auto [entity, nbr_children, branch_stride, parent_ofs] = scenegraph.tree.get_node_info_at(child_index);
-                child_index += branch_stride; //scenegraph.tree[current_index].;
+                child_index += branch_stride;
             }
 
             ImGui::TreePop();
@@ -793,9 +793,12 @@ namespace Inspector
             }
         }
 
-        if (!inspector.selected_entities.empty()) {
+        // Debug print selected
+        ImGui::Separator();
+        if (inspector.entity_selection.size()) 
+        {
             ImGui::Text("Selected Entities (in order):");
-            for (auto entity : inspector.selected_entities) {
+            for (auto entity : inspector.entity_selection.get_all()) {
                 ImGui::Text("Entity %d", static_cast<int>(entity));
             }
         }
