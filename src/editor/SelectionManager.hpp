@@ -8,70 +8,82 @@
 namespace Editor {
 
     template <typename T>
-    class SelectionManager 
+    class SelectionManager
     {
     private:
-        std::deque<T> selectedItems; // Stores selected items in order
+        std::deque<T> items; // Stores selected items in order
 
     public:
         // Add an item to the selection
-        void add(const T& item) 
+        void add(const T& item)
         {
             // Remove if already exists, then add to the end
             remove(item);
-            selectedItems.push_back(item);
+            items.push_back(item);
         }
 
         // Remove an item from the selection
-        void remove(const T& item) 
+        void remove(const T& item)
         {
-            selectedItems.erase(
-                std::remove(selectedItems.begin(), selectedItems.end(), item),
-                selectedItems.end()
+            items.erase(
+                std::remove(items.begin(), items.end(), item),
+                items.end()
             );
         }
 
         // Check if an item is selected
-        bool contains(const T& item) const 
+        bool contains(const T& item) const
         {
-            return std::find(selectedItems.begin(), selectedItems.end(), item) != selectedItems.end();
+            return std::find(items.begin(), items.end(), item) != items.end();
         }
 
         // Clear all selections
-        void clear() 
+        void clear()
         {
-            selectedItems.clear();
+            items.clear();
         }
 
         // Get the last selected item
-        const T& last() const 
+        const T& last() const
         {
-            return selectedItems.back();
+            return items.back();
+        }
+
+        // Indexation
+        T& at(size_t index)
+        {
+            return items.at(index);
+        }
+
+        // Indexation
+        const T& at(size_t index) const
+        {
+            return items.at(index);
         }
 
         // Get all items except the last one
-        std::deque<T> all_except_last() const 
+        std::deque<T> all_except_last() const
         {
-            if (selectedItems.empty()) return {};
-            return std::deque<T>(selectedItems.begin(), std::prev(selectedItems.end()));
+            if (items.empty()) return {};
+            return std::deque<T>(items.begin(), std::prev(items.end()));
         }
 
         // Iterate through selected items
-        const std::deque<T>& get_all() const 
+        const std::deque<T>& get_all() const
         {
-            return selectedItems;
+            return items;
         }
 
         // Get number of selected items
-        size_t size() const 
+        size_t size() const
         {
-            return selectedItems.size();
+            return items.size();
         }
 
         // Check if selection is empty
-        bool empty() const 
+        bool empty() const
         {
-            return selectedItems.empty();
+            return items.empty();
         }
     };
 

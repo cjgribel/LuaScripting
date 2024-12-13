@@ -14,8 +14,11 @@
 #include "Observer.h"
 #include "SceneGraph.hpp"
 #include "CommandQueue.hpp"
+#include "SelectionManager.hpp"
 
 #include "ParticleBuffer.hpp"
+
+using EntitySelection = Editor::SelectionManager<entt::entity>;
 
 // TODO --> ChunkRegistry.HPP/CPP
 class ChunkRegistry
@@ -147,9 +150,12 @@ public:
     struct SetGamePlayStateEvent { GamePlayState play_state; };
     struct DestroyChunkEvent { std::string chunk_tag; };
     struct LoadFileEvent { std::string path; };
+
     struct CreateEntityEvent { entt::entity parent_entity; };
-    struct DestroyEntityEvent { entt::entity entity; };
-    struct CopyEntityEvent { entt::entity entity; };
+    struct DestroyEntityEvent { EntitySelection entity_selection; };
+    struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
+    struct SetParentEntityEvent { EntitySelection entity_selection; };
+    struct UnparentEntityEvent { EntitySelection entity_selection; };
 
 private:
 
@@ -168,6 +174,8 @@ private:
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
     void OnCopyEntityEvent(const CopyEntityEvent& event);
+    void OnSetParentEntityEvent(const SetParentEntityEvent& event);
+    void OnUnparentEntityEvent(const UnparentEntityEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};

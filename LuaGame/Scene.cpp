@@ -740,16 +740,16 @@ namespace Inspector
         // New entity
         if (ImGui::Button("New"))
         {
-            Scene::CreateEntityEvent event{ .parent_entity = inspector.selected_entity };
+            Scene::CreateEntityEvent event{ .parent_entity = inspector.entity_selection.last() };
             observer.enqueue_event(event);
         }
 
         // Destroy selected entity
-        if (inspector.selected_entity == entt::null) inspector.begin_disabled();
+        if (inspector.entity_selection.empty()) inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Delete"))
         {
-            Scene::DestroyEntityEvent event{ .entity = inspector.selected_entity };
+            Scene::DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (inspector.selected_entity == entt::null) inspector.end_disabled();
@@ -795,7 +795,7 @@ namespace Inspector
 
         // Debug print selected
         ImGui::Separator();
-        if (inspector.entity_selection.size()) 
+        if (inspector.entity_selection.size())
         {
             ImGui::Text("Selected Entities (in order):");
             for (auto entity : inspector.entity_selection.get_all()) {
@@ -1189,6 +1189,9 @@ bool Scene::init(const v2i& windowSize)
     observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
     observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
     observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
+
+    observer.register_callback([&](const SetParentEntityEvent& event) { this->OnSetParentEntityEvent(event); });
+    observer.register_callback([&](const UnparentEntityEvent& event) { this->OnUnparentEntityEvent(event); });
 
     try
     {
@@ -2083,7 +2086,8 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 
 namespace
 {
-    auto stack_entity_branch(SceneGraph& sg, entt::entity entity)
+    // Add scene graph branch to a stack with leafs on top
+    auto stack_branch(SceneGraph& sg, entt::entity entity)
     {
         std::stack<entt::entity> stack;
         sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
@@ -2091,39 +2095,56 @@ namespace
             });
         return stack;
     }
+
+    bool is_child_of(SceneGraph& sg, entt::entity entity_child, entt::entity entity_parent)
+    {
+        bool is_child = false;
+        sg.tree.ascend(entity_child, [&](auto& entity, size_t index) {
+            if (entity == entity_child) return;
+            if (entity == entity_parent) is_child = true;
+            });
+        return is_child;
+    }
+
+    template<class Iterable>
+    auto filter_out_descendants(SceneGraph& scenegraph, const Iterable& entities)
+    {
+        std::vector<entt::entity> filtered_entities;
+        for (auto& entity : entities)
+        {
+            bool is_child = false;
+            for (auto& entity_other : entities)
+            {
+                if (entity == entity_other) continue;
+                is_child |= is_child_of(scenegraph, entity, entity_other);
+
+                // Debug print child-parent check
+                // std::cout << entt::to_integral(entity) << " is child to " << entt::to_integral(entity_other) << ": " << entity_is_child_of(scenegraph, entity, entity_other) << std::endl;
+            }
+            if (!is_child) filtered_entities.push_back(entity);
+        }
+        return filtered_entities;
+    }
 }
 
 void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
-    eeng::Log("DestroyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+    std::stringstream ss;
+    eeng::Log("DestroyEntityEvent: count = %i", event.entity_selection.size());
 
-    // TODO: Validate event.entity
-
-    // const auto destroy_entity = [&](entt::entity entity) -> void
-    //     {
-    //         this->queue_entity_for_destruction(entity);
-    //     };
-
-    // Traverse scene graph branch and add destroy commands bottom-up
-    auto branch_stack = stack_entity_branch(scenegraph, event.entity);
-    // std::stack<entt::entity> branch_stack;
-    // // const auto& [nbr_children, notused1, notused2] = scenegraph.tree.get_node_info(event.entity);
-    // scenegraph.tree.traverse_breadthfirst(event.entity, [&](auto& entity, size_t index) {
-    //     branch_stack.push(entity);
-    //     });
-    using namespace Editor;
-    while (branch_stack.size())
+    auto filtered_entities = filter_out_descendants(scenegraph, event.entity_selection.get_all());
+    for (auto& entity : filtered_entities)
     {
-        auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
-        // auto command = DestroyEntityCommand{ branch_stack.top(), create_context(), destroy_entity };
-        cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
-        branch_stack.pop();
+        // Traverse scene graph branch and add destroy commands bottom-up
+        auto branch_stack = stack_branch(scenegraph, entity);
+        using namespace Editor;
+        while (branch_stack.size())
+        {
+            auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
+            cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
+            branch_stack.pop();
+        }
     }
-
-    // Single node destroy
-    // using namespace Editor;
-    // auto command = DestroyEntityCommand{ event.entity, context, destroy_entity };
-    // cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
 }
 
 void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
@@ -2161,7 +2182,7 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 
     */
 
-    auto branch_stack = stack_entity_branch(scenegraph, event.entity);
+    auto branch_stack = stack_branch(scenegraph, event.entity);
     using namespace Editor;
     while (branch_stack.size())
     {
@@ -2170,3 +2191,9 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
         branch_stack.pop();
     }
 }
+
+    void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
+    {}
+
+    void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
+    {}

@@ -428,19 +428,33 @@ public:
     /// @param node_name Name of node to ascend from
     /// F is a function of type void(NodeType&, size_t), where the second argument is node index
     template<class F>
-        requires std::invocable<F, TreeNodeType&, size_t>
-    void ascend(const std::string& node_name,
+        requires std::invocable<F, PayloadType&, size_t>
+    void ascend(
+        size_t start_index,
         const F& func)
     {
-        auto node_index = find_node_index(node_name);
-        assert(node_index != VecTree_NullIndex);
+        if (!nodes.size()) return;
+        // auto node_index = find_node_index(payload);
+        assert(start_index != VecTree_NullIndex);
+        assert(start_index >= 0);
+        assert(start_index < nodes.size());
+        auto node_index = start_index; // find_node_index(node_name);
 
         while (nodes[node_index].m_parent_ofs)
         {
-            func(nodes[node_index], node_index);
+            func(nodes[node_index].m_payload, node_index);
             node_index -= nodes[node_index].m_parent_ofs;
         }
-        func(nodes[node_index], node_index);
+        func(nodes[node_index].m_payload, node_index);
+    }
+
+    template<class F>
+        requires std::invocable<F, PayloadType&, size_t>
+    void ascend(
+        const PayloadType& start_payload,
+        const F& func)
+    {
+        ascend(find_node_index(start_payload), func);
     }
 
     void reduce()
