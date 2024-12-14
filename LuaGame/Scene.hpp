@@ -181,6 +181,7 @@ private:
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
+    SceneGraph scenegraph{};
 
     const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 
@@ -193,8 +194,6 @@ private:
 
     m4f VP, P, V;
 
-    // entt::entity root_entity = entt::entity  {0};
-    SceneGraph scenegraph{};
 
     // Particle buffer
     ParticleBuffer particleBuffer{};

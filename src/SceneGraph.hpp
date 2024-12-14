@@ -132,24 +132,7 @@ public:
 
     void dump_to_cout(
         auto& registry,
-        entt::meta_type meta_type_with_name)
-    {
-        //std::cout << "Scene graph nodes:" << std::endl;
-        tree.traverse_depthfirst([&](const auto& entity, size_t index, size_t level)
-            {
-                //auto entity = node.m_payload;
-                auto entity_name = Editor::get_entity_name(registry, entity, meta_type_with_name);
-
-                auto [nbr_children, branch_stride, parent_ofs] = tree.get_node_info(entity);
-
-                for (int i = 0; i < level; i++) std::cout << "\t";
-                std::cout << " [node " << index << "]";
-                std::cout << " " << entity_name //node.m_name
-                    << " (children " << nbr_children
-                    << ", stride " << branch_stride
-                    << ", parent ofs " << parent_ofs << ")\n";
-            });
-    }
+        entt::meta_type meta_type_with_name) {}
 };
 
 #endif /* SceneGraph_hpp */

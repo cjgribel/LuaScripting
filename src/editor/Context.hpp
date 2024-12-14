@@ -11,6 +11,8 @@
 #include <memory>
 #include <entt/fwd.hpp>
 #include <sol/forward.hpp>
+//#include "SceneGraph.hpp"
+class SceneGraph;
 
 namespace Editor {
 
@@ -31,6 +33,7 @@ namespace Editor {
         RegisterEntityFunc register_entity;
         // + entity_valid ???
 
+        std::weak_ptr<SceneGraph> scenegraph;
         // shared_ptr<Scene>
         // shared_ptr<Resources>
     };

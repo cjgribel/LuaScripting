@@ -740,7 +740,9 @@ namespace Inspector
         // New entity
         if (ImGui::Button("New"))
         {
-            Scene::CreateEntityEvent event{ .parent_entity = inspector.entity_selection.last() };
+            entt::entity entity_parent = entt::null;
+            if (!inspector.entity_selection.empty()) entity_parent = inspector.entity_selection.last();
+            Scene::CreateEntityEvent event{ .parent_entity = entity_parent };
             observer.enqueue_event(event);
         }
 
@@ -2225,14 +2227,14 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
     for (auto& entity : filtered_entities)
     {
         // Traverse scene graph branch and add destroy commands bottom-up
-        auto branch_stack = stack_branch(scenegraph, entity);
+        //auto branch_stack = stack_branch(scenegraph, entity);
         using namespace Editor;
-        while (branch_stack.size())
-        {
-            auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
-            cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
-            branch_stack.pop();
-        }
+        //while (branch_stack.size())
+        //{
+            auto command = CopyEntityBranchCommand{ entity, create_context() };
+            cmd_queue->add(CommandFactory::Create<CopyEntityBranchCommand>(command));
+            //branch_stack.pop();
+        //}
     }
 }
 

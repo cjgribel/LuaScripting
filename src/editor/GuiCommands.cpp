@@ -143,7 +143,7 @@ namespace Editor {
     CopyEntityBranchCommand::CopyEntityBranchCommand(
         entt::entity entity,
         const Context& context) :
-        // entity_source(entity),
+        root_entity(entity),
         context(context)
     {
         display_name = std::string("Copy Entity ") + std::to_string(entt::to_integral(entity));
@@ -151,12 +151,26 @@ namespace Editor {
 
     void CopyEntityBranchCommand::execute()
     {
-        // assert(entity_copy == entt::null);
-        // assert(entity_source != entt::null);
-        // assert(context.registry->valid(entity_source)); // context.entity_valid
+        assert(copied_entities.empty());
+        assert(root_entity != entt::null);
+        assert(context.registry->valid(root_entity));
 
-        // entity_copy = context.registry->create(); // context.create_empty_entity
-        // Editor::clone_entity(context.registry, entity_source, entity_copy);
+        // iterate branch from root_entity -> source_entities
+        // 
+
+        // Create copies
+        for (auto& entity : source_entities)
+        {
+            auto entity_copy = context.registry->create(); // context.create_empty_entity
+            Editor::clone_entity(context.registry, root_entity, entity_copy);
+            copied_entities.push_back(entity_copy);
+        }
+
+        // ParentMap
+
+        // Reparent
+        // get_parent_of
+
 
         // assert(context.can_register_entity(entity_copy));
         // context.register_entity(entity_copy);
