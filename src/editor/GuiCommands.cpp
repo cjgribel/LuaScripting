@@ -138,4 +138,42 @@ namespace Editor {
         return display_name;
     }
 
+    // ------------------------------------------------------------------------
+
+    CopyEntityBranchCommand::CopyEntityBranchCommand(
+        entt::entity entity,
+        const Context& context) :
+        // entity_source(entity),
+        context(context)
+    {
+        display_name = std::string("Copy Entity ") + std::to_string(entt::to_integral(entity));
+    }
+
+    void CopyEntityBranchCommand::execute()
+    {
+        // assert(entity_copy == entt::null);
+        // assert(entity_source != entt::null);
+        // assert(context.registry->valid(entity_source)); // context.entity_valid
+
+        // entity_copy = context.registry->create(); // context.create_empty_entity
+        // Editor::clone_entity(context.registry, entity_source, entity_copy);
+
+        // assert(context.can_register_entity(entity_copy));
+        // context.register_entity(entity_copy);
+    }
+
+    void CopyEntityBranchCommand::undo()
+    {
+        // assert(entity_copy != entt::null);
+        // assert(context.registry->valid(entity_copy));
+
+        // context.destroy_entity(entity_copy);
+        // entity_copy = entt::null;
+    }
+
+    std::string CopyEntityBranchCommand::get_name() const
+    {
+        return display_name;
+    }
+
 } // namespace Editor

@@ -154,6 +154,7 @@ public:
     struct CreateEntityEvent { entt::entity parent_entity; };
     struct DestroyEntityEvent { EntitySelection entity_selection; };
     struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
+    struct CopyEntityEvent_ { EntitySelection entity_selection; }; // TMP
     struct SetParentEntityEvent { EntitySelection entity_selection; };
     struct UnparentEntityEvent { EntitySelection entity_selection; };
 
@@ -174,6 +175,7 @@ private:
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
     void OnCopyEntityEvent(const CopyEntityEvent& event);
+    void OnCopyEntityEvent_(const CopyEntityEvent_& event); // TMP
     void OnSetParentEntityEvent(const SetParentEntityEvent& event);
     void OnUnparentEntityEvent(const UnparentEntityEvent& event);
 
@@ -203,7 +205,11 @@ private:
     // (Editor) Command queue
     std::shared_ptr<Editor::CommandQueue> cmd_queue{};
 
-    bool entity_parent_registered (
+    // TODO -> SG ???
+    entt::entity get_entity_parent(
+        entt::entity entity);
+
+    bool entity_parent_registered(
         entt::entity entity);
 
     void register_entity(

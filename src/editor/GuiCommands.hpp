@@ -75,6 +75,8 @@ namespace Editor {
 
     // ------------------------------------------------------------------------
 
+    // -> CopyEntityBranchCommand
+
     class CopyEntityCommand : public Command
     {
         entt::entity entity_source = entt::null;
@@ -92,6 +94,31 @@ namespace Editor {
 
     public:
         CopyEntityCommand(
+            entt::entity entity,
+            const Context& context);
+        //         const DestroyEntityFunc&& destroy_func);
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
+    // ------------------------------------------------------------------------
+
+    class CopyEntityBranchCommand : public Command
+    {
+        std::vector<entt::entity> source_entities;
+        std::vector<entt::entity> copied_entities;
+        Context context;
+        std::string display_name;
+
+        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        // using DestroyEntityFunc = std::function<void(entt::entity)>;
+
+    public:
+        CopyEntityBranchCommand(
             entt::entity entity,
             const Context& context);
         //         const DestroyEntityFunc&& destroy_func);
