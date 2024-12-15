@@ -102,6 +102,25 @@ public:
         return std::make_tuple(node.m_payload, node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
     }
 
+    // bool has_parent(const PayloadType& payload)
+    // {
+    //     auto [nbr_children, branch_stride, parent_ofs] = get_node_info(payload);
+    //     return parent_ofs > 0;
+    // }
+
+    size_t get_parent_index(const PayloadType& payload)
+    {
+        auto node_index = find_node_index(payload);
+        assert(node_index != VecTree_NullIndex);
+
+        return node_index - nodes[node_index].m_parent_ofs;
+    }
+
+    PayloadType& get_parent(const PayloadType& payload)
+    {
+        return nodes[get_parent_index(payload)];
+    }
+
     void insert_as_root(const PayloadType& payload)
     {
         nodes.insert(nodes.begin(), TreeNodeType{ .m_payload = payload });
@@ -389,36 +408,48 @@ public:
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         size_t start_index,
-        const F& func) const 
-        { traverse_depthfirst_impl(*this, start_index, func); }
+        const F& func) const
+    {
+        traverse_depthfirst_impl(*this, start_index, func);
+    }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         size_t start_index,
-        const F& func) 
-        { traverse_depthfirst_impl(*this, start_index, func); }
+        const F& func)
+    {
+        traverse_depthfirst_impl(*this, start_index, func);
+    }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         const PayloadType& start_payload,
-        const F& func) const 
-        { traverse_depthfirst_impl(*this, start_payload, func); }
+        const F& func) const
+    {
+        traverse_depthfirst_impl(*this, start_payload, func);
+    }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         const PayloadType& start_payload,
-        const F& func) 
-        { traverse_depthfirst_impl(*this, start_payload, func); }
+        const F& func)
+    {
+        traverse_depthfirst_impl(*this, start_payload, func);
+    }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
-        const F& func) const 
-        { traverse_depthfirst_impl(*this, func); }
+        const F& func) const
+    {
+        traverse_depthfirst_impl(*this, func);
+    }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
-        const F& func) 
-        { traverse_depthfirst_impl(*this, func); }
+        const F& func)
+    {
+        traverse_depthfirst_impl(*this, func);
+    }
 
     // --- Breadth-first ------------------------------------------------------
 

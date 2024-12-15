@@ -1996,6 +1996,7 @@ Editor::Context Scene::create_context()
     return Editor::Context{
         registry,
         lua,
+        scenegraph,
         // Create entity
         [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity {
             return this->create_entity("", "", entity_parent, entity_hint);
@@ -2234,10 +2235,10 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
         using namespace Editor;
         //while (branch_stack.size())
         //{
-            auto command = CopyEntityBranchCommand{ entity, create_context() };
-            cmd_queue->add(CommandFactory::Create<CopyEntityBranchCommand>(command));
-            //branch_stack.pop();
-        //}
+        auto command = CopyEntityBranchCommand{ entity, create_context() };
+        cmd_queue->add(CommandFactory::Create<CopyEntityBranchCommand>(command));
+        //branch_stack.pop();
+    //}
     }
 }
 

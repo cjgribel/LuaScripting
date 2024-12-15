@@ -12,6 +12,9 @@
 #include "GuiCommands.hpp"
 // #include "meta_aux.h"
 
+// Used by Copy command
+#include "SceneGraph.hpp"
+
 namespace Editor {
 
     CreateEntityCommand::CreateEntityCommand(
@@ -156,26 +159,43 @@ namespace Editor {
         assert(context.registry->valid(root_entity));
 
         // iterate branch from root_entity -> source_entities
-        // 
+        assert(!context.scenegraph.expired());
+        auto scenegraph = context.scenegraph.lock();
+        // => get_branch_as_vector in SG
+        scenegraph->tree.traverse_depthfirst(root_entity, [&](const entt::entity& entity, size_t) {
+            source_entities.push_back(entity);
+        });
 
         // Create copies
         for (auto& entity : source_entities)
         {
-            auto entity_copy = context.registry->create(); // context.create_empty_entity
-            Editor::clone_entity(context.registry, root_entity, entity_copy);
+            auto entity_copy = context.registry->create(); // => context.create_empty_entity
+            Editor::clone_entity(context.registry, entity, entity_copy);
             copied_entities.push_back(entity_copy);
         }
 
         // ParentMap
+        std::unordered_map<uint32_t, uint32_t> parent_index_map;
+        for (int i = 0; i < source_entities.size(); i++)
+        {
+            auto parent_tree_index = scenegraph->tree.get_parent_index(source_entities[i]); // => function in SG
+            // -> parent_index within source_entities
+            // map i -> parent_index
+        }
 
         // Reparent
         // get_parent_of
-
+        for (int i = 0; i < source_entities.size(); i++)
+        {
+            // set parent of copied_entities[i] to copied_entities[ ParentMap[i] ]
+            // set_parent can be a SG function
+        }
 
         // assert(context.can_register_entity(entity_copy));
         // context.register_entity(entity_copy);
     }
 
+    // Destroy all copied_entities. Order does not matter since we are not using commands.
     void CopyEntityBranchCommand::undo()
     {
         // assert(entity_copy != entt::null);

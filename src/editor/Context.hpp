@@ -25,7 +25,9 @@ namespace Editor {
     {
         std::shared_ptr<entt::registry> registry;
         std::shared_ptr<sol::state> lua;
+        std::weak_ptr<SceneGraph> scenegraph;
 
+        // shared_ptr<Scene>
         CreateEntityFunc create_entity;
         // + create_empty_entity ???
         DestroyEntityFunc destroy_entity;
@@ -33,8 +35,6 @@ namespace Editor {
         RegisterEntityFunc register_entity;
         // + entity_valid ???
 
-        std::weak_ptr<SceneGraph> scenegraph;
-        // shared_ptr<Scene>
         // shared_ptr<Resources>
     };
 
