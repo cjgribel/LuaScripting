@@ -181,7 +181,7 @@ private:
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
-    SceneGraph scenegraph{};
+    std::shared_ptr<SceneGraph> scenegraph{};
 
     const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 

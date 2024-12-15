@@ -1045,7 +1045,7 @@ bool Scene::entity_parent_registered(
     auto entity_parent = get_entity_parent(entity);
 
     if (entity_parent == entt::null) return true;
-    return scenegraph.tree.contains(entity_parent);
+    return scenegraph->tree.contains(entity_parent);
 }
 
 void Scene::register_entity(
@@ -1062,12 +1062,12 @@ void Scene::register_entity(
     // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
     if (entity_parent == entt::null)
     {
-        scenegraph.create_node(entity);
+        scenegraph->create_node(entity);
     }
     else
     {
-        assert(scenegraph.tree.contains(entity_parent));
-        scenegraph.create_node(entity, entity_parent);
+        assert(scenegraph->tree.contains(entity_parent));
+        scenegraph->create_node(entity, entity_parent);
     }
 }
 
@@ -1145,8 +1145,8 @@ void Scene::destroy_pending_entities()
         chunk_registry.removeEntity(registry->get<HeaderComponent>(entity).chunk_tag, entity);
 
         // Remove from scene graph
-        if (scenegraph.tree.contains(entity))
-            scenegraph.erase_node(entity);
+        if (scenegraph->tree.contains(entity))
+            scenegraph->erase_node(entity);
 
         // Destroy entity. May lead to additional entities being added to the queue.
         registry->destroy(entity);
@@ -1199,6 +1199,8 @@ bool Scene::init(const v2i& windowSize)
     // Create registry
     registry = std::make_shared<entt::registry>();
     registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
+
+    scenegraph = std::make_shared<SceneGraph>();
 
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
@@ -1535,7 +1537,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     // Update scene graph
     // After script update because: scripts may alter positions
-    scenegraph.traverse(registry);
+    scenegraph->traverse(registry);
 
     // Update particles
     particleBuffer.update(deltaTime_s);
@@ -1755,7 +1757,7 @@ void Scene::renderUI()
         entities_pending_destruction.clear();
         // NOTE: SG is left unchanged
 
-        scenegraph.tree.nodes.clear(); // visibility ...
+        scenegraph->tree.nodes.clear(); // visibility ...
 
         chunk_registry.clear();
 
@@ -1781,7 +1783,7 @@ void Scene::renderUI()
     Inspector::inspect_command_queue(inspector);
 
     // Before inspect_entity ???
-    Inspector::inspect_scenegraph(scenegraph, inspector, observer);
+    Inspector::inspect_scenegraph(*scenegraph, inspector, observer);
 
     Inspector::inspect_playstate(play_state, observer);
 
@@ -1962,13 +1964,14 @@ void Scene::destroy()
     assert(!entities_pending_destruction.size());
 
     std::cout << "Nodes remaining in scene graph:" << std::endl;
-    scenegraph.dump_to_cout(registry, entt::resolve<HeaderComponent>());
+    scenegraph->dump_to_cout(registry, entt::resolve<HeaderComponent>());
 
     // Doesn't need to be explicit
     std::cout << "cmd_queue.use_count() " << cmd_queue.use_count() << std::endl;
     std::cout << "registry.use_count() " << registry.use_count() << std::endl;
     std::cout << "lua.use_count() " << lua.use_count() << std::endl;
     cmd_queue.reset();
+    scenegraph.reset();
     registry.reset();
     lua.reset();
 
@@ -2151,11 +2154,11 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: count = %i", event.entity_selection.size());
 
-    auto filtered_entities = filter_out_descendants(scenegraph, event.entity_selection.get_all());
+    auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
     for (auto& entity : filtered_entities)
     {
         // Traverse scene graph branch and add destroy commands bottom-up
-        auto branch_stack = stack_branch(scenegraph, entity);
+        auto branch_stack = stack_branch(*scenegraph, entity);
         using namespace Editor;
         while (branch_stack.size())
         {
@@ -2206,7 +2209,7 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 
     */
 
-    auto branch_stack = stack_branch(scenegraph, event.entity);
+    auto branch_stack = stack_branch(*scenegraph, event.entity);
     using namespace Editor;
     while (branch_stack.size())
     {
@@ -2223,7 +2226,7 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
     // assert(event.entity != entt::null);
     // assert(registry->valid(event.entity));
 
-    auto filtered_entities = filter_out_descendants(scenegraph, event.entity_selection.get_all());
+    auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
     for (auto& entity : filtered_entities)
     {
         // Traverse scene graph branch and add destroy commands bottom-up

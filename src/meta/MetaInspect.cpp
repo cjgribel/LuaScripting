@@ -33,7 +33,7 @@ namespace Editor {
     }
 
     std::string get_entity_name(
-        std::shared_ptr<entt::registry>& registry,
+        const std::shared_ptr<const entt::registry>& registry,
         entt::entity entity,
         entt::meta_type meta_type_with_name)
     {

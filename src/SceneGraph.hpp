@@ -20,19 +20,19 @@ class SceneGraph
 public:
 
 private:
-    struct SceneGraphNode
-    {
-        entt::entity entity;
-        std::string name;
+    // struct SceneGraphNode
+    // {
+    //     entt::entity entity;
+    //     std::string name;
 
-        bool operator==(const SceneGraphNode& node) const
-        {
-            return entity == node.entity;
-        }
+    //     bool operator==(const SceneGraphNode& node) const
+    //     {
+    //         return entity == node.entity;
+    //     }
 
-        SceneGraphNode(entt::entity entity, const std::string& name)
-            : entity(entity), name(name) {}
-    };
+    //     SceneGraphNode(entt::entity entity, const std::string& name)
+    //         : entity(entity), name(name) {}
+    // };
 
 public: // TODO: don't expose directly
     VecTree<entt::entity> tree;
@@ -131,8 +131,8 @@ public:
 // private:
 
     void dump_to_cout(
-        auto& registry,
-        entt::meta_type meta_type_with_name) {}
+        const std::shared_ptr<const entt::registry>& registry,
+        const entt::meta_type meta_type_with_name) const;
 };
 
 #endif /* SceneGraph_hpp */

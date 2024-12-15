@@ -318,17 +318,16 @@ public:
         }
     }
 
-    /// @brief Traverse tree depth-first with level information
-    /// @param node_name Name of node to descend from
-    /// The tree is not optimized for this type of traversal.
-    /// F is a function of type void(PayloadType&, size_t, size_t),
-    /// where the second argument is node index, and the third argument is node level.
-    template<class F>
-        requires std::invocable<F, PayloadType&, size_t, size_t>
-    void traverse_depthfirst(
+    // --- Depth-first with level information ---------------------------------
+
+private:
+    template<class T, class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    static void traverse_depthfirst_impl(
+        T& self,
         size_t start_index,
         const F& func)
     {
+        auto& nodes = self.nodes;
         if (!nodes.size()) return;
         // auto node_index = find_node_index(payload);
         assert(start_index != VecTree_NullIndex);
@@ -359,27 +358,74 @@ public:
         }
     }
 
-    template<class F>
-        requires std::invocable<F, PayloadType&, size_t, size_t>
-    void traverse_depthfirst(
+    template<class T, class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    static void traverse_depthfirst_impl(
+        T& self,
         const PayloadType& start_payload,
         const F& func)
     {
-        traverse_depthfirst(find_node_index(start_payload), func);
+        traverse_depthfirst_impl(self, self.find_node_index(start_payload), func);
     }
 
-    template<class F>
-        requires std::invocable<F, PayloadType&, size_t, size_t>
-    void traverse_depthfirst(const F& func)
+    template<class T, class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    static void traverse_depthfirst_impl(
+        T& self,
+        const F& func)
     {
         size_t i = 0;
-        while (i < size())
+        while (i < self.size())
         {
-            traverse_depthfirst(i, func);
-            i += nodes[i].m_branch_stride;
+            traverse_depthfirst_impl(self, i, func);
+            i += self.nodes[i].m_branch_stride;
         }
     }
 
+public:
+    /// @brief Traverse tree depth-first with level information
+    /// @param node_name Name of node to descend from
+    /// The tree is not optimized for this type of traversal.
+    /// F is a function of type void(PayloadType&, size_t, size_t),
+    /// where the second argument is node index, and the third argument is node level.
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        size_t start_index,
+        const F& func) const 
+        { traverse_depthfirst_impl(*this, start_index, func); }
+
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        size_t start_index,
+        const F& func) 
+        { traverse_depthfirst_impl(*this, start_index, func); }
+
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        const PayloadType& start_payload,
+        const F& func) const 
+        { traverse_depthfirst_impl(*this, start_payload, func); }
+
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        const PayloadType& start_payload,
+        const F& func) 
+        { traverse_depthfirst_impl(*this, start_payload, func); }
+
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        const F& func) const 
+        { traverse_depthfirst_impl(*this, func); }
+
+    template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    void traverse_depthfirst(
+        const F& func) 
+        { traverse_depthfirst_impl(*this, func); }
+
+    // --- Breadth-first ------------------------------------------------------
+
+private:
+    // TODO: impl
+
+public:
     /// @brief Traverse tree breadth-first (level-order).
     /// @param node_name Name of node to descend from
     /// The tree is not optimized for this type of traversal.
