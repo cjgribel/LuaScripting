@@ -185,7 +185,7 @@ private:
 
     const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 
-    std::vector<entt::entity> entities_pending_destruction;
+    std::deque<entt::entity> entities_pending_destruction;
 
     linalg::v3f lightPos, eyePos;
     const float nearPlane = 1.0f, farPlane = 10.0f;

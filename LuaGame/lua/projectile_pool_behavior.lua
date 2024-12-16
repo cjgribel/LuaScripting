@@ -44,7 +44,7 @@ end
 
 function ProjectilePool:destroy()
 
-    print("ProjectilePool:destroy()" .. self.id());
+    print("ProjectilePool:destroy() " .. self.id());
     --print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
 
     for _, entity in ipairs(self.pool) do

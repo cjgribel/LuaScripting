@@ -8,6 +8,7 @@
 #ifndef GuiCommands_hpp
 #define GuiCommands_hpp
 
+#include <deque>
 #include <entt/entt.hpp>
 // #include "Scene.hpp"
 #include "Command.hpp"
@@ -110,7 +111,7 @@ namespace Editor {
     class CopyEntityBranchCommand : public Command
     {
         entt::entity root_entity = entt::null;
-        std::vector<entt::entity> source_entities;
+        std::deque<entt::entity> source_entities;
         std::vector<entt::entity> copied_entities;
         Context context;
         std::string display_name;

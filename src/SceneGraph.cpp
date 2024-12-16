@@ -11,6 +11,30 @@
 //#include "transform.hpp"
 #include "CoreComponents.hpp"
 
+bool SceneGraph::create_node(
+    entt::entity entity,
+    entt::entity parent_entity
+)
+{
+    if (parent_entity == entt::null)
+    {
+        tree.insert_as_root(entity);
+        return true;
+    }
+    else
+        return tree.insert(entity, parent_entity);
+}
+
+    size_t SceneGraph::size()
+    {
+        return tree.nodes.size();
+    }
+
+    // void SceneGraph::reset()
+    // {
+    //     // for (auto& node : tree.nodes) node.transform_hnd->global_tfm = m4f_1;
+    // }
+
 void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
 {
     // std::cout << "traverse:" << std::endl;
@@ -42,6 +66,17 @@ void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
         tfm_node.y_global = tfm_node.x * sin(tfm_node.angle_parent) + tfm_node.y * cos(tfm_node.angle_parent) + tfm_node.y_parent;
         tfm_node.angle_global = tfm_node.angle + tfm_node.angle_parent;
         });
+}
+
+SceneGraph::BranchQueue SceneGraph::get_branch_in_level_order(entt::entity entity)
+{
+    BranchQueue stack;
+
+    tree.traverse_breadthfirst(entity, [&](const entt::entity& entity, size_t index) {
+        stack.push_back(entity);
+        });
+
+    return stack;
 }
 
 void SceneGraph::dump_to_cout(

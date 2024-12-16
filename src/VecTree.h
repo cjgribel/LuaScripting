@@ -102,13 +102,19 @@ public:
         return std::make_tuple(node.m_payload, node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
     }
 
-    // bool has_parent(const PayloadType& payload)
-    // {
-    //     auto [nbr_children, branch_stride, parent_ofs] = get_node_info(payload);
-    //     return parent_ofs > 0;
-    // }
+    bool is_root(const PayloadType& payload) const
+    {
+        auto [nbr_children, branch_stride, parent_ofs] = get_node_info(payload);
+        return parent_ofs > 0;
+    }
 
-    size_t get_parent_index(const PayloadType& payload)
+    bool is_leaf(const PayloadType& payload) const
+    {
+        auto [nbr_children, branch_stride, parent_ofs] = get_node_info(payload);
+        return nbr_children == 0;
+    }
+
+    size_t get_parent_index(const PayloadType& payload) const
     {
         auto node_index = find_node_index(payload);
         assert(node_index != VecTree_NullIndex);
@@ -116,9 +122,14 @@ public:
         return node_index - nodes[node_index].m_parent_ofs;
     }
 
+    PayloadType& get_parent(const PayloadType& payload) const
+    {
+        return nodes[get_parent_index(payload)].m_payload;
+    }
+
     PayloadType& get_parent(const PayloadType& payload)
     {
-        return nodes[get_parent_index(payload)];
+        return nodes[get_parent_index(payload)].m_payload;
     }
 
     void insert_as_root(const PayloadType& payload)

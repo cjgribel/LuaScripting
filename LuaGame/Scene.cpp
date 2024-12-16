@@ -737,34 +737,37 @@ namespace Inspector
             return;
         }
 
+        bool has_selection = !inspector.entity_selection.empty();
+
         // New entity
         if (ImGui::Button("New"))
         {
             entt::entity entity_parent = entt::null;
-            if (!inspector.entity_selection.empty()) entity_parent = inspector.entity_selection.last();
+            if (has_selection) entity_parent = inspector.entity_selection.last();
             Scene::CreateEntityEvent event{ .parent_entity = entity_parent };
             observer.enqueue_event(event);
         }
 
         // Destroy selected entity
-        if (inspector.entity_selection.empty()) inspector.begin_disabled();
+        if (!has_selection) inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Delete"))
         {
             Scene::DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
+            inspector.entity_selection.clear();
         }
-        if (inspector.entity_selection.empty()) inspector.end_disabled();
+        if (!has_selection) inspector.end_disabled();
 
         // Copy selected entity
-        if (inspector.entity_selection.empty()) inspector.begin_disabled();
+        if (!has_selection) inspector.begin_disabled();
         ImGui::SameLine();
         if (ImGui::Button("Copy"))
         {
             Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
             observer.enqueue_event(event);
         }
-        if (inspector.entity_selection.empty()) inspector.end_disabled();
+        if (!has_selection) inspector.end_disabled();
 
         // TODO: Parent
         // inspector.begin_disabled();
@@ -1129,6 +1132,7 @@ entt::entity Scene::create_entity(
 
 void Scene::queue_entity_for_destruction(entt::entity entity)
 {
+    // entities_pending_destruction.push_back(entity);
     entities_pending_destruction.push_back(entity);
 }
 
@@ -1137,8 +1141,11 @@ void Scene::destroy_pending_entities()
     int count = 0;
     while (entities_pending_destruction.size())
     {
-        auto entity = entities_pending_destruction.back();
-        entities_pending_destruction.pop_back();
+        // auto entity = entities_pending_destruction.back();
+        // entities_pending_destruction.pop_back();
+        auto entity = entities_pending_destruction.front();
+        // entities_pending_destruction.erase(entities_pending_destruction.begin());
+        entities_pending_destruction.pop_front();
 
         // Remove from chunk registry
         assert(registry->all_of<HeaderComponent>(entity));
@@ -1481,9 +1488,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1718,7 +1725,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-    } // anon
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1922,7 +1929,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
