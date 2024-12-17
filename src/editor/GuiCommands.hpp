@@ -106,7 +106,7 @@ namespace Editor {
         std::string get_name() const override;
     };
 
-    // ------------------------------------------------------------------------
+    // --- CopyEntityBranchCommand --------------------------------------------
 
     class CopyEntityBranchCommand : public Command
     {
@@ -124,6 +124,32 @@ namespace Editor {
             entt::entity entity,
             const Context& context);
         //         const DestroyEntityFunc&& destroy_func);
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
+    // --- ReparentEntityBranchCommand ----------------------------------------
+
+    class ReparentEntityBranchCommand : public Command
+    {
+        entt::entity entity = entt::null;
+        entt::entity prev_parent_entity = entt::null;
+        entt::entity new_parent_entity = entt::null;
+        Context context;
+        std::string display_name;
+
+        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+        // using DestroyEntityFunc = std::function<void(entt::entity)>;
+
+    public:
+        ReparentEntityBranchCommand(
+            entt::entity entity,
+            entt::entity parent_entity,
+            const Context& context);
 
         void execute() override;
 

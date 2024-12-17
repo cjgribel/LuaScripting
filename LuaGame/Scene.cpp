@@ -738,6 +738,7 @@ namespace Inspector
         }
 
         bool has_selection = !inspector.entity_selection.empty();
+        bool has_multi_selection = inspector.entity_selection.size() > 1;
 
         // New entity
         if (ImGui::Button("New"))
@@ -748,9 +749,9 @@ namespace Inspector
             observer.enqueue_event(event);
         }
 
-        // Destroy selected entity
-        if (!has_selection) inspector.begin_disabled();
+        // Destroy selected entities
         ImGui::SameLine();
+        if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Delete"))
         {
             Scene::DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
@@ -759,9 +760,9 @@ namespace Inspector
         }
         if (!has_selection) inspector.end_disabled();
 
-        // Copy selected entity
-        if (!has_selection) inspector.begin_disabled();
+        // Copy selected entities
         ImGui::SameLine();
+        if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Copy"))
         {
             Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
@@ -769,25 +770,27 @@ namespace Inspector
         }
         if (!has_selection) inspector.end_disabled();
 
-        // TODO: Parent
-        // inspector.begin_disabled();
+        // Reparent selected entities
         ImGui::SameLine();
+        if (!has_multi_selection) inspector.begin_disabled();
         if (ImGui::Button("Parent"))
         {
             Scene::SetParentEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
+        if (!has_multi_selection) inspector.end_disabled();
 
-        // TODO: Unparent
+        // TODO: Unparent selected entities
         ImGui::SameLine();
+        inspector.begin_disabled();
         if (ImGui::Button("Unparent"))
         {
             Scene::UnparentEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
-        // inspector.end_disabled();
+        inspector.end_disabled();
 
-        // Explicit traverse button
+        // Explicit traverse
         ImGui::SameLine();
         if (ImGui::Button("Traverse"))
         {
@@ -1488,9 +1491,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1725,7 +1728,7 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-} // anon
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -1929,7 +1932,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
@@ -2127,14 +2130,17 @@ namespace
         return stack;
     }
 
+    // TODO: Don't use this
     bool is_child_of(SceneGraph& sg, entt::entity entity_child, entt::entity entity_parent)
     {
-        bool is_child = false;
-        sg.tree.ascend(entity_child, [&](auto& entity, size_t index) {
-            if (entity == entity_child) return;
-            if (entity == entity_parent) is_child = true;
-            });
-        return is_child;
+        return sg.tree.is_descendant_of(entity_child, entity_parent);
+
+        // bool is_child = false;
+        // sg.tree.ascend(entity_child, [&](auto& entity, size_t index) {
+        //     if (entity == entity_child) return;
+        //     if (entity == entity_parent) is_child = true;
+        //     });
+        // return is_child;
     }
 
     template<class Iterable>
@@ -2252,6 +2258,31 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
 void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
 {
     eeng::Log("SetParentEntityEvent: count = %i", event.entity_selection.size());
+
+    if (event.entity_selection.size() < 2) return;
+
+    // Parent entity is the last selected
+    auto parent_entity = event.entity_selection.last();
+
+    // Extract all but last and filter out descendants
+    auto entities = event.entity_selection.all_except_last();
+    auto filtered_entities = filter_out_descendants(*scenegraph, entities);
+
+    // No entity can be parent to parent_entity
+
+    for (auto& entity : filtered_entities)
+    {
+        if (scenegraph->is_descendant_of(parent_entity, entity))
+        {
+            std::cerr << "Error: Cannot parent entity " << entt::to_integral(entity)
+                << " to entity " << entt::to_integral(parent_entity) << std::endl;
+            continue;
+        }
+
+        using namespace Editor;
+        auto command = ReparentEntityBranchCommand{ entity, parent_entity, create_context() };
+        cmd_queue->add(CommandFactory::Create<ReparentEntityBranchCommand>(command));
+    }
 }
 
 void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)

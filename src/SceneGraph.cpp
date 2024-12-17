@@ -36,10 +36,15 @@ bool SceneGraph::erase_node(entt::entity entity)
 
 void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
 {
+    // Do exception here?
+    // Which checks?
+    //      OnReparent does some checks
+    //      Command?
+    //      tree will throw if operation is not valid
     assert(tree.contains(entity));
     assert(tree.contains(parent_entity));
 
-    // tree.reparent(entity, parent_entity);
+    tree.reparent(entity, parent_entity);
     
     // erase_node(entity);
     // insert_node(entity, parent_entity);

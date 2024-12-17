@@ -105,7 +105,7 @@ public:
     bool is_root(const PayloadType& payload) const
     {
         auto [nbr_children, branch_stride, parent_ofs] = get_node_info(payload);
-        return parent_ofs > 0;
+        return parent_ofs == 0;
     }
 
     bool is_leaf(const PayloadType& payload) const
@@ -118,6 +118,8 @@ public:
     {
         auto node_index = find_node_index(payload);
         assert(node_index != VecTree_NullIndex);
+        // Error if root
+        assert(nodes[node_index].m_parent_ofs);
 
         return node_index - nodes[node_index].m_parent_ofs;
     }
@@ -132,17 +134,53 @@ public:
         return nodes[get_parent_index(payload)].m_payload;
     }
 
+    bool is_descendant_of(entt::entity entity_child, entt::entity entity_parent)
+    {
+        bool is_child = false;
+        ascend(entity_child, [&](auto& entity, size_t index) {
+            if (entity == entity_child) return;
+            if (entity == entity_parent) is_child = true;
+            });
+        return is_child;
+    }
+
     void reparent(const PayloadType& payload, const PayloadType& parent_payload)
     {
+        assert(!is_descendant_of(parent_payload, payload));
         auto node_index = find_node_index(payload);
-        auto parent_index = find_node_index(parent_payload);
+        // auto parent_index = find_node_index(parent_payload);
         auto [node_nbr_children, node_branch_stride, node_parent_ofs] = get_node_info(payload);
-        auto [parent_nbr_children, parent_branch_stride, parent_parent_ofs] = get_node_info(parent_payload);
-        
-        // Parent can not be a child of the node
-        // is_child_of
-        // is_descendant_of
-        //assert();
+        // auto [parent_nbr_children, parent_branch_stride, parent_parent_ofs] = get_node_info(parent_payload);
+
+        // New parent cannot descend from entity
+
+        // 1. Copy payload branch
+        std::deque<TreeNodeType> branch;
+        branch.resize(node_branch_stride);
+        // sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
+        //     branch.push_back(entity); // level-first
+        //     });
+        std::copy(
+            nodes.begin() + node_index,
+            nodes.begin() + node_index + node_branch_stride,
+            branch.begin()
+        );
+
+        // 2. Remove the payload branch
+        erase_branch(payload);
+
+        // 3. Reinsert branch under new parent
+        insert(branch.front().m_payload, parent_payload);
+        // branch.pop_front();
+        // 3. Insert copied, top-down
+        for (size_t i = 1; i < branch.size(); i++)
+        {
+            auto& node = branch[i];
+            //if (node.m_payload == entity) continue;
+            // insert(node.m_payload, get_parent(node.m_payload));
+            auto& parent_node = branch[i - node.m_parent_ofs];
+            insert(node.m_payload, parent_node.m_payload);
+        }
     }
 
     void insert_as_root(const PayloadType& payload)

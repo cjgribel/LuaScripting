@@ -141,7 +141,7 @@ namespace Editor {
         return display_name;
     }
 
-    // ------------------------------------------------------------------------
+    // --- CopyEntityBranchCommand --------------------------------------------
 
     CopyEntityBranchCommand::CopyEntityBranchCommand(
         entt::entity entity,
@@ -190,6 +190,7 @@ namespace Editor {
             // Not needed
             copied_entities.push_back(entity_copy);
         }
+        // DONE HERE?
 
         // Entity index to parent index map
         std::unordered_map<uint32_t, uint32_t> parent_index_map;
@@ -226,6 +227,48 @@ namespace Editor {
     }
 
     std::string CopyEntityBranchCommand::get_name() const
+    {
+        return display_name;
+    }
+
+    // --- ReparentEntityBranchCommand --------------------------------------------
+
+    ReparentEntityBranchCommand::ReparentEntityBranchCommand(
+        entt::entity entity,
+        entt::entity parent_entity,
+        const Context& context) :
+        entity(entity),
+        new_parent_entity(parent_entity),
+        context(context)
+    {
+        display_name = std::string("Reparent Entity ")
+            + std::to_string(entt::to_integral(entity))
+            + " to "
+            + std::to_string(entt::to_integral(parent_entity));
+    }
+
+    void ReparentEntityBranchCommand::execute()
+    {
+        assert(!context.scenegraph.expired());
+        auto scenegraph = context.scenegraph.lock();
+
+        if (scenegraph->is_root(entity))
+            prev_parent_entity = entt::null;
+        else
+            prev_parent_entity = scenegraph->get_parent(entity);
+
+        scenegraph->reparent(entity, new_parent_entity);
+    }
+
+    void ReparentEntityBranchCommand::undo()
+    {
+        if (prev_parent_entity == entt::null)
+        {
+            // insert_as_root
+        }
+    }
+
+    std::string ReparentEntityBranchCommand::get_name() const
     {
         return display_name;
     }
