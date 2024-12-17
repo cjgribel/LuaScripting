@@ -41,19 +41,14 @@ public: // TODO: don't expose directly
 
     SceneGraph() = default;
 
-    bool create_node(
+    bool insert_node(
         entt::entity entity,
         entt::entity parent_entity = entt::null
     );
 
-    bool erase_node(entt::entity entity)
-    {
-        // assert(tree.is_leaf(entity));
-        if (!tree.is_leaf(entity))
-            std::cout << "WARNING: erase_node: non-leaf node erased " << entt::to_integral(entity) << std::endl;
+    bool erase_node(entt::entity entity);
 
-        return tree.erase_branch(entity);
-    }
+    void reparent(entt::entity entity, entt::entity parent_entity);
 
     size_t size();
 

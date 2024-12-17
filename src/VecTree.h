@@ -132,6 +132,19 @@ public:
         return nodes[get_parent_index(payload)].m_payload;
     }
 
+    void reparent(const PayloadType& payload, const PayloadType& parent_payload)
+    {
+        auto node_index = find_node_index(payload);
+        auto parent_index = find_node_index(parent_payload);
+        auto [node_nbr_children, node_branch_stride, node_parent_ofs] = get_node_info(payload);
+        auto [parent_nbr_children, parent_branch_stride, parent_parent_ofs] = get_node_info(parent_payload);
+        
+        // Parent can not be a child of the node
+        // is_child_of
+        // is_descendant_of
+        //assert();
+    }
+
     void insert_as_root(const PayloadType& payload)
     {
         nodes.insert(nodes.begin(), TreeNodeType{ .m_payload = payload });

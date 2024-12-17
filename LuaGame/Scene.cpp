@@ -1065,12 +1065,12 @@ void Scene::register_entity(
     // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
     if (entity_parent == entt::null)
     {
-        scenegraph->create_node(entity);
+        scenegraph->insert_node(entity);
     }
     else
     {
         assert(scenegraph->tree.contains(entity_parent));
-        scenegraph->create_node(entity, entity_parent);
+        scenegraph->insert_node(entity, entity_parent);
     }
 }
 

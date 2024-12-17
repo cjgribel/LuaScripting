@@ -11,7 +11,7 @@
 //#include "transform.hpp"
 #include "CoreComponents.hpp"
 
-bool SceneGraph::create_node(
+bool SceneGraph::insert_node(
     entt::entity entity,
     entt::entity parent_entity
 )
@@ -25,15 +25,37 @@ bool SceneGraph::create_node(
         return tree.insert(entity, parent_entity);
 }
 
-    size_t SceneGraph::size()
-    {
-        return tree.nodes.size();
-    }
+bool SceneGraph::erase_node(entt::entity entity)
+{
+    // assert(tree.is_leaf(entity));
+    if (!tree.is_leaf(entity))
+        std::cout << "WARNING: erase_node: non-leaf node erased " << entt::to_integral(entity) << std::endl;
 
-    // void SceneGraph::reset()
-    // {
-    //     // for (auto& node : tree.nodes) node.transform_hnd->global_tfm = m4f_1;
-    // }
+    return tree.erase_branch(entity);
+}
+
+void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
+{
+    assert(tree.contains(entity));
+    assert(tree.contains(parent_entity));
+
+    // tree.reparent(entity, parent_entity);
+    
+    // erase_node(entity);
+    // insert_node(entity, parent_entity);
+
+    // 1. Copy branch
+}
+
+size_t SceneGraph::size()
+{
+    return tree.size();
+}
+
+// void SceneGraph::reset()
+// {
+//     // for (auto& node : tree.nodes) node.transform_hnd->global_tfm = m4f_1;
+// }
 
 void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
 {
