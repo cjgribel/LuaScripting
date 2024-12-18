@@ -60,21 +60,6 @@ public:
         return std::distance(nodes.begin(), it);
     }
 
-    /// @brief 
-    /// @param node_name 
-    /// @return 
-    // TreeNodeType* find_node(const PayloadType& payload)
-    // {
-    //     auto it = std::find_if(nodes.begin(), nodes.end(),
-    //         [&payload](const TreeNodeType& node)
-    //         {
-    //             return payload == node.m_payload;
-    //         });
-
-    //     if (it == nodes.end()) return nullptr;
-    //     return &(*it);
-    // }
-
     inline size_t size() const
     {
         return nodes.size();
@@ -100,6 +85,20 @@ public:
         assert(index != VecTree_NullIndex);
         const auto& node = nodes[index];
         return std::make_tuple(node.m_payload, node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
+    }
+
+    auto get_branch_stride(const PayloadType& payload)
+    {
+        auto index = find_node_index(payload);
+        assert(index != VecTree_NullIndex);
+        return nodes[index].m_branch_stride;
+    }
+
+    auto get_parent_ofs(const PayloadType& payload)
+    {
+        auto index = find_node_index(payload);
+        assert(index != VecTree_NullIndex);
+        return nodes[index].m_parent_ofs;
     }
 
     bool is_root(const PayloadType& payload) const
@@ -148,36 +147,52 @@ public:
     {
         assert(!is_descendant_of(parent_payload, payload));
         auto node_index = find_node_index(payload);
-        // auto parent_index = find_node_index(parent_payload);
-        auto [node_nbr_children, node_branch_stride, node_parent_ofs] = get_node_info(payload);
-        // auto [parent_nbr_children, parent_branch_stride, parent_parent_ofs] = get_node_info(parent_payload);
+        auto node_branch_stride = get_branch_stride(payload);
 
-        // New parent cannot descend from entity
-
-        // 1. Copy payload branch
+        // Move branch to a temporary buffer
         std::deque<TreeNodeType> branch;
         branch.resize(node_branch_stride);
-        // sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
-        //     branch.push_back(entity); // level-first
-        //     });
-        std::copy(
+        std::move(
             nodes.begin() + node_index,
             nodes.begin() + node_index + node_branch_stride,
             branch.begin()
         );
 
-        // 2. Remove the payload branch
+        // Remove branch from its current parent
         erase_branch(payload);
 
-        // 3. Reinsert branch under new parent
+        // Reinsert branch under new parent
         insert(branch.front().m_payload, parent_payload);
-        // branch.pop_front();
-        // 3. Insert copied, top-down
         for (size_t i = 1; i < branch.size(); i++)
         {
             auto& node = branch[i];
-            //if (node.m_payload == entity) continue;
-            // insert(node.m_payload, get_parent(node.m_payload));
+            auto& parent_node = branch[i - node.m_parent_ofs];
+            insert(node.m_payload, parent_node.m_payload);
+        }
+    }
+
+    void unparent(const PayloadType& payload)
+    {
+        auto node_index = find_node_index(payload);
+        auto node_branch_stride = get_branch_stride(payload);
+
+        // Move branch to a temporary buffer
+        std::deque<TreeNodeType> branch;
+        branch.resize(node_branch_stride);
+        std::move(
+            nodes.begin() + node_index,
+            nodes.begin() + node_index + node_branch_stride,
+            branch.begin()
+        );
+
+        // Remove branch from its current parent
+        erase_branch(payload);
+
+        // Reinsert branch under new parent
+        insert_as_root(branch.front().m_payload);
+        for (size_t i = 1; i < branch.size(); i++)
+        {
+            auto& node = branch[i];
             auto& parent_node = branch[i - node.m_parent_ofs];
             insert(node.m_payload, parent_node.m_payload);
         }
@@ -185,7 +200,7 @@ public:
 
     void insert_as_root(const PayloadType& payload)
     {
-        nodes.insert(nodes.begin(), TreeNodeType{ .m_payload = payload });
+        nodes.insert(nodes.end(), TreeNodeType{ .m_payload = payload });
     }
 
     /// @brief Insert a node

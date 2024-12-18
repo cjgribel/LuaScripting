@@ -45,11 +45,16 @@ void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
     assert(tree.contains(parent_entity));
 
     tree.reparent(entity, parent_entity);
-    
+
     // erase_node(entity);
     // insert_node(entity, parent_entity);
 
     // 1. Copy branch
+}
+
+void SceneGraph::unparent(entt::entity entity)
+{
+    tree.unparent(entity);
 }
 
 size_t SceneGraph::size()

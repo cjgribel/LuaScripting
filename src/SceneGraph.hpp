@@ -71,6 +71,8 @@ public: // TODO: don't expose directly
 
     void reparent(entt::entity entity, entt::entity parent_entity);
 
+    void unparent(entt::entity entity);
+
     size_t size();
 
     // void reset();

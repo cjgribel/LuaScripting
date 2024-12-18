@@ -2275,7 +2275,7 @@ void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
         if (scenegraph->is_descendant_of(parent_entity, entity))
         {
             std::cerr << "Error: Cannot parent entity " << entt::to_integral(entity)
-                << " to entity " << entt::to_integral(parent_entity) << std::endl;
+                << " to descendant " << entt::to_integral(parent_entity) << std::endl;
             continue;
         }
 

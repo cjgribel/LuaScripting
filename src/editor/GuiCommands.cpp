@@ -262,9 +262,16 @@ namespace Editor {
 
     void ReparentEntityBranchCommand::undo()
     {
+        assert(!context.scenegraph.expired());
+        auto scenegraph = context.scenegraph.lock();
+
         if (prev_parent_entity == entt::null)
         {
-            // insert_as_root
+            scenegraph->unparent(entity);
+        }
+        else
+        {
+            scenegraph->reparent(entity, prev_parent_entity);
         }
     }
 
