@@ -820,6 +820,10 @@ namespace Inspector
         }
 
         ImGui::End(); // Window
+
+        // TEMP
+        if (!inspector.entity_selection.empty())
+            inspector.selected_entity = inspector.entity_selection.last();
     }
 
     bool inspect_entity(Editor::InspectorState& inspector)
@@ -1039,7 +1043,18 @@ entt::entity Scene::get_entity_parent(
 {
     assert(registry->all_of<HeaderComponent>(entity));
     auto& header = registry->get<HeaderComponent>(entity);
-    return entt::entity{ header.entity_parent };
+    auto parent_entity = entt::entity{ header.entity_parent };
+
+    // SH might not be synched yet - this function is used by operations (copy) that register manually
+    // if (parent_entity == entt::null) { assert(scenegraph->is_root(entity)); }
+    // else { assert(parent_entity == scenegraph->get_parent(entity)); }
+
+    return parent_entity;
+}
+
+bool Scene::entity_valid(entt::entity entity)
+{
+    return registry->valid(entity);
 }
 
 bool Scene::entity_parent_registered(
@@ -1052,6 +1067,14 @@ bool Scene::entity_parent_registered(
 
     if (entity_parent == entt::null) return true;
     return scenegraph->tree.contains(entity_parent);
+}
+
+void Scene::reparent_entity(entt::entity entity, entt::entity parent_entity)
+{
+    assert(registry->all_of<HeaderComponent>(entity));
+    registry->get<HeaderComponent>(entity).entity_parent = entt::to_integral(parent_entity);
+
+    scenegraph->reparent(entity, parent_entity);
 }
 
 void Scene::register_entity(
@@ -1075,6 +1098,11 @@ void Scene::register_entity(
         assert(scenegraph->tree.contains(entity_parent));
         scenegraph->insert_node(entity, entity_parent);
     }
+}
+
+entt::entity Scene::create_empty_entity()
+{
+    return registry->create();
 }
 
 entt::entity Scene::create_entity(
@@ -2011,6 +2039,10 @@ Editor::Context Scene::create_context()
         [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity {
             return this->create_entity("", "", entity_parent, entity_hint);
         },
+        // Create empty entity
+        [&]() -> entt::entity {
+            return this->create_empty_entity();
+        },
         // Destroy_entity
         [&](entt::entity entity) -> void {
             this->queue_entity_for_destruction(entity);
@@ -2021,7 +2053,20 @@ Editor::Context Scene::create_context()
             },
         // Register entity
         [&](entt::entity entity) -> void {
-            this->register_entity(entity); }
+            this->register_entity(entity);
+            },
+        // Reparent entity
+        [&](entt::entity entity, entt::entity parent_entity) -> void {
+            this->reparent_entity(entity, parent_entity);
+        },
+        // Get entity parent
+        [&](entt::entity entity) -> entt::entity {
+            return this->get_entity_parent(entity);
+        },
+        // Entity validity
+        [&](entt::entity entity) -> bool {
+            return this->entity_valid(entity);
+        }
     };
 }
 
@@ -2268,6 +2313,7 @@ void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
     auto entities = event.entity_selection.all_except_last();
     auto filtered_entities = filter_out_descendants(*scenegraph, entities);
 
+    // Create branch commands per entity
     for (auto& entity : filtered_entities)
     {
         if (scenegraph->is_descendant_of(parent_entity, entity))
@@ -2288,10 +2334,12 @@ void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
 {
     eeng::Log("UnparentEntityEvent: count = %i", event.entity_selection.size());
 
-    // Extract all but last and filter out descendants
-    auto& entities = event.entity_selection.get_all();
-    auto filtered_entities = filter_out_descendants(*scenegraph, entities);
+    // Filter out descendants
+    // auto& entities = event.entity_selection.get_all();
+    // auto filtered_entities = filter_out_descendants(*scenegraph, entities);
+    auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
 
+    // Create branch commands per entity
     for (auto& entity : filtered_entities)
     {
         if (scenegraph->is_root(entity))

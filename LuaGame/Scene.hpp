@@ -208,11 +208,17 @@ private:
     entt::entity get_entity_parent(
         entt::entity entity);
 
+    bool entity_valid(entt::entity entity);
+
     bool entity_parent_registered(
         entt::entity entity);
 
+    void reparent_entity(entt::entity entity, entt::entity parent_entity);
+
     void register_entity(
         entt::entity entity);
+
+    entt::entity create_empty_entity();
 
     entt::entity create_entity(
         const std::string& chunk_tag,

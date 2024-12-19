@@ -17,9 +17,13 @@ class SceneGraph;
 namespace Editor {
 
     using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
+    using CreateEmptyEntityFunc = std::function<entt::entity()>;
     using DestroyEntityFunc = std::function<void(entt::entity)>;
     using CanRegisterEntityFunc = std::function<bool(entt::entity)>;
     using RegisterEntityFunc = std::function<void(entt::entity)>;
+    using ReparentEntityFunc = std::function<void(entt::entity, entt::entity)>;
+    using GetParentFunc = std::function<entt::entity(entt::entity)>;
+    using EntityValidFunc = std::function<bool(entt::entity)>;
 
     struct Context
     {
@@ -29,11 +33,13 @@ namespace Editor {
 
         // shared_ptr<Scene>
         CreateEntityFunc create_entity;
-        // + create_empty_entity ???
+        CreateEmptyEntityFunc create_empty_entity;
         DestroyEntityFunc destroy_entity;
         CanRegisterEntityFunc can_register_entity;
         RegisterEntityFunc register_entity;
-        // + entity_valid ???
+        ReparentEntityFunc reparent_entity;
+        GetParentFunc get_parent;
+        EntityValidFunc entity_valid;
 
         // shared_ptr<Resources>
     };

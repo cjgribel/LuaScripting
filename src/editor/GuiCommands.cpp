@@ -112,7 +112,7 @@ namespace Editor {
         assert(entity_source != entt::null);
         assert(context.registry->valid(entity_source)); // context.entity_valid
 
-        entity_copy = context.registry->create(); // context.create_empty_entity
+        entity_copy = context.create_empty_entity(); // context.registry->create(); // context.create_empty_entity
         Editor::clone_entity(context.registry, entity_source, entity_copy);
 
         assert(context.can_register_entity(entity_copy));
@@ -255,26 +255,17 @@ namespace Editor {
         if (scenegraph->is_root(entity))
             prev_parent_entity = entt::null;
         else
-            prev_parent_entity = scenegraph->get_parent(entity);
+            prev_parent_entity = context.get_parent(entity); // scenegraph->get_parent(entity); // context.get_parent?
 
-        scenegraph->reparent(entity, new_parent_entity);
+        context.reparent_entity(entity, new_parent_entity);
     }
 
     void ReparentEntityBranchCommand::undo()
     {
-        assert(!context.scenegraph.expired());
-        auto scenegraph = context.scenegraph.lock();
+        // assert(!context.scenegraph.expired());
+        // auto scenegraph = context.scenegraph.lock();
 
-        scenegraph->reparent(entity, prev_parent_entity);
-
-        // if (prev_parent_entity == entt::null)
-        // {
-        //     scenegraph->unparent(entity);
-        // }
-        // else
-        // {
-        //     scenegraph->reparent(entity, prev_parent_entity);
-        // }
+        context.reparent_entity(entity, prev_parent_entity);
     }
 
     std::string ReparentEntityBranchCommand::get_name() const
