@@ -780,15 +780,15 @@ namespace Inspector
         }
         if (!has_multi_selection) inspector.end_disabled();
 
-        // TODO: Unparent selected entities
+        // Unparent selected entities (set them as roots)
         ImGui::SameLine();
-        inspector.begin_disabled();
+        if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Unparent"))
         {
             Scene::UnparentEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
-        inspector.end_disabled();
+        if (!has_selection) inspector.end_disabled();
 
         // Explicit traverse
         ImGui::SameLine();
@@ -2268,12 +2268,11 @@ void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
     auto entities = event.entity_selection.all_except_last();
     auto filtered_entities = filter_out_descendants(*scenegraph, entities);
 
-    // No entity can be parent to parent_entity
-
     for (auto& entity : filtered_entities)
     {
         if (scenegraph->is_descendant_of(parent_entity, entity))
         {
+            // Illegal to parent an entity to one of its descendants (unparent descendant first)
             std::cerr << "Error: Cannot parent entity " << entt::to_integral(entity)
                 << " to descendant " << entt::to_integral(parent_entity) << std::endl;
             continue;
@@ -2289,5 +2288,21 @@ void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
 {
     eeng::Log("UnparentEntityEvent: count = %i", event.entity_selection.size());
 
-    // Just SetParentEntityCommand with parent = entt::null?
+    // Extract all but last and filter out descendants
+    auto& entities = event.entity_selection.get_all();
+    auto filtered_entities = filter_out_descendants(*scenegraph, entities);
+
+    for (auto& entity : filtered_entities)
+    {
+        if (scenegraph->is_root(entity))
+        {
+            // Entity is already a root
+            std::cerr << "Warning: Entity " << entt::to_integral(entity) << " already unparented";
+            continue;
+        }
+
+        using namespace Editor;
+        auto command = ReparentEntityBranchCommand{ entity, entt::null, create_context() };
+        cmd_queue->add(CommandFactory::Create<ReparentEntityBranchCommand>(command));
+    }
 }

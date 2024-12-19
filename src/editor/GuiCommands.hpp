@@ -142,9 +142,6 @@ namespace Editor {
         Context context;
         std::string display_name;
 
-        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-        // using DestroyEntityFunc = std::function<void(entt::entity)>;
-
     public:
         ReparentEntityBranchCommand(
             entt::entity entity,
@@ -157,6 +154,29 @@ namespace Editor {
 
         std::string get_name() const override;
     };
+
+        // --- UnparentEntityBranchCommand ----------------------------------------
+
+    // class UnparentEntityBranchCommand : public Command
+    // {
+    //     entt::entity entity = entt::null;
+    //     entt::entity prev_parent_entity = entt::null;
+    //     // entt::entity new_parent_entity = entt::null;
+    //     Context context;
+    //     std::string display_name;
+
+    // public:
+    //     UnparentEntityBranchCommand(
+    //         entt::entity entity,
+    //         entt::entity parent_entity,
+    //         const Context& context);
+
+    //     void execute() override;
+
+    //     void undo() override;
+
+    //     std::string get_name() const override;
+    // };
 
 } // namespace Editor
 

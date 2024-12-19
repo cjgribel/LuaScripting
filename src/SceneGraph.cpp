@@ -41,15 +41,17 @@ void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
     //      OnReparent does some checks
     //      Command?
     //      tree will throw if operation is not valid
+    
     assert(tree.contains(entity));
+
+    if (parent_entity == entt::null)
+    {
+        unparent(entity);
+        return;
+    }
+
     assert(tree.contains(parent_entity));
-
     tree.reparent(entity, parent_entity);
-
-    // erase_node(entity);
-    // insert_node(entity, parent_entity);
-
-    // 1. Copy branch
 }
 
 void SceneGraph::unparent(entt::entity entity)

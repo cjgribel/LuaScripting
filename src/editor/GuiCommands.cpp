@@ -265,19 +265,72 @@ namespace Editor {
         assert(!context.scenegraph.expired());
         auto scenegraph = context.scenegraph.lock();
 
-        if (prev_parent_entity == entt::null)
-        {
-            scenegraph->unparent(entity);
-        }
-        else
-        {
-            scenegraph->reparent(entity, prev_parent_entity);
-        }
+        scenegraph->reparent(entity, prev_parent_entity);
+
+        // if (prev_parent_entity == entt::null)
+        // {
+        //     scenegraph->unparent(entity);
+        // }
+        // else
+        // {
+        //     scenegraph->reparent(entity, prev_parent_entity);
+        // }
     }
 
     std::string ReparentEntityBranchCommand::get_name() const
     {
         return display_name;
     }
+
+    // --- UnparentEntityBranchCommand --------------------------------------------
+
+    // UnparentEntityBranchCommand::UnparentEntityBranchCommand(
+    //     entt::entity entity,
+    //     entt::entity parent_entity,
+    //     const Context& context) :
+    //     entity(entity),
+    //     // new_parent_entity(parent_entity),
+    //     context(context)
+    // {
+    //     display_name = std::string("Unparent Entity ") + std::to_string(entt::to_integral(entity));
+    // }
+
+    // void UnparentEntityBranchCommand::execute()
+    // {
+    //     assert(!context.scenegraph.expired());
+    //     auto scenegraph = context.scenegraph.lock();
+
+    //     if (scenegraph->is_root(entity))
+    //     {
+    //         return;
+    //         // prev_parent_entity = entt::null;
+    //     }
+    //     // else
+    //         prev_parent_entity = scenegraph->get_parent(entity);
+
+    //     // scenegraph->reparent(entity, new_parent_entity);
+    //     scenegraph->unparent(entity);
+    // }
+
+    // void UnparentEntityBranchCommand::undo()
+    // {
+    //     assert(!context.scenegraph.expired());
+    //     auto scenegraph = context.scenegraph.lock();
+
+    //     if (prev_parent_entity == entt::null)
+    //     {
+    //         assert(scenegraph->is_root(entity));
+    //         // scenegraph->unparent(entity);
+    //         return;
+    //     }
+    //     // else
+    //         scenegraph->reparent(entity, prev_parent_entity);
+    // }
+
+    // std::string UnparentEntityBranchCommand::get_name() const
+    // {
+    //     return display_name;
+    // }
+
 
 } // namespace Editor
