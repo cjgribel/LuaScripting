@@ -2163,14 +2163,14 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 namespace
 {
     // Add scene graph branch to a stack with leafs on top
-    auto stack_branch(SceneGraph& sg, entt::entity entity)
-    {
-        std::stack<entt::entity> stack;
-        sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
-            stack.push(entity);
-            });
-        return stack;
-    }
+    // auto stack_branch(SceneGraph& sg, entt::entity entity)
+    // {
+    //     std::stack<entt::entity> stack;
+    //     sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
+    //         stack.push(entity);
+    //         });
+    //     return stack;
+    // }
 
     // TODO: Don't use this
     bool is_child_of(SceneGraph& sg, entt::entity entity_child, entt::entity entity_parent)
@@ -2210,19 +2210,27 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: count = %i", event.entity_selection.size());
 
+    auto context = create_context();
     auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
-    for (auto& entity : filtered_entities)
+    for (auto& root_entity : filtered_entities)
     {
         // Traverse scene graph branch and add destroy commands bottom-up
-        //auto branch = scenegraph->get_branch_in_level_order(entity);
-        auto branch_stack = stack_branch(*scenegraph, entity);
+        auto branch = scenegraph->get_branch_bottomup(root_entity);
         using namespace Editor;
-        while (branch_stack.size())
+        for (auto& entity : branch)
         {
-            auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
+            auto command = DestroyEntityCommand{ entity, context };
             cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
-            branch_stack.pop();
         }
+
+        // auto branch_stack = stack_branch(*scenegraph, entity);
+        // using namespace Editor;
+        // while (branch_stack.size())
+        // {
+        //     auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
+        //     cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
+        //     branch_stack.pop();
+        // }
     }
 }
 
@@ -2266,13 +2274,22 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
 
     */
 
-    auto branch_stack = stack_branch(*scenegraph, event.entity);
+    // auto branch_stack = stack_branch(*scenegraph, event.entity);
+    // using namespace Editor;
+    // while (branch_stack.size())
+    // {
+    //     auto command = CopyEntityCommand{ branch_stack.top(), create_context() };
+    //     cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
+    //     branch_stack.pop();
+    // }
+
+    auto context = create_context();
+    auto branch = scenegraph->get_branch_bottomup(event.entity);
     using namespace Editor;
-    while (branch_stack.size())
+    for (auto& entity : branch)
     {
-        auto command = CopyEntityCommand{ branch_stack.top(), create_context() };
+        auto command = CopyEntityCommand{ entity, context };
         cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
-        branch_stack.pop();
     }
 }
 
@@ -2283,6 +2300,7 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
     // assert(event.entity != entt::null);
     // assert(registry->valid(event.entity));
 
+    auto context = create_context();
     auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
     for (auto& entity : filtered_entities)
     {
@@ -2291,7 +2309,7 @@ void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
         using namespace Editor;
         //while (branch_stack.size())
         //{
-        auto command = CopyEntityBranchCommand{ entity, create_context() };
+        auto command = CopyEntityBranchCommand{ entity, context };
         cmd_queue->add(CommandFactory::Create<CopyEntityBranchCommand>(command));
         //branch_stack.pop();
     //}

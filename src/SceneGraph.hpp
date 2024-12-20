@@ -79,7 +79,9 @@ public: // TODO: don't expose directly
 
     void traverse(std::shared_ptr<entt::registry>& registry);
 
-    BranchQueue get_branch_in_level_order(entt::entity entity);
+    BranchQueue get_branch_topdown(entt::entity entity);
+
+    BranchQueue get_branch_bottomup(entt::entity entity);
 
     void dump_to_cout(
         const std::shared_ptr<const entt::registry>& registry,

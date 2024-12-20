@@ -108,12 +108,23 @@ void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
         });
 }
 
-SceneGraph::BranchQueue SceneGraph::get_branch_in_level_order(entt::entity entity)
+SceneGraph::BranchQueue SceneGraph::get_branch_topdown(entt::entity entity)
 {
     BranchQueue stack;
 
     tree.traverse_breadthfirst(entity, [&](const entt::entity& entity, size_t index) {
         stack.push_back(entity);
+        });
+
+    return stack;
+}
+
+SceneGraph::BranchQueue SceneGraph::get_branch_bottomup(entt::entity entity)
+{
+    BranchQueue stack;
+
+    tree.traverse_breadthfirst(entity, [&](const entt::entity& entity, size_t index) {
+        stack.push_front(entity);
         });
 
     return stack;

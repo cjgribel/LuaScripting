@@ -166,7 +166,7 @@ namespace Editor {
         //     source_entities.push_back(entity);
         //     });
         // ->
-        source_entities = scenegraph->get_branch_in_level_order(root_entity); // leve-order with leafs in the back
+        source_entities = scenegraph->get_branch_topdown(root_entity); // leve-order with leafs in the back
         //source_entities.insert my_vector{ my_stack._Get_container().begin(), my_stack._Get_container().end() };
 
         // Create copies
