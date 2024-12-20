@@ -41,7 +41,7 @@ void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
     //      OnReparent does some checks
     //      Command?
     //      tree will throw if operation is not valid
-    
+
     assert(tree.contains(entity));
 
     if (parent_entity == entt::null)
@@ -90,6 +90,12 @@ void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
             tfm_node.x_parent = tfm_parent.x_global;
             tfm_node.y_parent = tfm_parent.y_global;
             tfm_node.angle_parent = tfm_parent.angle_global;
+        }
+        else
+        {
+            tfm_node.x_parent = 0.0f;
+            tfm_node.y_parent = 0.0f;
+            tfm_node.angle_parent = 0.0f;
         }
 
         // // opt sin/cos

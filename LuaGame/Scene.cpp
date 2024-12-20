@@ -1038,19 +1038,19 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 }
 
 // TODO -> SG ???
-entt::entity Scene::get_entity_parent(
-    entt::entity entity)
-{
-    assert(registry->all_of<HeaderComponent>(entity));
-    auto& header = registry->get<HeaderComponent>(entity);
-    auto parent_entity = entt::entity{ header.entity_parent };
+// entt::entity Scene::get_entity_parent(
+//     entt::entity entity)
+// {
+//     assert(registry->all_of<HeaderComponent>(entity));
+//     auto& header = registry->get<HeaderComponent>(entity);
+//     auto parent_entity = entt::entity{ header.entity_parent };
 
-    // SH might not be synched yet - this function is used by operations (copy) that register manually
-    // if (parent_entity == entt::null) { assert(scenegraph->is_root(entity)); }
-    // else { assert(parent_entity == scenegraph->get_parent(entity)); }
+//     // SH might not be synched yet - this function is used by operations (copy) that register manually
+//     // if (parent_entity == entt::null) { assert(scenegraph->is_root(entity)); }
+//     // else { assert(parent_entity == scenegraph->get_parent(entity)); }
 
-    return parent_entity;
-}
+//     return parent_entity;
+// }
 
 bool Scene::entity_valid(entt::entity entity)
 {
@@ -1060,10 +1060,10 @@ bool Scene::entity_valid(entt::entity entity)
 bool Scene::entity_parent_registered(
     entt::entity entity)
 {
-    // assert(registry->all_of<HeaderComponent>(entity));
-    // auto& header = registry->get<HeaderComponent>(entity);
-    // auto entity_parent = entt::entity{ header.entity_parent };
-    auto entity_parent = get_entity_parent(entity);
+    assert(registry->all_of<HeaderComponent>(entity));
+    auto& header = registry->get<HeaderComponent>(entity);
+    auto entity_parent = entt::entity{ header.entity_parent };
+    // auto entity_parent = get_entity_parent(entity);
 
     if (entity_parent == entt::null) return true;
     return scenegraph->tree.contains(entity_parent);
@@ -1088,7 +1088,6 @@ void Scene::register_entity(
 
     chunk_registry.addEntity(header.chunk_tag, entity);
 
-    // std::cout << "Scene::create_entity_and_attach_to_scenegraph " << entt::to_integral(entity) << std::endl; //
     if (entity_parent == entt::null)
     {
         scenegraph->insert_node(entity);
@@ -1172,10 +1171,7 @@ void Scene::destroy_pending_entities()
     int count = 0;
     while (entities_pending_destruction.size())
     {
-        // auto entity = entities_pending_destruction.back();
-        // entities_pending_destruction.pop_back();
         auto entity = entities_pending_destruction.front();
-        // entities_pending_destruction.erase(entities_pending_destruction.begin());
         entities_pending_destruction.pop_front();
 
         // Remove from chunk registry
@@ -1187,7 +1183,8 @@ void Scene::destroy_pending_entities()
             scenegraph->erase_node(entity);
 
         // Destroy entity. May lead to additional entities being added to the queue.
-        registry->destroy(entity);
+        // registry->destroy(entity);
+        registry->destroy(entity, 0); // TODO: This is a fix to keep generations of entities equal
 
         count++;
     }
@@ -2060,9 +2057,9 @@ Editor::Context Scene::create_context()
             this->reparent_entity(entity, parent_entity);
         },
         // Get entity parent
-        [&](entt::entity entity) -> entt::entity {
-            return this->get_entity_parent(entity);
-        },
+        // [&](entt::entity entity) -> entt::entity {
+        //     return this->get_entity_parent(entity);
+        // },
         // Entity validity
         [&](entt::entity entity) -> bool {
             return this->entity_valid(entity);
@@ -2217,6 +2214,7 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
     for (auto& entity : filtered_entities)
     {
         // Traverse scene graph branch and add destroy commands bottom-up
+        //auto branch = scenegraph->get_branch_in_level_order(entity);
         auto branch_stack = stack_branch(*scenegraph, entity);
         using namespace Editor;
         while (branch_stack.size())

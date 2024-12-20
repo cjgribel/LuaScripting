@@ -255,7 +255,7 @@ namespace Editor {
         if (scenegraph->is_root(entity))
             prev_parent_entity = entt::null;
         else
-            prev_parent_entity = context.get_parent(entity); // scenegraph->get_parent(entity); // context.get_parent?
+            prev_parent_entity = scenegraph->get_parent(entity);
 
         context.reparent_entity(entity, new_parent_entity);
     }

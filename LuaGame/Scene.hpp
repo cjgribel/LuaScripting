@@ -205,8 +205,8 @@ private:
     std::shared_ptr<Editor::CommandQueue> cmd_queue{};
 
     // TODO -> SG ???
-    entt::entity get_entity_parent(
-        entt::entity entity);
+    // entt::entity get_entity_parent(
+    //     entt::entity entity);
 
     bool entity_valid(entt::entity entity);
 

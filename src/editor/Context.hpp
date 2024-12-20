@@ -38,7 +38,7 @@ namespace Editor {
         CanRegisterEntityFunc can_register_entity;
         RegisterEntityFunc register_entity;
         ReparentEntityFunc reparent_entity;
-        GetParentFunc get_parent;
+        // GetParentFunc get_parent;
         EntityValidFunc entity_valid;
 
         // shared_ptr<Resources>
