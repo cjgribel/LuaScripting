@@ -141,7 +141,7 @@ namespace Editor {
 #ifdef USE_COMMANDS
                 // Invoke inspection meta function on a copy of the object
 
-                auto copy_any = Editor::clone_any(any, inspector.selected_entity);
+                auto copy_any = Editor::clone_any(any, inspector.entity_selection.first());
                 //auto copy_any = any;
                 auto res_any = meta_func.invoke({}, copy_any.data(), entt::forward_as_meta(inspector));
                 assert(res_any && "Failed to invoke inspect meta function");

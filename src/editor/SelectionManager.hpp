@@ -44,6 +44,12 @@ namespace Editor {
         }
 
         // Get the last selected item
+        const T& first() const
+        {
+            return items.front();
+        }
+
+        // Get the last selected item
         const T& last() const
         {
             return items.back();
@@ -72,6 +78,17 @@ namespace Editor {
         const std::deque<T>& get_all() const
         {
             return items;
+        }
+
+        template<class F>
+        bool remove_invalid(const F&& is_valid)
+        {
+            auto items_temp = items;
+            items.clear();
+            for (auto& item : items_temp)
+            {
+                if (is_valid(item)) add(item);
+            }
         }
 
         // Get number of selected items

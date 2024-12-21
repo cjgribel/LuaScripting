@@ -74,9 +74,7 @@ namespace Editor {
         std::string get_name() const override;
     };
 
-    // ------------------------------------------------------------------------
-
-    // -> CopyEntityBranchCommand
+    // --- CopyEntityCommand --------------------------------------------------
 
     class CopyEntityCommand : public Command
     {
@@ -116,14 +114,10 @@ namespace Editor {
         Context context;
         std::string display_name;
 
-        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-        // using DestroyEntityFunc = std::function<void(entt::entity)>;
-
     public:
         CopyEntityBranchCommand(
             entt::entity entity,
             const Context& context);
-        //         const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
 

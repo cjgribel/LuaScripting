@@ -19,7 +19,7 @@ namespace Editor {
         Context context; // <- should use weak_ptr so this class does not have ownership
         std::weak_ptr<CommandQueue> cmd_queue;
         // + observer (perhaps all that is needed)
-        entt::entity selected_entity = entt::null;
+        //entt::entity selected_entity = entt::null;
 
         // std::deque<entt::entity> selected_entities;
 

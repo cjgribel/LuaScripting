@@ -823,8 +823,8 @@ namespace Inspector
         ImGui::End(); // Window
 
         // TEMP
-        if (!inspector.entity_selection.empty())
-            inspector.selected_entity = inspector.entity_selection.last();
+        // if (!inspector.entity_selection.empty())
+        //     inspector.selected_entity = inspector.entity_selection.last();
     }
 
     bool inspect_entity(Editor::InspectorState& inspector)
@@ -834,9 +834,11 @@ namespace Inspector
         static bool open = true;
         bool* p_open = &open;
 
+        entt::entity selected_entity = entt::null;
+        if (!inspector.entity_selection.empty()) selected_entity = inspector.entity_selection.first();
         bool selected_entity_valid =
-            inspector.selected_entity != entt::null &&
-            registry->valid(inspector.selected_entity);
+            selected_entity != entt::null &&
+            registry->valid(selected_entity);
 
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (!ImGui::Begin("Inspector", p_open))
@@ -859,7 +861,7 @@ namespace Inspector
 
                 if (selected_entity_valid)
                 {
-                    mod |= Editor::inspect_entity(inspector.selected_entity, inspector);
+                    mod |= Editor::inspect_entity(selected_entity, inspector);
                 }
                 else
                     ImGui::Text("Selected entity is null or invalid");
@@ -1816,8 +1818,7 @@ void Scene::renderUI()
     static Editor::InspectorState inspector{};
     inspector.context = create_context();
     inspector.cmd_queue = cmd_queue;
-    if (!registry->valid(inspector.selected_entity)) inspector.selected_entity = entt::null;
-    // + cmd_queue + CommandBuilder ???
+    inspector.entity_selection.remove_invalid([&](entt::entity& entity) { return registry->valid(entity); });
 
     if (Inspector::inspect_entity(inspector))
     {
