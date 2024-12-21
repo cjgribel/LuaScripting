@@ -154,7 +154,7 @@ public:
     struct CreateEntityEvent { entt::entity parent_entity; };
     struct DestroyEntityEvent { EntitySelection entity_selection; };
     struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
-    struct CopyEntityEvent_ { EntitySelection entity_selection; }; // TMP
+    struct CopyEntitySelectionEvent { EntitySelection entity_selection; }; // TMP
     struct SetParentEntityEvent { EntitySelection entity_selection; };
     struct UnparentEntityEvent { EntitySelection entity_selection; };
 
@@ -175,7 +175,7 @@ private:
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
     void OnCopyEntityEvent(const CopyEntityEvent& event);
-    void OnCopyEntityEvent_(const CopyEntityEvent_& event); // TMP
+    void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event); // TMP
     void OnSetParentEntityEvent(const SetParentEntityEvent& event);
     void OnUnparentEntityEvent(const UnparentEntityEvent& event);
 
@@ -215,6 +215,10 @@ private:
 
     void reparent_entity(entt::entity entity, entt::entity parent_entity);
 
+    /// Sets entity parent in HeaderComponent and registers entity to scene graph
+    void set_entity_header_parent(entt::entity entity, entt::entity entity_parent);
+
+    /// Registers entity to scene graph using parent registered in HeaderComponent
     void register_entity(
         entt::entity entity);
 

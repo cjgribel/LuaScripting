@@ -765,7 +765,8 @@ namespace Inspector
         if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Copy"))
         {
-            Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
+            // Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
+            Scene::CopyEntitySelectionEvent event { inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
@@ -1077,6 +1078,14 @@ void Scene::reparent_entity(entt::entity entity, entt::entity parent_entity)
     scenegraph->reparent(entity, parent_entity);
 }
 
+void Scene::set_entity_header_parent(entt::entity entity, entt::entity entity_parent)
+{
+    assert(registry->all_of<HeaderComponent>(entity));
+    registry->get<HeaderComponent>(entity).entity_parent = entt::to_integral(entity_parent);
+
+    // register_entity(entity);
+}
+
 void Scene::register_entity(
     entt::entity entity)
 {
@@ -1246,6 +1255,7 @@ bool Scene::init(const v2i& windowSize)
     observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
     observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
     observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
+    observer.register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
 
     observer.register_callback([&](const SetParentEntityEvent& event) { this->OnSetParentEntityEvent(event); });
     observer.register_callback([&](const UnparentEntityEvent& event) { this->OnUnparentEntityEvent(event); });
@@ -2056,10 +2066,10 @@ Editor::Context Scene::create_context()
         [&](entt::entity entity, entt::entity parent_entity) -> void {
             this->reparent_entity(entity, parent_entity);
         },
-        // Get entity parent
-        // [&](entt::entity entity) -> entt::entity {
-        //     return this->get_entity_parent(entity);
-        // },
+        // Set entity header parent
+        [&](entt::entity entity, entt::entity entity_parent) -> void {
+             this->set_entity_header_parent(entity, entity_parent);
+        },
         // Entity validity
         [&](entt::entity entity) -> bool {
             return this->entity_valid(entity);
@@ -2293,7 +2303,7 @@ void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
     }
 }
 
-void Scene::OnCopyEntityEvent_(const CopyEntityEvent_& event)
+void Scene::OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event)
 {
     eeng::Log("CopyEntityEvent: count = %i", event.entity_selection.size());
 

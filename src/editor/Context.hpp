@@ -22,7 +22,8 @@ namespace Editor {
     using CanRegisterEntityFunc = std::function<bool(entt::entity)>;
     using RegisterEntityFunc = std::function<void(entt::entity)>;
     using ReparentEntityFunc = std::function<void(entt::entity, entt::entity)>;
-    using GetParentFunc = std::function<entt::entity(entt::entity)>;
+    using SetEntityHeaderParentFunc = std::function<void(entt::entity, entt::entity)>;
+    // using GetParentFunc = std::function<entt::entity(entt::entity)>;
     using EntityValidFunc = std::function<bool(entt::entity)>;
 
     struct Context
@@ -38,6 +39,7 @@ namespace Editor {
         CanRegisterEntityFunc can_register_entity;
         RegisterEntityFunc register_entity;
         ReparentEntityFunc reparent_entity;
+        SetEntityHeaderParentFunc set_entity_header_parent;
         // GetParentFunc get_parent;
         EntityValidFunc entity_valid;
 

@@ -156,7 +156,7 @@ namespace Editor {
     {
         assert(copied_entities.empty());
         assert(root_entity != entt::null);
-        assert(context.registry->valid(root_entity));
+        assert(context.registry->valid(root_entity)); // -> context.entity_valid
 
         // iterate branch from root_entity -> source_entities
         assert(!context.scenegraph.expired());
@@ -170,26 +170,38 @@ namespace Editor {
         //source_entities.insert my_vector{ my_stack._Get_container().begin(), my_stack._Get_container().end() };
 
         // Create copies
-        for (auto& entity : source_entities)
+        for (int i = 0; i < source_entities.size(); i++)
         {
+            auto& entity = source_entities[i];
             // Copy entity
             auto entity_copy = context.registry->create(); // => context.create_empty_entity
             Editor::clone_entity(context.registry, entity, entity_copy);
 
-            // Determine parent of copied entity
-            // if entity == root_entity: Register entity_copy to the same parent
-            // else: Find index of entity parent inside source_entities, 
-            //      and use this index to fetch entity_parent of entity_copy in copied_entities
-            //      (should have been registered at this point since we are traversing in level order)
-            //      Register entity_copy to parent_copy
+            // Update entity parent
+            if (entity != root_entity)
+            {
+                auto entity_parent = scenegraph->get_parent(entity);
+                int entity_parent_index = -1;
+                //auto entity_parent_index = std::find(source_entities.begin());
+                for (int j = 0; j < i; j++)
+                {
+                    if (source_entities[j] == entity_parent) entity_parent_index = j;
+                }
+                assert(entity_parent_index > -1);
+                auto& new_parent = copied_entities[entity_parent_index];
+                //context.reparent_entity(entity_copy, new_parent); <- doesn't exist in SG yet
+                // -> set HeaderComp to new parent + register
+                context.set_entity_header_parent(entity_copy, new_parent);
+
+            }
 
             // Register copied entity
             assert(context.can_register_entity(entity_copy));
             context.register_entity(entity_copy);
 
-            // Not needed
             copied_entities.push_back(entity_copy);
         }
+        return;
         // DONE HERE?
 
         // Entity index to parent index map
