@@ -95,7 +95,7 @@ namespace Editor {
         return display_name;
     }
 
-    // ------------------------------------------------------------------------
+    // --- CopyEntityCommand (REMOVE) --------------------------------------------------
 
     CopyEntityCommand::CopyEntityCommand(
         entt::entity entity,
@@ -156,43 +156,38 @@ namespace Editor {
     {
         assert(copied_entities.empty());
         assert(root_entity != entt::null);
-        assert(context.registry->valid(root_entity)); // -> context.entity_valid
+        assert(context.entity_valid(root_entity));
 
-        // iterate branch from root_entity -> source_entities
         assert(!context.scenegraph.expired());
         auto scenegraph = context.scenegraph.lock();
-        // => get_branch_as_vector in SG
-        // scenegraph->tree.traverse_depthfirst(root_entity, [&](const entt::entity& entity, size_t) {
-        //     source_entities.push_back(entity);
-        //     });
-        // ->
-        source_entities = scenegraph->get_branch_topdown(root_entity); // leve-order with leafs in the back
-        //source_entities.insert my_vector{ my_stack._Get_container().begin(), my_stack._Get_container().end() };
+        source_entities = scenegraph->get_branch_topdown(root_entity);
 
-        // Create copies
+        // Create copies top-down and resolve new parents
         for (int i = 0; i < source_entities.size(); i++)
         {
-            auto& entity = source_entities[i];
+            auto& source_entity = source_entities[i];
+            
             // Copy entity
-            auto entity_copy = context.registry->create(); // => context.create_empty_entity
-            Editor::clone_entity(context.registry, entity, entity_copy);
+            auto entity_copy = context.create_empty_entity();
+            Editor::clone_entity(context.registry, source_entity, entity_copy);
 
-            // Update entity parent
-            if (entity != root_entity)
+            // Update entity parent for all except the root entity
+            if (source_entity != root_entity)
             {
-                auto entity_parent = scenegraph->get_parent(entity);
-                int entity_parent_index = -1;
-                //auto entity_parent_index = std::find(source_entities.begin());
+                // Find index of source entity's parent within the branch
+                auto source_entity_parent = scenegraph->get_parent(source_entity);
+                int source_entity_parent_index = -1;
+                // The parent is located in the [0, i[ range
                 for (int j = 0; j < i; j++)
                 {
-                    if (source_entities[j] == entity_parent) entity_parent_index = j;
+                    if (source_entities[j] == source_entity_parent) source_entity_parent_index = j;
                 }
-                assert(entity_parent_index > -1);
-                auto& new_parent = copied_entities[entity_parent_index];
-                //context.reparent_entity(entity_copy, new_parent); <- doesn't exist in SG yet
-                // -> set HeaderComp to new parent + register
-                context.set_entity_header_parent(entity_copy, new_parent);
+                assert(source_entity_parent_index > -1);
 
+                // Use index to obtain parent of the copied entity
+                auto& new_parent = copied_entities[source_entity_parent_index];
+                // Now set new parent in the entity header
+                context.set_entity_header_parent(entity_copy, new_parent);
             }
 
             // Register copied entity
@@ -201,41 +196,19 @@ namespace Editor {
 
             copied_entities.push_back(entity_copy);
         }
-        return;
-        // DONE HERE?
-
-        // Entity index to parent index map
-        std::unordered_map<uint32_t, uint32_t> parent_index_map;
-        for (int i = 0; i < source_entities.size(); i++)
-        {
-            auto parent_entity = scenegraph->tree.get_parent(source_entities[i]); // => function in SG
-            auto parent_entity_it = std::find(source_entities.begin(), source_entities.end(), parent_entity);
-            assert(parent_entity_it != source_entities.end());
-            auto parent_entity_index = std::distance(source_entities.begin(), parent_entity_it);
-
-            parent_index_map[i] = parent_entity_index;
-        }
-
-        // Reparent
-        // get_parent_of
-        for (int i = 0; i < source_entities.size(); i++)
-        {
-            // set parent of copied_entities[i] to copied_entities[ ParentMap[i] ]
-            // set_parent can be a SG function
-        }
-
-        // assert(context.can_register_entity(entity_copy));
-        // context.register_entity(entity_copy);
     }
 
-    // Destroy all copied_entities. Order does not matter since we are not using commands.
     void CopyEntityBranchCommand::undo()
     {
-        // assert(entity_copy != entt::null);
-        // assert(context.registry->valid(entity_copy));
+        // Destroy bottom-up
+        for (auto entity_it = copied_entities.rbegin();
+            entity_it != copied_entities.rend();
+            entity_it++)
+        {
+            context.destroy_entity(*entity_it);
+        }
 
-        // context.destroy_entity(entity_copy);
-        // entity_copy = entt::null;
+        copied_entities.clear();
     }
 
     std::string CopyEntityBranchCommand::get_name() const

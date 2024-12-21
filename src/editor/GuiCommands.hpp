@@ -110,9 +110,9 @@ namespace Editor {
 
     class CopyEntityBranchCommand : public Command
     {
-        entt::entity root_entity = entt::null; // -> entity
-        std::deque<entt::entity> source_entities;
-        std::vector<entt::entity> copied_entities; // might not be needed
+        entt::entity root_entity = entt::null;
+        std::deque<entt::entity> source_entities; // top-down
+        std::deque<entt::entity> copied_entities; // top-down
         Context context;
         std::string display_name;
 
