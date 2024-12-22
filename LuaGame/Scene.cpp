@@ -658,6 +658,65 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
 
 namespace Inspector
 {
+    struct Visitor
+    {
+        Editor::InspectorState& inspector;
+        int current_level = -1;
+        int closedIndex = -1;
+
+        Visitor(Editor::InspectorState& inspector) :
+            inspector(inspector)
+        {
+        }
+
+        void operator()(const entt::entity& entity, size_t index, size_t level)
+        {
+            // std::cout << current_level << "/" << level << ", ";
+            while (current_level >= (int)level) {
+                ImGui::TreePop();
+                current_level--;
+            }
+            if (closedIndex != -1 && level > closedIndex) return;
+
+            auto& registry = inspector.context.registry;
+            auto scenegraph = inspector.context.scenegraph.lock(); //
+
+            // Actually used: nbr_children
+            //auto [entity_, nbr_children, branch_stride, parent_ofs] = scenegraph->tree.get_node_info_at(index);
+
+            std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
+            // Add entity nbr to start for clarity
+            label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
+
+            auto& entity_selection = inspector.entity_selection;
+            bool is_selected = entity_selection.contains(entity);
+
+            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
+            //if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf; // TODO
+            if (is_selected) flags |= ImGuiTreeNodeFlags_Selected;
+
+            ImGui::SetNextItemOpen(true);
+            if (ImGui::TreeNodeEx(label.c_str(), flags))
+            {
+                current_level = (int)level;
+                closedIndex = -1;
+            }
+            else
+            {
+                closedIndex = (int)level;
+                // Node closed
+            }
+        }
+
+        ~Visitor()
+        {
+            while (current_level >= 0) {
+                ImGui::TreePop();
+                current_level--;
+            }
+        }
+    };
+
     void inspect_scene_graph_node(
         SceneGraph& scenegraph,
         Editor::InspectorState& inspector,
@@ -766,7 +825,7 @@ namespace Inspector
         if (ImGui::Button("Copy"))
         {
             // Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
-            Scene::CopyEntitySelectionEvent event { inspector.entity_selection };
+            Scene::CopyEntitySelectionEvent event{ inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
@@ -801,6 +860,9 @@ namespace Inspector
         // Scene graph
         if (scenegraph.size())
         {
+#if 1
+            scenegraph.tree.traverse_depthfirst(Visitor(inspector));
+#else
             // For all roots ...
             size_t i = 0;
             while (i < scenegraph.tree.size())
@@ -808,6 +870,7 @@ namespace Inspector
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
             }
+#endif
         }
 
         // Debug print selected
@@ -1822,8 +1885,6 @@ void Scene::renderUI()
 
     if (Inspector::inspect_entity(inspector))
     {
-        //std::cout << "cmd_queue->size() " << cmd_queue->size() << std::endl;
-         //cmd_queue->execute_pending();
     }
 
     Inspector::inspect_command_queue(inspector);

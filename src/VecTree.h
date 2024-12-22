@@ -421,7 +421,7 @@ private:
     static void traverse_depthfirst_impl(
         T& self,
         size_t start_index,
-        const F& func)
+        F&& func)
     {
         auto& nodes = self.nodes;
         if (!nodes.size()) return;
@@ -458,7 +458,7 @@ private:
     static void traverse_depthfirst_impl(
         T& self,
         const PayloadType& start_payload,
-        const F& func)
+        F&& func)
     {
         traverse_depthfirst_impl(self, self.find_node_index(start_payload), func);
     }
@@ -466,7 +466,7 @@ private:
     template<class T, class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     static void traverse_depthfirst_impl(
         T& self,
-        const F& func)
+        F&& func)
     {
         size_t i = 0;
         while (i < self.size())
@@ -485,7 +485,7 @@ public:
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         size_t start_index,
-        const F& func) const
+        F&& func) const
     {
         traverse_depthfirst_impl(*this, start_index, func);
     }
@@ -493,7 +493,7 @@ public:
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         size_t start_index,
-        const F& func)
+        F&& func)
     {
         traverse_depthfirst_impl(*this, start_index, func);
     }
@@ -501,7 +501,7 @@ public:
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         const PayloadType& start_payload,
-        const F& func) const
+        F&& func) const
     {
         traverse_depthfirst_impl(*this, start_payload, func);
     }
@@ -509,21 +509,21 @@ public:
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
         const PayloadType& start_payload,
-        const F& func)
+        F&& func)
     {
         traverse_depthfirst_impl(*this, start_payload, func);
     }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
-        const F& func) const
+        F&& func) const
     {
         traverse_depthfirst_impl(*this, func);
     }
 
     template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     void traverse_depthfirst(
-        const F& func)
+        F&& func)
     {
         traverse_depthfirst_impl(*this, func);
     }
@@ -578,6 +578,8 @@ public:
         traverse_breadthfirst(find_node_index(start_payload), func);
     }
 
+    // --- Ascend -------------------------------------------------------------
+
     /// @brief Ascend to root.
     /// @param node_name Name of node to ascend from
     /// F is a function of type void(NodeType&, size_t), where the second argument is node index
@@ -610,6 +612,8 @@ public:
     {
         ascend(find_node_index(start_payload), func);
     }
+
+    // ---------------------------------------------------------
 
     void reduce()
     {

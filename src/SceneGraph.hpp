@@ -18,9 +18,9 @@
 
 class SceneGraph
 {
-public:
+// public:
 
-private:
+// private:
     // struct SceneGraphNode
     // {
     //     entt::entity entity;
