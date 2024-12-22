@@ -222,7 +222,7 @@ private:
     void register_entity(
         entt::entity entity);
 
-    entt::entity create_empty_entity();
+    entt::entity create_empty_entity(entt::entity entity_hint);
 
     entt::entity create_entity(
         const std::string& chunk_tag,

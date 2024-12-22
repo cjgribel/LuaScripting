@@ -17,7 +17,7 @@ class SceneGraph;
 namespace Editor {
 
     using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-    using CreateEmptyEntityFunc = std::function<entt::entity()>;
+    using CreateEmptyEntityFunc = std::function<entt::entity(entt::entity)>;
     using DestroyEntityFunc = std::function<void(entt::entity)>;
     using CanRegisterEntityFunc = std::function<bool(entt::entity)>;
     using RegisterEntityFunc = std::function<void(entt::entity)>;

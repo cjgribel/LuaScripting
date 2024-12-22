@@ -112,7 +112,7 @@ namespace Editor {
         assert(entity_source != entt::null);
         assert(context.registry->valid(entity_source)); // context.entity_valid
 
-        entity_copy = context.create_empty_entity(); // context.registry->create(); // context.create_empty_entity
+        entity_copy = context.create_empty_entity(entt::null); // context.registry->create(); // context.create_empty_entity
         Editor::clone_entity(context.registry, entity_source, entity_copy);
 
         assert(context.can_register_entity(entity_copy));
@@ -154,13 +154,20 @@ namespace Editor {
 
     void CopyEntityBranchCommand::execute()
     {
-        assert(copied_entities.empty());
+        //assert(copied_entities.empty());
         assert(root_entity != entt::null);
         assert(context.entity_valid(root_entity));
 
+        // Obtain entity branch
         assert(!context.scenegraph.expired());
         auto scenegraph = context.scenegraph.lock();
         source_entities = scenegraph->get_branch_topdown(root_entity);
+
+        // Hints for copied entites:
+        // either no hints (not a redo) or previously copied & destroyed entities (undo-redo)
+        auto entity_hints = copied_entities;
+        if (entity_hints.empty()) entity_hints.assign(source_entities.size(), entt::null);
+        copied_entities.clear();
 
         // Create copies top-down and resolve new parents
         for (int i = 0; i < source_entities.size(); i++)
@@ -168,7 +175,7 @@ namespace Editor {
             auto& source_entity = source_entities[i];
             
             // Copy entity
-            auto entity_copy = context.create_empty_entity();
+            entt::entity entity_copy = context.create_empty_entity(entity_hints[i]);
             Editor::clone_entity(context.registry, source_entity, entity_copy);
 
             // Update entity parent for all except the root entity
@@ -207,8 +214,6 @@ namespace Editor {
         {
             context.destroy_entity(*entity_it);
         }
-
-        copied_entities.clear();
     }
 
     std::string CopyEntityBranchCommand::get_name() const

@@ -860,7 +860,7 @@ namespace Inspector
         // Scene graph
         if (scenegraph.size())
         {
-#if 1
+#if 0
             scenegraph.tree.traverse_depthfirst(Visitor(inspector));
 #else
             // For all roots ...
@@ -1173,9 +1173,15 @@ void Scene::register_entity(
     }
 }
 
-entt::entity Scene::create_empty_entity()
+entt::entity Scene::create_empty_entity(entt::entity entity_hint)
 {
-    return registry->create();
+    entt::entity entity;
+    if (entity_hint == entt::null)
+        return registry->create();
+
+    entity = registry->create(entity_hint);
+    assert(entity == entity_hint);
+    return entity;
 }
 
 entt::entity Scene::create_entity(
@@ -1184,16 +1190,7 @@ entt::entity Scene::create_entity(
     entt::entity entity_parent,
     entt::entity entity_hint)
 {
-    entt::entity entity;
-    if (entity_hint == entt::null)
-    {
-        entity = registry->create();
-    }
-    else
-    {
-        entity = registry->create(entity_hint);
-        assert(entity == entity_hint);
-    }
+    entt::entity entity = create_empty_entity(entity_hint);
 
     std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
     std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
@@ -1603,7 +1600,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-}
+        }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1834,7 +1831,7 @@ void Scene::update(float time_s, float deltaTime_s)
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-}
+    }
 
 void Scene::renderUI()
 {
@@ -2038,7 +2035,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-}
+    }
 
 void Scene::destroy()
 {
@@ -2109,8 +2106,8 @@ Editor::Context Scene::create_context()
             return this->create_entity("", "", entity_parent, entity_hint);
         },
         // Create empty entity
-        [&]() -> entt::entity {
-            return this->create_empty_entity();
+        [&](entt::entity entity_hint) -> entt::entity {
+            return this->create_empty_entity(entity_hint);
         },
         // Destroy_entity
         [&](entt::entity entity) -> void {
