@@ -662,50 +662,63 @@ namespace Inspector
     {
         Editor::InspectorState& inspector;
         int current_level = -1;
-        int closedIndex = -1;
+        int closed_index = -1;
 
         Visitor(Editor::InspectorState& inspector) :
             inspector(inspector)
         {
         }
 
-        void operator()(const entt::entity& entity, size_t index, size_t level)
+        //void operator()(const entt::entity& entity, size_t index, size_t level)
+        void visit(const entt::entity& entity, int level)
         {
-            // std::cout << current_level << "/" << level << ", ";
-            while (current_level >= (int)level) {
-                ImGui::TreePop();
-                current_level--;
-            }
-            if (closedIndex != -1 && level > closedIndex) return;
+            while (current_level >= level) { ImGui::TreePop(); current_level--; }
+            if (closed_index != -1 && level > closed_index) return;
 
             auto& registry = inspector.context.registry;
-            auto scenegraph = inspector.context.scenegraph.lock(); //
-
-            // Actually used: nbr_children
-            //auto [entity_, nbr_children, branch_stride, parent_ofs] = scenegraph->tree.get_node_info_at(index);
-
-            std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
-            // Add entity nbr to start for clarity
-            label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
-
+            auto scenegraph = inspector.context.scenegraph.lock();
             auto& entity_selection = inspector.entity_selection;
+
+            const std::string entity_name = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
+            const std::string label = "[" + std::to_string(entt::to_integral(entity)) + "] " + entity_name;
+
             bool is_selected = entity_selection.contains(entity);
+            bool is_leaf = scenegraph->get_nbr_children(entity) == 0;
 
             ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanFullWidth;
-            //if (!nbr_children) flags |= ImGuiTreeNodeFlags_Leaf; // TODO
+            if (is_leaf) flags |= ImGuiTreeNodeFlags_Leaf;
             if (is_selected) flags |= ImGuiTreeNodeFlags_Selected;
 
             ImGui::SetNextItemOpen(true);
             if (ImGui::TreeNodeEx(label.c_str(), flags))
             {
-                current_level = (int)level;
-                closedIndex = -1;
+                current_level = level;
+                closed_index = -1;
+
+                if (ImGui::IsItemClicked())
+                {
+                    if (bool ctrl_pressed = ImGui::IsKeyDown(ImGuiKey_ModCtrl); ctrl_pressed)
+                    {
+                        // Multi-selection with Ctrl: toggle selection state
+                        is_selected ? entity_selection.remove(entity) : entity_selection.add(entity);
+                    }
+                    else
+                    {
+                        // Single selection: clear previous selections and select this entity
+                        entity_selection.clear();
+                        entity_selection.add(entity);
+                    }
+                }
             }
             else
             {
-                closedIndex = (int)level;
-                // Node closed
+                closed_index = level;
             }
+        }
+
+        void operator()(const entt::entity& entity, size_t index, size_t level)
+        {
+            visit(entity, (int)level);
         }
 
         ~Visitor()
@@ -860,7 +873,7 @@ namespace Inspector
         // Scene graph
         if (scenegraph.size())
         {
-#if 0
+#if 1
             scenegraph.tree.traverse_depthfirst(Visitor(inspector));
 #else
             // For all roots ...
@@ -1600,7 +1613,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-        }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1831,7 +1844,7 @@ void Scene::update(float time_s, float deltaTime_s)
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-    }
+}
 
 void Scene::renderUI()
 {
@@ -2035,7 +2048,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
     // Render shapes
     drawcallCount = renderer->render(P * V);
     renderer->post_render();
-    }
+}
 
 void Scene::destroy()
 {

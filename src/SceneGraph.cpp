@@ -34,6 +34,32 @@ bool SceneGraph::erase_node(entt::entity entity)
     return tree.erase_branch(entity);
 }
 
+bool SceneGraph::is_root(entt::entity entity)
+{
+    return tree.is_root(entity);
+}
+
+bool SceneGraph::is_leaf(entt::entity entity)
+{
+    return tree.is_leaf(entity);
+}
+
+unsigned SceneGraph::get_nbr_children(entt::entity entity)
+{
+    return tree.get_nbr_children(entity);
+}
+
+entt::entity SceneGraph::get_parent(entt::entity entity)
+{
+    assert(!is_root(entity));
+    return tree.get_parent(entity);
+}
+
+bool SceneGraph::is_descendant_of(entt::entity entity, entt::entity parent_entity)
+{
+    return tree.is_descendant_of(entity, parent_entity);
+}
+
 void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
 {
     // Do exception here?

@@ -48,26 +48,15 @@ public: // TODO: don't expose directly
 
     bool erase_node(entt::entity entity);
 
-    bool is_root(entt::entity entity)
-    {
-        return tree.is_root(entity);
-    }
+    bool is_root(entt::entity entity);
 
-    bool is_leaf(entt::entity entity)
-    {
-        return tree.is_leaf(entity);
-    }
+    bool is_leaf(entt::entity entity);
 
-    entt::entity get_parent(entt::entity entity)
-    {
-        assert(!is_root(entity));
-        return tree.get_parent(entity);
-    }
+    unsigned get_nbr_children(entt::entity entity);
 
-    bool is_descendant_of(entt::entity entity, entt::entity parent_entity)
-    {
-        return tree.is_descendant_of(entity, parent_entity);
-    }
+    entt::entity get_parent(entt::entity entity);
+
+    bool is_descendant_of(entt::entity entity, entt::entity parent_entity);
 
     void reparent(entt::entity entity, entt::entity parent_entity);
 
@@ -82,6 +71,10 @@ public: // TODO: don't expose directly
     BranchQueue get_branch_topdown(entt::entity entity);
 
     BranchQueue get_branch_bottomup(entt::entity entity);
+
+    // template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
+    // void traverse_depthfirst(
+    //     F&& func)
 
     void dump_to_cout(
         const std::shared_ptr<const entt::registry>& registry,

@@ -87,11 +87,18 @@ public:
         return std::make_tuple(node.m_payload, node.m_nbr_children, node.m_branch_stride, node.m_parent_ofs);
     }
 
-    auto get_branch_stride(const PayloadType& payload)
+    auto get_branch_size(const PayloadType& payload)
     {
         auto index = find_node_index(payload);
         assert(index != VecTree_NullIndex);
         return nodes[index].m_branch_stride;
+    }
+
+    auto get_nbr_children(const PayloadType& payload)
+    {
+        auto index = find_node_index(payload);
+        assert(index != VecTree_NullIndex);
+        return nodes[index].m_nbr_children;
     }
 
     auto get_parent_ofs(const PayloadType& payload)
@@ -147,7 +154,7 @@ public:
     {
         assert(!is_descendant_of(parent_payload, payload));
         auto node_index = find_node_index(payload);
-        auto node_branch_stride = get_branch_stride(payload);
+        auto node_branch_stride = get_branch_size(payload);
 
         // Move branch to a temporary buffer
         std::deque<TreeNodeType> branch;
@@ -174,7 +181,7 @@ public:
     void unparent(const PayloadType& payload)
     {
         auto node_index = find_node_index(payload);
-        auto node_branch_stride = get_branch_stride(payload);
+        auto node_branch_stride = get_branch_size(payload);
 
         // Move branch to a temporary buffer
         std::deque<TreeNodeType> branch;
