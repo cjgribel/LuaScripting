@@ -658,13 +658,13 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
 
 namespace Inspector
 {
-    struct Visitor
+    struct EntityInspectorVisitor
     {
         Editor::InspectorState& inspector;
         int current_level = -1;
         int closed_index = -1;
 
-        Visitor(Editor::InspectorState& inspector) :
+        EntityInspectorVisitor(Editor::InspectorState& inspector) :
             inspector(inspector)
         {
         }
@@ -680,7 +680,7 @@ namespace Inspector
             auto& entity_selection = inspector.entity_selection;
 
             const std::string entity_name = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
-            const std::string label = "[" + std::to_string(entt::to_integral(entity)) + "] " + entity_name;
+            const std::string label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + entity_name;
 
             bool is_selected = entity_selection.contains(entity);
             bool is_leaf = scenegraph->get_nbr_children(entity) == 0;
@@ -721,7 +721,7 @@ namespace Inspector
             visit(entity, (int)level);
         }
 
-        ~Visitor()
+        ~EntityInspectorVisitor()
         {
             while (current_level >= 0) {
                 ImGui::TreePop();
@@ -874,7 +874,7 @@ namespace Inspector
         if (scenegraph.size())
         {
 #if 1
-            scenegraph.tree.traverse_depthfirst(Visitor(inspector));
+            scenegraph.tree.traverse_depthfirst(EntityInspectorVisitor(inspector));
 #else
             // For all roots ...
             size_t i = 0;
