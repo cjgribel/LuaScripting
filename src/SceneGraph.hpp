@@ -75,6 +75,7 @@ public: // TODO: don't expose directly
     // template<class F> requires std::invocable<F, PayloadType&, size_t, size_t>
     // void traverse_depthfirst(
     //     F&& func)
+    //void visit_depthfirst();
 
     void dump_to_cout(
         const std::shared_ptr<const entt::registry>& registry,

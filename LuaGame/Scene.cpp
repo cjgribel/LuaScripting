@@ -903,7 +903,8 @@ namespace Inspector
         //     inspector.selected_entity = inspector.entity_selection.last();
     }
 
-    bool inspect_entity(Editor::InspectorState& inspector)
+    bool inspect_entity(
+        Editor::InspectorState& inspector)
     {
         auto& registry = inspector.context.registry;
         bool mod = false;
@@ -962,7 +963,8 @@ namespace Inspector
         return mod;
     }
 
-    void inspect_command_queue(Editor::InspectorState& inspector)
+    void inspect_command_queue(
+        Editor::InspectorState& inspector)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -1021,7 +1023,9 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_playstate(const Scene::GamePlayState& play_state, ConditionalObserver& observer)
+    void inspect_playstate(
+        const Scene::GamePlayState& play_state, 
+        ConditionalObserver& observer)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -1061,7 +1065,9 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
-    void inspect_chunkregistry(ChunkRegistry& chunk_registry, ConditionalObserver& observer)
+    void inspect_chunkregistry(
+        ChunkRegistry& chunk_registry, 
+        ConditionalObserver& observer)
     {
         static bool open = true;
         bool* p_open = &open;
