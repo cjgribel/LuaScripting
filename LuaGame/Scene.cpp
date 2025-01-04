@@ -942,6 +942,8 @@ namespace Inspector
             // For all meta types
             for (auto&& [id_, type] : entt::resolve())
             {
+                if (auto is_component = get_meta_type_prop<bool, false>(type, "is_component"_hs); !is_component)
+                    continue;
                 // Note: 
                 // id_ is a hash of the mangled (fully qualified) type name
                 // type.id() is a hash of the name hash given by entt::meta<T>.type("..."_hs)
@@ -2526,4 +2528,6 @@ void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEven
     event.entity_selection.assert_valid([&](entt::entity entity) {
         return entity != entt::null && registry->valid(entity);
         });
+
+    // ...
 }

@@ -31,16 +31,16 @@ namespace Meta {
     nlohmann::json serialize_registry(
         std::shared_ptr<entt::registry>& registry);
 
-    // void deserialize_any(
-    //     const nlohmann::json& json,
-    //     entt::meta_any& meta_any,
-    //     entt::entity entity,
-    //     Editor::Context& context);
+    void deserialize_any(
+        const nlohmann::json& json,
+        entt::meta_any& meta_any,
+        entt::entity entity,
+        Editor::Context& context);
 
-    // entt::entity deserialize_entity(
-    //     const nlohmann::json& json,
-    //     Editor::Context& context
-    // );
+    entt::entity deserialize_entity(
+        const nlohmann::json& json,
+        Editor::Context& context
+    );
 
     void deserialize_entities(
         const nlohmann::json& json,

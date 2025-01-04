@@ -119,12 +119,27 @@ inline auto meta_data_name(const entt::id_type& id, const entt::meta_data& data)
     return std::to_string(id);
 }
 
+/// @brief Get the value of a meta_type property
+/// @tparam Type Non-class property type
+/// @tparam Default Value to be used if property does ot exist or cast to Type fails
+/// @param data 
+/// @param id 
+/// @return The property value if it exists, or the default value
+template<class Type, Type Default>
+inline Type get_meta_type_prop(const entt::meta_type& type, const entt::id_type& id)
+{
+    if (auto prop = type.prop(id); prop)
+        if (auto ptr = prop.value().try_cast<Type>(); ptr)
+            return *ptr;
+    return Default;
+}
+
 /// @brief Get the value of a meta_data property
 /// @tparam Type Non-class property type
 /// @tparam Default Value to be used if property does ot exist or cast to Type fails
 /// @param data 
 /// @param id 
-/// @return The property value or the default value
+/// @return The property value if it exists, or the default value
 template<class Type, Type Default>
 inline Type get_meta_data_prop(const entt::meta_data& data, const entt::id_type& id)
 {

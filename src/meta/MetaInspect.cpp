@@ -18,8 +18,6 @@
 #include "InspectType.hpp"
 #include "EditComponentCommand.hpp"
 
-
-
 namespace Editor {
 
     namespace
@@ -40,8 +38,9 @@ namespace Editor {
         //assert(registry.valid(entity));
         auto entity_str = std::to_string(entt::to_integral(entity));
 
-        // DEBUG
+#ifdef EENG_DEBUG
         if (!registry->valid(entity)) entity_str = entity_str + " [invalid]";
+#endif
 
         // No meta type to use
         if (!meta_type_with_name) return entity_str;
@@ -230,10 +229,10 @@ namespace Editor {
 #ifdef INSPECTION_DEBUG_PRINT
                     std::cout << "DONE inspecting data field" << key_name << std::endl;
 #endif
-                    }
                 }
-            return mod;
             }
+            return mod;
+        }
 
         // any is not a meta type
 
@@ -354,14 +353,14 @@ namespace Editor {
                 });
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast type ") + meta_type_name(any.type()));
-                }
+        }
         // else { /* cref */ }
 
 #ifdef INSPECTION_DEBUG_PRINT
         std::cout << "DONE inspect_any " << meta_type_name(any.type()) << std::endl;
 #endif
         return mod;
-        }
+    }
 
     bool inspect_entity(
         entt::entity entity,
@@ -450,7 +449,7 @@ namespace Editor {
 #endif
         }
         return mod;
-        }
+    }
 #endif
 
-    } // namespace Editor
+} // namespace Editor

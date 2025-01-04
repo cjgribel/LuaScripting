@@ -53,6 +53,10 @@ template <typename Component> void register_meta_component()
     using namespace entt::literals;
 
     entt::meta<Component>()
+
+        .prop("is_component"_hs, true)
+
+        // These are Lua specific
         .template func<&is_valid<Component>>("valid"_hs)
         .template func<&emplace_component<Component>>("emplace"_hs)
         .template func<&get_component<Component>>("get"_hs)

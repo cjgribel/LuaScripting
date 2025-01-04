@@ -313,7 +313,7 @@ namespace Editor {
     //     return display_name;
     // }
 
-    // --- ReparentEntityBranchCommand ----------------------------------------
+    // --- AddComponentToEntityCommand ----------------------------------------
 
     AddComponentToEntityCommand::AddComponentToEntityCommand(
         entt::entity entity,
@@ -331,6 +331,7 @@ namespace Editor {
 
     void AddComponentToEntityCommand::execute()
     {
+        // Fetch component storage
         auto storage = context.registry->storage(comp_id);
         assert(!storage->contains(entity));
 
@@ -339,6 +340,7 @@ namespace Editor {
 
     void AddComponentToEntityCommand::undo()
     {
+        // Fetch component storage
         auto storage = context.registry->storage(comp_id);
         assert(storage->contains(entity));
 
@@ -350,28 +352,71 @@ namespace Editor {
         return display_name;
     }
 
-    // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
-    //     std::cout << "Component type: " << type.name() << "\n";
-    //     // Add `type.name()` or similar to the combo box
+    // --- RemoveComponentFromEntityCommand ----------------------------------------
+
+    // void DestroyEntityCommand::execute()
+    // {
+    //     assert(entity != entt::null);
+    //     entity_json = Meta::serialize_entities(&entity, 1, context.registry);
+    //     context.destroy_entity(entity);
+    //     // destroy_func(entity);
     // }
 
-    // storage->contains(entity) <- Check first
+    // void DestroyEntityCommand::undo()
+    // {
+    //     Meta::deserialize_entities(entity_json, context);
 
-    // Note: "emplace"_hs is already registered for a Lua-specific 
+    //     entity_json = nlohmann::json{};
+    // }
 
-    // -> AddComponentEvent
+    RemoveComponentFromEntityCommand::RemoveComponentFromEntityCommand(
+        entt::entity entity,
+        entt::id_type comp_id,
+        const Context& context) :
+        entity(entity),
+        comp_id(comp_id),
+        context(context)
+    {
+        display_name = std::string("Remove Component ")
+            + std::to_string(comp_id)
+            + " from Entity "
+            + std::to_string(entt::to_integral(entity));
+    }
 
-    // Create & add component
+    void RemoveComponentFromEntityCommand::execute()
+    {
+        // Fetch component storage
+        auto storage = context.registry->storage(comp_id);
+        assert(storage->contains(entity));
 
-    // push (deserialize_entity)
-    // Without last arg
-    //      context.registry->storage(id)->push(entity, any.data());
-    // Note needed since since push will default-initialize
-    //      entt::meta_any any = meta_type.construct();
+        // Fetch component type
+        auto comp_type = entt::resolve(comp_id);
+        // Fetch component
+        auto comp_any = comp_type.from_void(storage->value(entity));
+        // Serialize component
+        comp_json = Meta::serialize_any(comp_type.from_void(storage->value(entity)));
+        // Remove component from entity
+        storage->remove(entity);
+    }
 
-    // Remove
-    //auto storage = inspector.context.registry->storage(id);
-    //storage->remove(entity);
+    void RemoveComponentFromEntityCommand::undo()
+    {
+        // Fetch component storage
+        auto storage = context.registry->storage(comp_id);
+        assert(!storage->contains(entity));
 
+        // Fetch component type
+        auto comp_type = entt::resolve(comp_id);
+        // Default-construct component
+        auto comp_any = comp_type.construct();
+        // Deserialize component
+        Meta::deserialize_any(comp_json, comp_any, entity, context);
+        // Add component to entity
+        storage->push(entity, comp_any.data());
+    }
 
+    std::string RemoveComponentFromEntityCommand::get_name() const
+    {
+        return display_name;
+    }
 } // namespace Editor

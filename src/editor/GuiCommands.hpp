@@ -55,16 +55,10 @@ namespace Editor {
         Context context;
         std::string display_name;
 
-        // using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
-        // using DestroyEntityFunc = std::function<void(entt::entity)>;
-
-        // DestroyEntityFunc destroy_func;
-
     public:
         DestroyEntityCommand(
             entt::entity entity,
             const Context& context
-            // const DestroyEntityFunc&& destroy_func
         );
 
         void execute() override;
@@ -80,22 +74,16 @@ namespace Editor {
     {
         entt::entity entity_source = entt::null;
         entt::entity entity_copy = entt::null;
-        //     nlohmann::json entity_json{};
         Context context;
         std::string display_name;
 
         using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
         using DestroyEntityFunc = std::function<void(entt::entity)>;
-        //     using RegisterEntityFunc = std::function<void(entt::entity, entt::entity)>;
-        //     using DestroyEntityFunc = std::function<void(entt::entity)>;
-
-        //     DestroyEntityFunc destroy_func;
 
     public:
         CopyEntityCommand(
             entt::entity entity,
             const Context& context);
-        //         const DestroyEntityFunc&& destroy_func);
 
         void execute() override;
 
@@ -149,30 +137,30 @@ namespace Editor {
         std::string get_name() const override;
     };
 
-        // --- UnparentEntityBranchCommand ----------------------------------------
+    // --- UnparentEntityBranchCommand ----------------------------------------
 
-    // class UnparentEntityBranchCommand : public Command
-    // {
-    //     entt::entity entity = entt::null;
-    //     entt::entity prev_parent_entity = entt::null;
-    //     // entt::entity new_parent_entity = entt::null;
-    //     Context context;
-    //     std::string display_name;
+// class UnparentEntityBranchCommand : public Command
+// {
+//     entt::entity entity = entt::null;
+//     entt::entity prev_parent_entity = entt::null;
+//     // entt::entity new_parent_entity = entt::null;
+//     Context context;
+//     std::string display_name;
 
-    // public:
-    //     UnparentEntityBranchCommand(
-    //         entt::entity entity,
-    //         entt::entity parent_entity,
-    //         const Context& context);
+// public:
+//     UnparentEntityBranchCommand(
+//         entt::entity entity,
+//         entt::entity parent_entity,
+//         const Context& context);
 
-    //     void execute() override;
+//     void execute() override;
 
-    //     void undo() override;
+//     void undo() override;
 
-    //     std::string get_name() const override;
-    // };
+//     std::string get_name() const override;
+// };
 
-    // --- ReparentEntityBranchCommand ----------------------------------------
+// --- AddComponentToEntityCommand ----------------------------------------
 
     class AddComponentToEntityCommand : public Command
     {
@@ -183,6 +171,29 @@ namespace Editor {
 
     public:
         AddComponentToEntityCommand(
+            entt::entity entity,
+            entt::id_type comp_id,
+            const Context& context);
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
+    // --- RemoveComponentFromEntityCommand -----------------------------------
+
+    class RemoveComponentFromEntityCommand : public Command
+    {
+        entt::entity entity = entt::null;
+        entt::id_type comp_id;
+        nlohmann::json comp_json{};
+        Context context;
+        std::string display_name;
+
+    public:
+        RemoveComponentFromEntityCommand(
             entt::entity entity,
             entt::id_type comp_id,
             const Context& context);
