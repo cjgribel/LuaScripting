@@ -153,11 +153,11 @@ public:
 
     struct CreateEntityEvent { entt::entity parent_entity; };
     struct DestroyEntityEvent { EntitySelection entity_selection; };
-    struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
+    // struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
     struct CopyEntitySelectionEvent { EntitySelection entity_selection; }; // TMP
-    struct SetParentEntityEvent { EntitySelection entity_selection; };
-    struct UnparentEntityEvent { EntitySelection entity_selection; };
-    struct AddComponentToEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
+    struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
+    struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
     struct RemoveComponentFromEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
 
 private:
@@ -176,12 +176,12 @@ private:
     void OnLoadFileEvent(const LoadFileEvent& event);
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
-    void OnCopyEntityEvent(const CopyEntityEvent& event);
+    // void OnCopyEntityEvent(const CopyEntityEvent& event);
     void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event); // TMP
-    void OnSetParentEntityEvent(const SetParentEntityEvent& event);
-    void OnUnparentEntityEvent(const UnparentEntityEvent& event);
+    void OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent& event);
+    void OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& event);
 
-    void OnAddComponentToEntityEvent(const AddComponentToEntityEvent& event);
+    void OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelectionEvent& event);
     void OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event);
 
     std::shared_ptr<entt::registry> registry{};

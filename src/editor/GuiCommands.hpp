@@ -172,6 +172,28 @@ namespace Editor {
     //     std::string get_name() const override;
     // };
 
+    // --- ReparentEntityBranchCommand ----------------------------------------
+
+    class AddComponentToEntityCommand : public Command
+    {
+        entt::entity entity = entt::null;
+        entt::id_type comp_id;
+        Context context;
+        std::string display_name;
+
+    public:
+        AddComponentToEntityCommand(
+            entt::entity entity,
+            entt::id_type comp_id,
+            const Context& context);
+
+        void execute() override;
+
+        void undo() override;
+
+        std::string get_name() const override;
+    };
+
 } // namespace Editor
 
 #endif /* EditComponentCommand_hpp */

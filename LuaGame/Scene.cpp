@@ -848,7 +848,7 @@ namespace Inspector
         if (!has_multi_selection) inspector.begin_disabled();
         if (ImGui::Button("Parent"))
         {
-            Scene::SetParentEntityEvent event{ .entity_selection = inspector.entity_selection };
+            Scene::SetParentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_multi_selection) inspector.end_disabled();
@@ -858,7 +858,7 @@ namespace Inspector
         if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Unparent"))
         {
-            Scene::UnparentEntityEvent event{ .entity_selection = inspector.entity_selection };
+            Scene::UnparentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
@@ -997,7 +997,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Add") && selected_comp_id)
         {
-            Scene::AddComponentToEntityEvent event{ selected_comp_id, inspector.entity_selection };
+            Scene::AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
         ImGui::SameLine();
@@ -1409,13 +1409,13 @@ bool Scene::init(const v2i& windowSize)
     observer.register_callback([&](const LoadFileEvent& event) { this->OnLoadFileEvent(event); });
     observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
     observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
-    observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
+    // observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
     observer.register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
 
-    observer.register_callback([&](const SetParentEntityEvent& event) { this->OnSetParentEntityEvent(event); });
-    observer.register_callback([&](const UnparentEntityEvent& event) { this->OnUnparentEntityEvent(event); });
+    observer.register_callback([&](const SetParentEntitySelectionEvent& event) { this->OnSetParentEntitySelectionEvent(event); });
+    observer.register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
 
-    observer.register_callback([&](const AddComponentToEntityEvent& event) { this->OnAddComponentToEntityEvent(event); });
+    observer.register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
     observer.register_callback([&](const RemoveComponentFromEntityEvent& event) { this->OnRemoveComponentFromEntityEvent(event); });
 
     try
@@ -1974,9 +1974,12 @@ void Scene::renderUI()
     static Editor::InspectorState inspector{};
     inspector.context = create_context();
     inspector.cmd_queue = cmd_queue;
-    inspector.entity_selection.remove_invalid([&](entt::entity& entity) { return registry->valid(entity); });
+    inspector.entity_selection.remove_invalid([&](entt::entity& entity)
+        {
+            return entity != entt::null && registry->valid(entity);
+        });
 
-    if (Inspector::inspect_entity(inspector, observer)) { }
+    if (Inspector::inspect_entity(inspector, observer)) {}
 
     Inspector::inspect_command_queue(inspector);
 
@@ -2373,6 +2376,10 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
 {
     eeng::Log("DestroyEntityEvent: count = %i", event.entity_selection.size());
 
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
+
     auto context = create_context();
     auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
     for (auto& root_entity : filtered_entities)
@@ -2385,105 +2392,53 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
             auto command = DestroyEntityCommand{ entity, context };
             cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
         }
-
-        // auto branch_stack = stack_branch(*scenegraph, entity);
-        // using namespace Editor;
-        // while (branch_stack.size())
-        // {
-        //     auto command = DestroyEntityCommand{ branch_stack.top(), create_context() };
-        //     cmd_queue->add(CommandFactory::Create<DestroyEntityCommand>(command));
-        //     branch_stack.pop();
-        // }
     }
 }
 
-void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
-{
-    eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
+// void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
+// {
+//     eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
 
-    assert(event.entity != entt::null);
-    assert(registry->valid(event.entity));
+//     assert(event.entity != entt::null);
+//     assert(registry->valid(event.entity));
 
-    // Adjust CopyCommand to manage multiple entities / a branch?
-
-    // Can't queue a ParentCommand if the entity has not been created yet...
-
-    // FILTER (remove entities with a selected parent)
-    // + REPARENT CHILDREN
-
-    /*
-
-    - Node1
-        - Node2
-            - Node3
-
-    NOW ->
-
-    - Node1copy
-    - Node1
-        - Node2copy
-        - Node2
-            - Node3copy
-            - Node3
-
-    SHOULD BE ??? ->
-
-    - Node1copy
-        - Node2copy
-            - Node3copy
-    - Node1
-        - Node2
-            - Node3
-
-    */
-
-    // auto branch_stack = stack_branch(*scenegraph, event.entity);
-    // using namespace Editor;
-    // while (branch_stack.size())
-    // {
-    //     auto command = CopyEntityCommand{ branch_stack.top(), create_context() };
-    //     cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
-    //     branch_stack.pop();
-    // }
-
-    auto context = create_context();
-    auto branch = scenegraph->get_branch_bottomup(event.entity);
-    using namespace Editor;
-    for (auto& entity : branch)
-    {
-        auto command = CopyEntityCommand{ entity, context };
-        cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
-    }
-}
+//     auto context = create_context();
+//     auto branch = scenegraph->get_branch_bottomup(event.entity);
+//     using namespace Editor;
+//     for (auto& entity : branch)
+//     {
+//         auto command = CopyEntityCommand{ entity, context };
+//         cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
+//     }
+// }
 
 void Scene::OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event)
 {
-    eeng::Log("CopyEntityEvent: count = %i", event.entity_selection.size());
+    eeng::Log("CopyEntitySelectionEvent: count = %i", event.entity_selection.size());
 
-    // assert(event.entity != entt::null);
-    // assert(registry->valid(event.entity));
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
 
     auto context = create_context();
     auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
     for (auto& entity : filtered_entities)
     {
-        // Traverse scene graph branch and add destroy commands bottom-up
-        //auto branch_stack = stack_branch(scenegraph, entity);
+
         using namespace Editor;
-        //while (branch_stack.size())
-        //{
         auto command = CopyEntityBranchCommand{ entity, context };
         cmd_queue->add(CommandFactory::Create<CopyEntityBranchCommand>(command));
-        //branch_stack.pop();
-    //}
     }
 }
 
-void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
+void Scene::OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent& event)
 {
     eeng::Log("SetParentEntityEvent: count = %i", event.entity_selection.size());
 
     if (event.entity_selection.size() < 2) return;
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
 
     // Parent entity is the last selected
     auto parent_entity = event.entity_selection.last();
@@ -2498,8 +2453,10 @@ void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
         if (scenegraph->is_descendant_of(parent_entity, entity))
         {
             // Illegal to parent an entity to one of its descendants (unparent descendant first)
-            std::cerr << "Error: Cannot parent entity " << entt::to_integral(entity)
-                << " to descendant " << entt::to_integral(parent_entity) << std::endl;
+            eeng::LogError("Cannot parent entity %u to its descendant %u",
+                entt::to_integral(entity),
+                entt::to_integral(parent_entity));
+
             continue;
         }
 
@@ -2509,13 +2466,15 @@ void Scene::OnSetParentEntityEvent(const SetParentEntityEvent& event)
     }
 }
 
-void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
+void Scene::OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& event)
 {
     eeng::Log("UnparentEntityEvent: count = %i", event.entity_selection.size());
 
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
+
     // Filter out descendants
-    // auto& entities = event.entity_selection.get_all();
-    // auto filtered_entities = filter_out_descendants(*scenegraph, entities);
     auto filtered_entities = filter_out_descendants(*scenegraph, event.entity_selection.get_all());
 
     // Create branch commands per entity
@@ -2523,8 +2482,7 @@ void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
     {
         if (scenegraph->is_root(entity))
         {
-            // Entity is already a root
-            std::cerr << "Warning: Entity " << entt::to_integral(entity) << " already unparented";
+            eeng::LogError("Entity %u already unparented", entt::to_integral(entity));
             continue;
         }
 
@@ -2534,12 +2492,38 @@ void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
     }
 }
 
-void Scene::OnAddComponentToEntityEvent(const AddComponentToEntityEvent& event)
+void Scene::OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelectionEvent& event)
 {
     eeng::Log("AddComponentToEntityEvent: comp_id %u, count = %i", event.component_id, event.entity_selection.size());
+
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
+
+    auto storage = registry->storage(event.component_id);
+    auto context = create_context();
+    using namespace Editor;
+
+    for (auto& entity : event.entity_selection.get_all())
+    {
+        if (storage->contains(entity))
+        {
+            eeng::LogError("Entity %u already contains Component %u",
+                entt::to_integral(entity),
+                event.component_id);
+            continue;
+        }
+
+        auto command = AddComponentToEntityCommand{ entity, event.component_id, context };
+        cmd_queue->add(CommandFactory::Create<AddComponentToEntityCommand>(command));
+    }
 }
 
 void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event)
 {
     eeng::Log("RemoveComponentFromEntityEvent: comp_id %u, count = %i", event.component_id, event.entity_selection.size());
+
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
 }

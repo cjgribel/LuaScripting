@@ -35,6 +35,19 @@ void eeng::Log(const char* fmt, ...)
     internal::LogSingleton::instance().AddLog("[frame#%i] %s\n", ImGui::GetFrameCount(), formattedString.c_str());
 }
 
+void eeng::LogError(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    std::string formattedString = formatString(fmt, args);
+    va_end(args);
+
+#ifdef EENG_PRINT_ERROR_LOG_TO_CERR
+    std::cerr << "Error: " << formattedString << std::endl;
+#endif
+    internal::LogSingleton::instance().AddLog("[frame#%i][Error] %s\n", ImGui::GetFrameCount(), formattedString.c_str());
+}
+
 void eeng::LogDraw(const char* label, bool* p_open)
 {
     internal::LogSingleton::instance().Draw(label, p_open);

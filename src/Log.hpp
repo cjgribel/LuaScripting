@@ -13,6 +13,11 @@ namespace eeng {
     void Log(const char* fmt, ...);
 
     /// @brief 
+    /// @param fmt 
+    /// @param  
+    void LogError(const char* fmt, ...);
+
+    /// @brief 
     /// @param label 
     /// @param p_open 
     void LogDraw(const char* label, bool* p_open = nullptr);

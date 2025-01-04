@@ -81,6 +81,15 @@ namespace Editor {
         }
 
         template<class F>
+        void assert_valid(const F&& is_valid) const
+        {
+            for (auto& item : items)
+            {
+                assert(is_valid(item));
+            }
+        }
+
+        template<class F>
         bool remove_invalid(const F&& is_valid)
         {
             auto items_temp = items;

@@ -173,7 +173,7 @@ namespace Editor {
         for (int i = 0; i < source_entities.size(); i++)
         {
             auto& source_entity = source_entities[i];
-            
+
             // Copy entity
             entt::entity entity_copy = context.create_empty_entity(entity_hints[i]);
             Editor::clone_entity(context.registry, source_entity, entity_copy);
@@ -313,31 +313,65 @@ namespace Editor {
     //     return display_name;
     // }
 
+    // --- ReparentEntityBranchCommand ----------------------------------------
 
+    AddComponentToEntityCommand::AddComponentToEntityCommand(
+        entt::entity entity,
+        entt::id_type comp_id,
+        const Context& context) :
+        entity(entity),
+        comp_id(comp_id),
+        context(context)
+    {
+        display_name = std::string("Add Component ")
+            + std::to_string(comp_id)
+            + " to Entity "
+            + std::to_string(entt::to_integral(entity));
+    }
 
+    void AddComponentToEntityCommand::execute()
+    {
+        auto storage = context.registry->storage(comp_id);
+        assert(!storage->contains(entity));
 
-                // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
-                //     std::cout << "Component type: " << type.name() << "\n";
-                //     // Add `type.name()` or similar to the combo box
-                // }
+        storage->push(entity);
+    }
 
-                // storage->contains(entity) <- Check first
+    void AddComponentToEntityCommand::undo()
+    {
+        auto storage = context.registry->storage(comp_id);
+        assert(storage->contains(entity));
 
-                // Note: "emplace"_hs is already registered for a Lua-specific 
+        storage->remove(entity);
+    }
 
-                // -> AddComponentEvent
+    std::string AddComponentToEntityCommand::get_name() const
+    {
+        return display_name;
+    }
 
-                // Create & add component
+    // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
+    //     std::cout << "Component type: " << type.name() << "\n";
+    //     // Add `type.name()` or similar to the combo box
+    // }
 
-                // push (deserialize_entity)
-                // Without last arg
-                //      context.registry->storage(id)->push(entity, any.data());
-                // Note needed since since push will default-initialize
-                //      entt::meta_any any = meta_type.construct();
+    // storage->contains(entity) <- Check first
 
-                // Remove
-                //auto storage = inspector.context.registry->storage(id);
-                //storage->remove(entity);
+    // Note: "emplace"_hs is already registered for a Lua-specific 
+
+    // -> AddComponentEvent
+
+    // Create & add component
+
+    // push (deserialize_entity)
+    // Without last arg
+    //      context.registry->storage(id)->push(entity, any.data());
+    // Note needed since since push will default-initialize
+    //      entt::meta_any any = meta_type.construct();
+
+    // Remove
+    //auto storage = inspector.context.registry->storage(id);
+    //storage->remove(entity);
 
 
 } // namespace Editor
