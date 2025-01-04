@@ -94,7 +94,7 @@ namespace Editor {
 
         // Build combo
         auto selected_entry = cur_entry;
-        if (ImGui::BeginCombo("##enum", cur_entry->first.c_str()))
+        if (ImGui::BeginCombo("##enumcombo", cur_entry->first.c_str()))
         {
             for (auto it = enum_entries.begin(); it != enum_entries.end(); it++)
             {

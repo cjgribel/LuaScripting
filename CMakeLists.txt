@@ -143,8 +143,9 @@ endif()
 # Fetch enTT (header-only)
 #
 # Release notes for 3.14
-# Note deprecation for meta properties: should use 'custom' instead
+# Note deprecation for meta properties: should use 'traits' or 'custom' instead
 # https://github.com/skypjack/entt/releases/tag/v3.14.0
+# https://github.com/skypjack/entt/blob/master/docs/md/meta.md#user-defined-data
 message(STATUS "Fetching enTT")
 FetchContent_Declare(
   entt

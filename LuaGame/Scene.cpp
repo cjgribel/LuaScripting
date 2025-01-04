@@ -28,7 +28,7 @@
 
 #include "GuiCommands.hpp" // -> GUI
 
-//#include "meta_aux.h" // enum -> string
+#include "meta_aux.h" // meta_type_name
 
 #define AUTO_ARG(x) decltype(x), x
 using namespace linalg;
@@ -891,9 +891,12 @@ namespace Inspector
         if (inspector.entity_selection.size())
         {
             ImGui::Text("Selected Entities (in order):");
-            for (auto entity : inspector.entity_selection.get_all()) {
+            std::stringstream ss;
+            for (auto entity : inspector.entity_selection.get_all())
+                //ss << std::to_string(entt::to_integral(entity)) << " ";
+                //ss << Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>()) << " ";
                 ImGui::Text("Entity %d", static_cast<int>(entity));
-            }
+            // ImGui::Text("%s", ss.str().c_str());
         }
 
         ImGui::End(); // Window
@@ -904,7 +907,8 @@ namespace Inspector
     }
 
     bool inspect_entity(
-        Editor::InspectorState& inspector)
+        Editor::InspectorState& inspector,
+        ConditionalObserver& observer)
     {
         auto& registry = inspector.context.registry;
         bool mod = false;
@@ -917,13 +921,93 @@ namespace Inspector
             selected_entity != entt::null &&
             registry->valid(selected_entity);
 
-        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-        if (!ImGui::Begin("Inspector", p_open))
+        ImGui::SetNextWindowBgAlpha(0.35f);
+        if (!ImGui::Begin("Entity Inspector", p_open))
         {
             ImGui::End();
             return mod;
         }
 
+        // Add Component
+        static entt::id_type selected_comp_id = 0;
+        const auto get_comp_name = [](entt::id_type comp_id) -> std::string
+            {
+                return meta_type_name(entt::resolve(comp_id));
+            };
+        std::string selected_entry_label = "";
+        if (selected_comp_id) selected_entry_label = get_comp_name(selected_comp_id);
+
+        if (ImGui::BeginCombo("##addcompcombo", selected_entry_label.c_str()))
+        {
+            // For all meta types
+            for (auto&& [id_, type] : entt::resolve())
+            {
+                // Note: 
+                // id_ is a hash of the mangled (fully qualified) type name
+                // type.id() is a hash of the name hash given by entt::meta<T>.type("..."_hs)
+                // If these mismatch, entt::resolve will give a correct type for the latter but not the former
+
+                auto id = type.id();
+                // id, type.id(), "Transform"_hs
+                // std::cout << meta_type_name(type);
+                // std::cout << ", " << type.info().name(); // mangled
+                // std::cout << ", " << id; // mangled?
+                // std::cout << ", " << type.id(); // same as ->
+                // std::cout << ", " << (bool)entt::resolve(id); // 0
+                // std::cout << ", " << (bool)entt::resolve(type.id()); // 1
+                // std::cout << ", " << (bool)entt::resolve(entt::type_id<Scene::GamePlayState>()); // 1
+                // std::cout << ", " << entt::hashed_string("GamePlayState"_hs).value(); // ^this
+                // std::cout << std::endl;
+
+                bool is_selected = (id == selected_comp_id);
+                // std::string label = std::string(type.info().name()); // Mangled name
+                std::string label = get_comp_name(id); // Display name, if present, or mangled name
+
+                if (ImGui::Selectable(label.c_str(), is_selected))
+                    selected_comp_id = id;
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+
+                // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
+                //     std::cout << "Component type: " << type.name() << "\n";
+                //     // Add `type.name()` or similar to the combo box
+                // }
+
+                // storage->contains(entity) <- Check first
+
+                // Note: "emplace"_hs is already registered for a Lua-specific 
+
+                // -> AddComponentEvent
+
+                // Create & add component
+
+                // push (deserialize_entity)
+                // Without last arg
+                //      context.registry->storage(id)->push(entity, any.data());
+                // Note needed since since push will default-initialize
+                //      entt::meta_any any = meta_type.construct();
+
+                // Remove
+                //auto storage = inspector.context.registry->storage(id);
+                //storage->remove(entity);
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Add") && selected_comp_id)
+        {
+            Scene::AddComponentToEntityEvent event{ selected_comp_id, inspector.entity_selection };
+            observer.enqueue_event(event);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove") && selected_comp_id)
+        {
+            Scene::RemoveComponentFromEntityEvent event{ selected_comp_id, inspector.entity_selection };
+            observer.enqueue_event(event);
+        }
+
+        // Component inspector
         ImGui::SetNextItemOpen(true);
         if (ImGui::TreeNode("Components"))
         {
@@ -942,16 +1026,6 @@ namespace Inspector
                 }
                 else
                     ImGui::Text("Selected entity is null or invalid");
-
-                //Editor::inspect_registry(header_meta, inspector);
-
-                // if (inspector_widget.begin_node("comp name"))
-                // {
-                //     // type_widget(*t, w, scene);
-                //     ImGui::Text("Hello!");
-                //     inspector_widget.end_node();
-                // }
-
 
                 ImGui::EndTable();
             }
@@ -1024,7 +1098,7 @@ namespace Inspector
     }
 
     void inspect_playstate(
-        const Scene::GamePlayState& play_state, 
+        const Scene::GamePlayState& play_state,
         ConditionalObserver& observer)
     {
         static bool open = true;
@@ -1066,7 +1140,7 @@ namespace Inspector
     }
 
     void inspect_chunkregistry(
-        ChunkRegistry& chunk_registry, 
+        ChunkRegistry& chunk_registry,
         ConditionalObserver& observer)
     {
         static bool open = true;
@@ -1340,6 +1414,9 @@ bool Scene::init(const v2i& windowSize)
 
     observer.register_callback([&](const SetParentEntityEvent& event) { this->OnSetParentEntityEvent(event); });
     observer.register_callback([&](const UnparentEntityEvent& event) { this->OnUnparentEntityEvent(event); });
+
+    observer.register_callback([&](const AddComponentToEntityEvent& event) { this->OnAddComponentToEntityEvent(event); });
+    observer.register_callback([&](const RemoveComponentFromEntityEvent& event) { this->OnRemoveComponentFromEntityEvent(event); });
 
     try
     {
@@ -1899,9 +1976,7 @@ void Scene::renderUI()
     inspector.cmd_queue = cmd_queue;
     inspector.entity_selection.remove_invalid([&](entt::entity& entity) { return registry->valid(entity); });
 
-    if (Inspector::inspect_entity(inspector))
-    {
-    }
+    if (Inspector::inspect_entity(inspector, observer)) { }
 
     Inspector::inspect_command_queue(inspector);
 
@@ -2457,4 +2532,14 @@ void Scene::OnUnparentEntityEvent(const UnparentEntityEvent& event)
         auto command = ReparentEntityBranchCommand{ entity, entt::null, create_context() };
         cmd_queue->add(CommandFactory::Create<ReparentEntityBranchCommand>(command));
     }
+}
+
+void Scene::OnAddComponentToEntityEvent(const AddComponentToEntityEvent& event)
+{
+    eeng::Log("AddComponentToEntityEvent: comp_id %u, count = %i", event.component_id, event.entity_selection.size());
+}
+
+void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event)
+{
+    eeng::Log("RemoveComponentFromEntityEvent: comp_id %u, count = %i", event.component_id, event.entity_selection.size());
 }

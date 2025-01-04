@@ -157,6 +157,8 @@ public:
     struct CopyEntitySelectionEvent { EntitySelection entity_selection; }; // TMP
     struct SetParentEntityEvent { EntitySelection entity_selection; };
     struct UnparentEntityEvent { EntitySelection entity_selection; };
+    struct AddComponentToEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    struct RemoveComponentFromEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
 
 private:
 
@@ -178,6 +180,9 @@ private:
     void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event); // TMP
     void OnSetParentEntityEvent(const SetParentEntityEvent& event);
     void OnUnparentEntityEvent(const UnparentEntityEvent& event);
+
+    void OnAddComponentToEntityEvent(const AddComponentToEntityEvent& event);
+    void OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};

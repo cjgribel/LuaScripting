@@ -314,4 +314,30 @@ namespace Editor {
     // }
 
 
+
+
+                // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
+                //     std::cout << "Component type: " << type.name() << "\n";
+                //     // Add `type.name()` or similar to the combo box
+                // }
+
+                // storage->contains(entity) <- Check first
+
+                // Note: "emplace"_hs is already registered for a Lua-specific 
+
+                // -> AddComponentEvent
+
+                // Create & add component
+
+                // push (deserialize_entity)
+                // Without last arg
+                //      context.registry->storage(id)->push(entity, any.data());
+                // Note needed since since push will default-initialize
+                //      entt::meta_any any = meta_type.construct();
+
+                // Remove
+                //auto storage = inspector.context.registry->storage(id);
+                //storage->remove(entity);
+
+
 } // namespace Editor

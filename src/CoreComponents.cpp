@@ -52,8 +52,10 @@ template<>
 void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
 {
     // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
+    
     entt::meta<Transform>()
-        .type("Transform"_hs).prop(display_name_hs, "Transform")
+        //.type("Transform"_hs)                 // <- this hashed string is used implicitly
+        .prop(display_name_hs, "Transform")  // <- Can be used without .type()
 
         .data<&Transform::x>("x"_hs).prop(display_name_hs, "x")
         .data<&Transform::y>("y"_hs).prop(display_name_hs, "y")
@@ -76,6 +78,8 @@ void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
         //        .func<&vec3::to_string>(to_string_hs)
         //.func<&vec3_to_string>(to_string_hs)
         ;
+    
+    assert("Transform"_hs == entt::resolve<Transform>().id());
 
     lua->new_usertype<Transform>("Transform",
 

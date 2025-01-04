@@ -163,7 +163,7 @@ namespace Meta {
             if (entt::meta_type meta_type = entt::resolve(id); meta_type)
             {
                 auto key_name = std::string{ meta_type.info().name() }; // Better for serialization?
-                // auto type_name = meta_type_name(meta_type); // Inspector-friendly version
+                // auto type_name = meta_type_name(meta_type); // Display name or mangled name
 
                 entity_json["components"][key_name] = serialize_any(meta_type.from_void(type.value(entity)));
             }
@@ -413,11 +413,11 @@ namespace Meta {
 
             if (entt::meta_type meta_type = entt::resolve(id); meta_type)
             {
-                // Default-construct component component
+                // Default-construct component
                 entt::meta_any any = meta_type.construct();
-                // Deserialize component
+                // Deserialize
                 deserialize_any(component_json.value(), any, entity, context);
-                // Add component to entity storage
+                // Add to entity storage
                 context.registry->storage(id)->push(entity, any.data());
             }
             else
