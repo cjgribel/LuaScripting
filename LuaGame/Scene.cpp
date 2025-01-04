@@ -2529,5 +2529,21 @@ void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEven
         return entity != entt::null && registry->valid(entity);
         });
 
-    // ...
+    auto storage = registry->storage(event.component_id);
+    auto context = create_context();
+    using namespace Editor;
+
+    for (auto& entity : event.entity_selection.get_all())
+    {
+        if (!storage->contains(entity))
+        {
+            eeng::LogError("Entity %u does not contain Component %u",
+                entt::to_integral(entity),
+                event.component_id);
+            continue;
+        }
+
+        auto command = RemoveComponentFromEntityCommand { entity, event.component_id, context };
+        cmd_queue->add(CommandFactory::Create<RemoveComponentFromEntityCommand>(command));
+    }
 }
