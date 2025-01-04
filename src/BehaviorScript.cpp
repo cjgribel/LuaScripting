@@ -163,7 +163,7 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
     const std::string& identifier,
     const std::string& script_path)
 {
-    std::cout << "BehaviorScriptFactory::create_from_lua_object " << identifier << " entity " << (uint32_t)entity << std::endl;
+    // std::cout << "BehaviorScriptFactory::create_from_lua_object " << identifier << " entity " << (uint32_t)entity << std::endl;
     //return;
     assert(script_table.valid());
 

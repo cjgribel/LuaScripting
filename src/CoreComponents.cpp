@@ -1133,7 +1133,7 @@ namespace {
     BehaviorScript copy_BehaviorScript(const void* ptr, entt::entity dst_entity)
     {
         auto script = static_cast<const BehaviorScript*>(ptr);
-        std::cout << "COPY BehaviorScript" << std::endl;
+        // std::cout << "COPY BehaviorScript" << std::endl;
 
 
         // ScriptedBehaviorComponent comp_cpy;
@@ -1184,7 +1184,7 @@ namespace {
         // comp_cpy.scripts.push_back(std::move(script_cpy));
     // }
 
-        std::cout << "DONE COPY BehaviorScript" << std::endl << std::flush;
+        // std::cout << "DONE COPY BehaviorScript" << std::endl << std::flush;
         return script_cpy;
     };
 

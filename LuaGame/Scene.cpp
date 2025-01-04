@@ -1,7 +1,7 @@
 
 #include <thread>
 #include <chrono>
-
+#include <filesystem> // get_files_in_folder
 #include <algorithm>
 #include <execution>
 
@@ -656,8 +656,53 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
     lua->operator[]("observer") = &observer;
 }
 
+namespace {
+
+    struct PathComponents {
+        std::string directory;
+        std::string filename;
+        std::string name_without_extension;
+        std::string extension;
+    };
+
+    PathComponents split_path(const std::string& path) {
+        PathComponents components;
+        std::filesystem::path fs_path(path);
+
+        components.directory = fs_path.parent_path().string() + "/";
+        components.filename = fs_path.filename().string();
+        components.name_without_extension = fs_path.stem().string();
+        components.extension = fs_path.extension().string();
+
+        // Remove leading dot from the extension
+        if (!components.extension.empty() && components.extension[0] == '.') {
+            components.extension.erase(0, 1);
+        }
+
+        return components;
+    }
+
+    std::vector<std::string> get_files_in_folder(const std::string& folder_path)
+    {
+        namespace fs = std::filesystem;
+        std::vector<std::string> fileNames;
+        try {
+            for (const auto& entry : fs::directory_iterator(folder_path)) {
+                if (fs::is_regular_file(entry.status())) {
+                    fileNames.push_back(entry.path().string());
+                }
+            }
+        }
+        catch (const fs::filesystem_error& e) {
+            std::cerr << "Error accessing directory: " << e.what() << std::endl;
+        }
+        return fileNames;
+    }
+}
+
 namespace Inspector
 {
+
     struct EntityInspectorVisitor
     {
         Editor::InspectorState& inspector;
@@ -930,38 +975,40 @@ namespace Inspector
 
         // Component combo
         static entt::id_type selected_comp_id = 0;
-        const auto get_comp_name = [](entt::id_type comp_id) -> std::string
-            {
-                return meta_type_name(entt::resolve(comp_id));
-            };
-        std::string selected_entry_label = "";
-        if (selected_comp_id) selected_entry_label = get_comp_name(selected_comp_id);
-
-        if (ImGui::BeginCombo("##addcompcombo", selected_entry_label.c_str()))
         {
-            // For all meta types
-            for (auto&& [id_, type] : entt::resolve())
+            const auto get_comp_name = [](entt::id_type comp_id) -> std::string
+                {
+                    return meta_type_name(entt::resolve(comp_id));
+                };
+            std::string selected_entry_label = "";
+            if (selected_comp_id) selected_entry_label = get_comp_name(selected_comp_id);
+
+            if (ImGui::BeginCombo("##addcompcombo", selected_entry_label.c_str()))
             {
-                // Skip non-component types
-                if (auto is_component = get_meta_type_prop<bool, false>(type, "is_component"_hs); !is_component)
-                    continue;
-                
-                // Note: 
-                // id_ is a hash of the mangled (fully qualified) type name
-                // type.id() is a hash of the name hash given by entt::meta<T>.type(...)
-                // If these mismatch, entt::resolve will give a correct meta type only for the latter
-                auto id = type.id();
+                // For all meta types
+                for (auto&& [id_, type] : entt::resolve())
+                {
+                    // Skip non-component types
+                    if (auto is_component = get_meta_type_prop<bool, false>(type, "is_component"_hs); !is_component)
+                        continue;
 
-                bool is_selected = (id == selected_comp_id);
-                std::string label = get_comp_name(id); // Display name, if present, or mangled name
+                    // Note: 
+                    // id_ is a hash of the mangled (fully qualified) type name
+                    // type.id() is a hash of the name hash given by entt::meta<T>.type(...)
+                    // If these mismatch, entt::resolve will give a correct meta type only for the latter
+                    auto id = type.id();
 
-                if (ImGui::Selectable(label.c_str(), is_selected))
-                    selected_comp_id = id;
+                    bool is_selected = (id == selected_comp_id);
+                    std::string label = get_comp_name(id); // Display name, if present, or mangled name
 
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
+                    if (ImGui::Selectable(label.c_str(), is_selected))
+                        selected_comp_id = id;
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
             }
-            ImGui::EndCombo();
         }
 
         // Add Component button
@@ -980,7 +1027,44 @@ namespace Inspector
             observer.enqueue_event(event);
         }
 
-        // Component inspector
+        // Scripts combo
+        auto all_scripts = get_files_in_folder(Scene::script_dir);
+        static std::string selected_script_path = "";
+        if (ImGui::BeginCombo("##addscriptcombo", selected_script_path.c_str()))
+        {
+            for (auto& script_path : all_scripts)
+            {
+                if (split_path(script_path).extension != "lua") continue;
+
+                bool is_selected = (script_path == selected_script_path);
+
+                if (ImGui::Selectable(script_path.c_str(), is_selected))
+                    selected_script_path = script_path;
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // Add script
+        ImGui::SameLine();
+        if (ImGui::Button("Add script"))
+        {
+            //observer.enqueue_event(Scene::LoadFileEvent{ script_path });
+        };
+
+        // // Fetch component type
+        // auto comp_type = entt::resolve(comp_id);
+        // // Fetch component
+        // auto comp_any = comp_type.from_void(storage->value(entity));
+        // // Serialize component
+        // comp_json = Meta::serialize_any(comp_type.from_void(storage->value(entity))); + cast<ScriptedBehavior>
+        // // Remove component from entity
+        // storage->remove(entity);
+
+
+    // Component inspector
         ImGui::SetNextItemOpen(true);
         if (ImGui::TreeNode("Components"))
         {
@@ -1120,7 +1204,7 @@ namespace Inspector
         bool* p_open = &open;
 
         static std::string selected_chunk_tag;
-        static std::string load_json_path = "/Users/ag1498/GitHub/LuaScripting/LuaGame/lua/init.lua"; //
+        static std::string load_json_path = "..."; //
 
         ImGui::SetNextWindowBgAlpha(0.35f);
         if (!ImGui::Begin("Scene Chunks", p_open))
@@ -1669,7 +1753,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-}
+        }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1900,7 +1984,7 @@ void Scene::update(float time_s, float deltaTime_s)
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-}
+    }
 
 void Scene::renderUI()
 {
@@ -2514,7 +2598,7 @@ void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEven
             continue;
         }
 
-        auto command = RemoveComponentFromEntityCommand { entity, event.component_id, context };
+        auto command = RemoveComponentFromEntityCommand{ entity, event.component_id, context };
         cmd_queue->add(CommandFactory::Create<RemoveComponentFromEntityCommand>(command));
     }
 }

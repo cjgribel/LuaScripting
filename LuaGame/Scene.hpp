@@ -159,7 +159,9 @@ public:
     struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
     struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
     struct RemoveComponentFromEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    //struct AddScriptToEntityEvent { entt::entity id_type component_id; EntitySelection entity_selection; };
 
+    static inline const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 private:
 
     Editor::Context create_context();
@@ -187,8 +189,6 @@ private:
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
     std::shared_ptr<SceneGraph> scenegraph{};
-
-    const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 
     std::deque<entt::entity> entities_pending_destruction;
 
