@@ -928,7 +928,7 @@ namespace Inspector
             return mod;
         }
 
-        // Add Component
+        // Component combo
         static entt::id_type selected_comp_id = 0;
         const auto get_comp_name = [](entt::id_type comp_id) -> std::string
             {
@@ -942,27 +942,17 @@ namespace Inspector
             // For all meta types
             for (auto&& [id_, type] : entt::resolve())
             {
+                // Skip non-component types
                 if (auto is_component = get_meta_type_prop<bool, false>(type, "is_component"_hs); !is_component)
                     continue;
+                
                 // Note: 
                 // id_ is a hash of the mangled (fully qualified) type name
-                // type.id() is a hash of the name hash given by entt::meta<T>.type("..."_hs)
-                // If these mismatch, entt::resolve will give a correct type for the latter but not the former
-
+                // type.id() is a hash of the name hash given by entt::meta<T>.type(...)
+                // If these mismatch, entt::resolve will give a correct meta type only for the latter
                 auto id = type.id();
-                // id, type.id(), "Transform"_hs
-                // std::cout << meta_type_name(type);
-                // std::cout << ", " << type.info().name(); // mangled
-                // std::cout << ", " << id; // mangled?
-                // std::cout << ", " << type.id(); // same as ->
-                // std::cout << ", " << (bool)entt::resolve(id); // 0
-                // std::cout << ", " << (bool)entt::resolve(type.id()); // 1
-                // std::cout << ", " << (bool)entt::resolve(entt::type_id<Scene::GamePlayState>()); // 1
-                // std::cout << ", " << entt::hashed_string("GamePlayState"_hs).value(); // ^this
-                // std::cout << std::endl;
 
                 bool is_selected = (id == selected_comp_id);
-                // std::string label = std::string(type.info().name()); // Mangled name
                 std::string label = get_comp_name(id); // Display name, if present, or mangled name
 
                 if (ImGui::Selectable(label.c_str(), is_selected))
@@ -970,38 +960,19 @@ namespace Inspector
 
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
-
-                // if (auto prop = type.prop("is_component"_hs); prop && prop.value().cast<bool>()) {
-                //     std::cout << "Component type: " << type.name() << "\n";
-                //     // Add `type.name()` or similar to the combo box
-                // }
-
-                // storage->contains(entity) <- Check first
-
-                // Note: "emplace"_hs is already registered for a Lua-specific 
-
-                // -> AddComponentEvent
-
-                // Create & add component
-
-                // push (deserialize_entity)
-                // Without last arg
-                //      context.registry->storage(id)->push(entity, any.data());
-                // Note needed since since push will default-initialize
-                //      entt::meta_any any = meta_type.construct();
-
-                // Remove
-                //auto storage = inspector.context.registry->storage(id);
-                //storage->remove(entity);
             }
             ImGui::EndCombo();
         }
+
+        // Add Component button
         ImGui::SameLine();
         if (ImGui::Button("Add") && selected_comp_id)
         {
             Scene::AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
+
+        // Remove Component button
         ImGui::SameLine();
         if (ImGui::Button("Remove") && selected_comp_id)
         {

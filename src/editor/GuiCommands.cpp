@@ -354,21 +354,6 @@ namespace Editor {
 
     // --- RemoveComponentFromEntityCommand ----------------------------------------
 
-    // void DestroyEntityCommand::execute()
-    // {
-    //     assert(entity != entt::null);
-    //     entity_json = Meta::serialize_entities(&entity, 1, context.registry);
-    //     context.destroy_entity(entity);
-    //     // destroy_func(entity);
-    // }
-
-    // void DestroyEntityCommand::undo()
-    // {
-    //     Meta::deserialize_entities(entity_json, context);
-
-    //     entity_json = nlohmann::json{};
-    // }
-
     RemoveComponentFromEntityCommand::RemoveComponentFromEntityCommand(
         entt::entity entity,
         entt::id_type comp_id,

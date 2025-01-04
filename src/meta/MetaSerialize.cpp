@@ -392,6 +392,8 @@ namespace Meta {
         }
     }
 
+    // deserialize_component
+
     entt::entity deserialize_entity(
         const nlohmann::json& json,
         Editor::Context& context
