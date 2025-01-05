@@ -1023,7 +1023,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Remove") && selected_comp_id)
         {
-            Scene::RemoveComponentFromEntityEvent event{ selected_comp_id, inspector.entity_selection };
+            Scene::RemoveComponentFromEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
 
@@ -1049,9 +1049,17 @@ namespace Inspector
 
         // Add script
         ImGui::SameLine();
-        if (ImGui::Button("Add script"))
+        if (ImGui::Button("Add Script"))
         {
-            //observer.enqueue_event(Scene::LoadFileEvent{ script_path });
+            Scene::AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
+            observer.enqueue_event(event);
+        };
+
+        ImGui::SameLine();
+        if (ImGui::Button("Remove Script"))
+        {
+            Scene::RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
+            observer.enqueue_event(event);
         };
 
         // // Fetch component type
@@ -1473,7 +1481,10 @@ bool Scene::init(const v2i& windowSize)
     observer.register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
 
     observer.register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
-    observer.register_callback([&](const RemoveComponentFromEntityEvent& event) { this->OnRemoveComponentFromEntityEvent(event); });
+    observer.register_callback([&](const RemoveComponentFromEntitySelectionEvent& event) { this->OnRemoveComponentFromEntitySelectionEvent(event); });
+
+    observer.register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
+    observer.register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
 
     try
     {
@@ -1753,7 +1764,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-        }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1984,7 +1995,7 @@ void Scene::update(float time_s, float deltaTime_s)
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-    }
+}
 
 void Scene::renderUI()
 {
@@ -2576,7 +2587,7 @@ void Scene::OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelec
     }
 }
 
-void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event)
+void Scene::OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromEntitySelectionEvent& event)
 {
     eeng::Log("RemoveComponentFromEntityEvent: comp_id %u, count = %i", event.component_id, event.entity_selection.size());
 
@@ -2601,4 +2612,42 @@ void Scene::OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEven
         auto command = RemoveComponentFromEntityCommand{ entity, event.component_id, context };
         cmd_queue->add(CommandFactory::Create<RemoveComponentFromEntityCommand>(command));
     }
+}
+
+void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEvent& event)
+{
+    eeng::Log("AddScriptToEntitySelectionEvent: path %s, count = %i",
+        event.script_path.c_str(),
+        event.entity_selection.size());
+
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
+
+    //...
+
+    //     sol::table add_script_from_file(
+    //     auto& registry,
+    //     entt::entity entity,
+    //     auto& lua,
+    //     const std::string& script_dir,
+    //     const std::string& script_name
+    // )
+    auto split = split_path(event.script_path);
+    auto path = split.directory;
+    auto just_filename = split.name_without_extension;
+    add_script_from_file(*registry, event.entity_selection.first(), lua, path, just_filename);
+}
+
+void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event)
+{
+    eeng::Log("RemoveScriptFromEntitySelectionEvent: path %s, count = %i",
+        event.script_path.c_str(),
+        event.entity_selection.size());
+
+    event.entity_selection.assert_valid([&](entt::entity entity) {
+        return entity != entt::null && registry->valid(entity);
+        });
+
+    //...
 }

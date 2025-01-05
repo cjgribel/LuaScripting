@@ -158,8 +158,9 @@ public:
     struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
     struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
     struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    struct RemoveComponentFromEntityEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    //struct AddScriptToEntityEvent { entt::entity id_type component_id; EntitySelection entity_selection; };
+    struct RemoveComponentFromEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    struct AddScriptToEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
+    struct RemoveScriptFromEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
 
     static inline const std::string script_dir = "../../LuaGame/lua/"; // Todo: Should not be hard coded obviously
 private:
@@ -184,7 +185,10 @@ private:
     void OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& event);
 
     void OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelectionEvent& event);
-    void OnRemoveComponentFromEntityEvent(const RemoveComponentFromEntityEvent& event);
+    void OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromEntitySelectionEvent& event);
+
+    void OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEvent& event);
+    void OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
