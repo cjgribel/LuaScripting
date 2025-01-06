@@ -242,6 +242,8 @@ add_executable(LuaGame
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meta/MetaSerialize.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/editor/GuiCommands.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/editor/EditComponentCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FileManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ChunkRegistry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLDebugMessageCallback.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ShapeRenderer.cpp

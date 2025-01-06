@@ -8,8 +8,10 @@
 //#include <nlohmann/json.hpp> // to serialize 
 
 #include "imgui.h"
+
 #include "mat.h"
 
+#include "FileManager.hpp" // JSON IO
 #include "MetaInspect.hpp"
 #include "MetaClone.hpp"
 #include "MetaSerialize.hpp"
@@ -326,7 +328,7 @@ namespace {
         // lua["engine"]["input"]["button_y"] = buttons.w;
     }
 
-    // Called from Lua
+    // Called from Lua or after adding a script in Editor mode
     // Adds a behavior script to the ScriptedBehaviorComponent of an entity
     // Adds entity & registry to the script ('id', 'owner')
     // 
@@ -654,50 +656,6 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
     );
 
     lua->operator[]("observer") = &observer;
-}
-
-namespace {
-
-    struct PathComponents {
-        std::string directory;
-        std::string filename;
-        std::string name_without_extension;
-        std::string extension;
-    };
-
-    PathComponents split_path(const std::string& path) {
-        PathComponents components;
-        std::filesystem::path fs_path(path);
-
-        components.directory = fs_path.parent_path().string() + "/";
-        components.filename = fs_path.filename().string();
-        components.name_without_extension = fs_path.stem().string();
-        components.extension = fs_path.extension().string();
-
-        // Remove leading dot from the extension
-        if (!components.extension.empty() && components.extension[0] == '.') {
-            components.extension.erase(0, 1);
-        }
-
-        return components;
-    }
-
-    std::vector<std::string> get_files_in_folder(const std::string& folder_path)
-    {
-        namespace fs = std::filesystem;
-        std::vector<std::string> fileNames;
-        try {
-            for (const auto& entry : fs::directory_iterator(folder_path)) {
-                if (fs::is_regular_file(entry.status())) {
-                    fileNames.push_back(entry.path().string());
-                }
-            }
-        }
-        catch (const fs::filesystem_error& e) {
-            std::cerr << "Error accessing directory: " << e.what() << std::endl;
-        }
-        return fileNames;
-    }
 }
 
 namespace Inspector
@@ -1028,13 +986,13 @@ namespace Inspector
         }
 
         // Scripts combo
-        auto all_scripts = get_files_in_folder(Scene::script_dir);
+        auto all_scripts = FileManager::GetFilesInFolder(Scene::script_dir);
         static std::string selected_script_path = "";
         if (ImGui::BeginCombo("##addscriptcombo", selected_script_path.c_str()))
         {
             for (auto& script_path : all_scripts)
             {
-                if (split_path(script_path).extension != "lua") continue;
+                if (FileManager::SplitPath(script_path).extension != "lua") continue;
 
                 bool is_selected = (script_path == selected_script_path);
 
@@ -1062,17 +1020,7 @@ namespace Inspector
             observer.enqueue_event(event);
         };
 
-        // // Fetch component type
-        // auto comp_type = entt::resolve(comp_id);
-        // // Fetch component
-        // auto comp_any = comp_type.from_void(storage->value(entity));
-        // // Serialize component
-        // comp_json = Meta::serialize_any(comp_type.from_void(storage->value(entity))); + cast<ScriptedBehavior>
-        // // Remove component from entity
-        // storage->remove(entity);
-
-
-    // Component inspector
+        // Component inspector
         ImGui::SetNextItemOpen(true);
         if (ImGui::TreeNode("Components"))
         {
@@ -1221,12 +1169,14 @@ namespace Inspector
             return;
         }
 
-        ImGui::InputText("##loadjson", &load_json_path, 0, nullptr, nullptr);
+        // Existing JSON combo
+
+        //ImGui::InputText("##loadjson", &load_json_path, 0, nullptr, nullptr);
 
         // Load JSON
-        if (ImGui::Button("Load file"))
+        if (ImGui::Button("Load Chunk"))
         {
-            observer.enqueue_event(Scene::LoadFileEvent{ load_json_path });
+            observer.enqueue_event(Scene::LoadChunkFromFileEvent{ load_json_path });
         };
 
         // Chunk list
@@ -1242,9 +1192,9 @@ namespace Inspector
         }
         ImGui::EndChild(); // Chunk list window
 
-        if (ImGui::Button("Destroy chunk"))
+        if (ImGui::Button("Unload Chunk"))
         {
-            observer.enqueue_event(Scene::DestroyChunkEvent{ selected_chunk_tag });
+            observer.enqueue_event(Scene::UnloadChunkEvent{ selected_chunk_tag });
         };
 
         ImGui::End(); // Window
@@ -1470,8 +1420,8 @@ bool Scene::init(const v2i& windowSize)
 
     // Hook up Scene events
     observer.register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
-    observer.register_callback([&](const DestroyChunkEvent& event) { this->OnDestroyChunkEvent(event); });
-    observer.register_callback([&](const LoadFileEvent& event) { this->OnLoadFileEvent(event); });
+    observer.register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
+    observer.register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
     observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
     observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
     // observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
@@ -2303,26 +2253,75 @@ Editor::Context Scene::create_context()
 
 void Scene::save_chunk(const std::string& chunk_tag)
 {
-    // NOT A COMMAND
+    // 1. Save chunk entities to JSON
+    // -> ChunkRegistry?
+
+    // Extract chunk entities
+    auto chunk_it = chunk_registry.chunk(chunk_tag);
+    std::vector<entt::entity> entities (chunk_it.begin(), chunk_it.end());
+
+    // Serialize entities
+    nlohmann::json entities_json =
+        Meta::serialize_entities(entities.data(), entities.size(), registry);
+
+    // Create JSON object
+    nlohmann::json chunk_json;
+    chunk_json["chunk"] = chunk_tag;
+    chunk_json["entities"] = entities_json;
+
+    // Save JSON to file
+    // std::string file_path = save_dir + chunk_tag + ".json";
+    // std::ofstream file(file_path);
+    // if (file.is_open()) {
+    //     file << json_data.dump(4); // Pretty-print with an indent of 4 spaces
+    //     file.close();
+    // } else {
+    //     std::cerr << "Unable to open file for writing: " << file_path << std::endl;
+    // }
 }
 
 void Scene::save_all_chunks()
 {
-    // NOT A COMMAND
+    for (auto& chunk : chunk_registry.chunks()) save_chunk(chunk.first);
 }
 
-void Scene::load_json(const std::string& path)
+// unload_chunk()
+
+// unload_all_chunks()
+
+void Scene::load_chunk(const std::string& path)
 {
 
 }
 
 void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 {
+    // NOT A COMMAND
+
     auto j_play_state = Meta::serialize_any(event.play_state);
     assert(!j_play_state.is_null());
     eeng::Log("SetGamePlayStateEvent: %s", j_play_state.dump().c_str());
 
-    // NOT A COMMAND
+    play_state = event.play_state;
+
+
+    // (Editor -> Play)
+    // 1. save_all_chunks()
+    // 2. Somehow keep track of which chunks (JSONs) are loaded (notably editor chunks)
+    //      load_during_play
+    // 3. unload_all_chunks()
+    // 4. Change to Play mode
+    // 5. Which chunk should be loaded at this point?
+    // ...
+    // run update() for scripts
+
+    // (Play -> Editor)
+    // 1. unload_all_chunks()
+    // 2. load_chunk() for all files stored since switching to Play
+    // 3. Change to Editor mode
+    // ...
+    // run editor_update() for scripts
+
 
     // Save open tags
 
@@ -2348,16 +2347,16 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
     // Stop
 
     // Pause
-
-
-    play_state = event.play_state;
 }
 
-void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
+void Scene::OnUnloadChunkEvent(const UnloadChunkEvent& event)
 {
     eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
 
     // NOT A COMMAND
+
+    // 1. Destroy all chunk entities (done below)
+    // 2. (?) Remove chunk from chunck registry
 
     for (auto& entity : chunk_registry.chunk(event.chunk_tag))
     {
@@ -2365,14 +2364,18 @@ void Scene::OnDestroyChunkEvent(const DestroyChunkEvent& event)
         // 1) rely on entt's onDestroy event for calling destroy() on scripts
         queue_entity_for_destruction(entity);
 
-        // 2) Destroy scripts explicitly: then BehaviorScript should store destroy()
+        // 2) Destroy scripts explicitly <- then BehaviorScript should store destroy()
         // ...
     }
 }
 
-void Scene::OnLoadFileEvent(const LoadFileEvent& event)
+void Scene::OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event)
 {
     eeng::Log("LoadFileEvent: %s", event.path.c_str());
+
+    // NOT A COMMAND
+
+    // 1. Deserialize entities in JSON file = create entities + register entities (to SG & chunk reg)
 }
 
 void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
@@ -2633,7 +2636,7 @@ void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEv
     //     const std::string& script_dir,
     //     const std::string& script_name
     // )
-    auto split = split_path(event.script_path);
+    auto split = FileManager::SplitPath(event.script_path);
     auto path = split.directory;
     auto just_filename = split.name_without_extension;
     add_script_from_file(*registry, event.entity_selection.first(), lua, path, just_filename);
