@@ -81,11 +81,14 @@ public:
     static PathComponents SplitPath(const std::string& path);
 
     /**
-     * @brief Lists all files in a given folder.
+     * @brief Lists all files in a given folder, optionally filtering by extensions.
      * @param folderPath The folder path to list files from.
-     * @return A vector of file paths in the folder.
+     * @param filter A space-separated list of extensions to include (e.g., "lua json").
+     *        If empty, no filtering is applied.
+     * @return A vector of file paths in the folder matching the filter (if provided).
      */
-    static std::vector<std::string> GetFilesInFolder(const std::string& folderPath);
+    static std::vector<std::string> GetFilesInFolder(const std::string& folderPath, const std::string filter = "");
+
 };
 
 #endif // FILE_MANAGER_HPP

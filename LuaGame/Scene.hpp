@@ -37,14 +37,14 @@ public:
 
     enum class GamePlayState : int { Play, Stop, Pause };
 
-    struct SetGamePlayStateEvent { GamePlayState play_state; };
+    struct SaveChunkToFileEvent { std::string chunk_tag; };
+    struct SaveAllChunksToFileEvent { int placeholder; };
     struct UnloadChunkEvent { std::string chunk_tag; };
     struct LoadChunkFromFileEvent { std::string path; };
-
+    struct SetGamePlayStateEvent { GamePlayState play_state; };
     struct CreateEntityEvent { entt::entity parent_entity; };
     struct DestroyEntityEvent { EntitySelection entity_selection; };
-    // struct CopyEntityEvent { entt::entity entity; }; // EntitySelection entity_selection;
-    struct CopyEntitySelectionEvent { EntitySelection entity_selection; }; // TMP
+    struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
     struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
     struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
     struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
@@ -66,19 +66,18 @@ private:
     void save_all_chunks();
     void load_chunk(const std::string& path);
 
-    void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
+    void OnSaveChunkToFileEvent(const SaveChunkToFileEvent& event);
+    void OnSaveAllChunksToFileEvent(const SaveAllChunksToFileEvent& event);
     void OnUnloadChunkEvent(const UnloadChunkEvent& event);
     void OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event);
+    void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
-    // void OnCopyEntityEvent(const CopyEntityEvent& event);
-    void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event); // TMP
+    void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event);
     void OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent& event);
     void OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& event);
-
     void OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelectionEvent& event);
     void OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromEntitySelectionEvent& event);
-
     void OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEvent& event);
     void OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event);
 

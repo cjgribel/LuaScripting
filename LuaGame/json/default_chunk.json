@@ -1,0 +1,135 @@
+{
+    "chunk": "default_chunk",
+    "entities": [
+        {
+            "components": {
+                "DebugClass": {
+                    "a": 1.0,
+                    "anEnum": "Hello",
+                    "b": 2,
+                    "c": 3,
+                    "flag": true,
+                    "map1": [
+                        [
+                            7,
+                            7.5
+                        ],
+                        [
+                            8,
+                            8.5
+                        ]
+                    ],
+                    "map2": [
+                        [
+                            9,
+                            {
+                                "m": 9.5
+                            }
+                        ],
+                        [
+                            10,
+                            {
+                                "m": 10.5
+                            }
+                        ]
+                    ],
+                    "map3": [
+                        [
+                            {
+                                "m": 9.5
+                            },
+                            9
+                        ],
+                        [
+                            {
+                                "m": 10.5
+                            },
+                            10
+                        ]
+                    ],
+                    "position": {
+                        "uv_coords": {
+                            "u": -1.0,
+                            "v": -2.0
+                        },
+                        "x": 1.0,
+                        "y": 2.0,
+                        "z": 3.0
+                    },
+                    "set1": [
+                        11,
+                        12
+                    ],
+                    "somestring": "Hello",
+                    "vector1": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "vector2": [
+                        {
+                            "m": 4.0
+                        },
+                        {
+                            "m": 5.0
+                        },
+                        {
+                            "m": 6.0
+                        }
+                    ]
+                },
+                "HeaderComponent": {
+                    "chunk_tag": "default_chunk",
+                    "entity_parent": 4294967295,
+                    "guid": 0,
+                    "name": "16abc"
+                }
+            },
+            "entity": 16
+        },
+        {
+            "components": {
+                "HeaderComponent": {
+                    "chunk_tag": "default_chunk",
+                    "entity_parent": 4294967295,
+                    "guid": 0,
+                    "name": "17"
+                }
+            },
+            "entity": 17
+        },
+        {
+            "components": {
+                "HeaderComponent": {
+                    "chunk_tag": "default_chunk",
+                    "entity_parent": 4294967295,
+                    "guid": 0,
+                    "name": "18"
+                }
+            },
+            "entity": 18
+        },
+        {
+            "components": {
+                "HeaderComponent": {
+                    "chunk_tag": "default_chunk",
+                    "entity_parent": 4294967295,
+                    "guid": 0,
+                    "name": "19"
+                }
+            },
+            "entity": 19
+        },
+        {
+            "components": {
+                "HeaderComponent": {
+                    "chunk_tag": "default_chunk",
+                    "entity_parent": 4294967295,
+                    "guid": 0,
+                    "name": "20"
+                }
+            },
+            "entity": 20
+        }
+    ]
+}

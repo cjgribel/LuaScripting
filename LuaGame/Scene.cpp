@@ -986,14 +986,12 @@ namespace Inspector
         }
 
         // Scripts combo
-        auto all_scripts = FileManager::GetFilesInFolder(Scene::script_dir);
+        auto all_scripts = FileManager::GetFilesInFolder(Scene::script_dir, "lua");
         static std::string selected_script_path = "";
         if (ImGui::BeginCombo("##addscriptcombo", selected_script_path.c_str()))
         {
             for (auto& script_path : all_scripts)
             {
-                if (FileManager::SplitPath(script_path).extension != "lua") continue;
-
                 bool is_selected = (script_path == selected_script_path);
 
                 if (ImGui::Selectable(script_path.c_str(), is_selected))
@@ -1007,18 +1005,21 @@ namespace Inspector
 
         // Add script
         ImGui::SameLine();
-        if (ImGui::Button("Add Script"))
+        if (ImGui::Button("Add Script") && selected_script_path.size())
         {
             Scene::AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
         };
 
+        // Remove script
         ImGui::SameLine();
-        if (ImGui::Button("Remove Script"))
+        ImGui::BeginDisabled();
+        if (ImGui::Button("Remove Script") && selected_script_path.size())
         {
             Scene::RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
         };
+        ImGui::EndDisabled();
 
         // Component inspector
         ImGui::SetNextItemOpen(true);
@@ -1160,7 +1161,7 @@ namespace Inspector
         bool* p_open = &open;
 
         static std::string selected_chunk_tag;
-        static std::string load_json_path = "..."; //
+        // static std::string load_json_path = "..."; //
 
         ImGui::SetNextWindowBgAlpha(0.35f);
         if (!ImGui::Begin("Scene Chunks", p_open))
@@ -1169,18 +1170,35 @@ namespace Inspector
             return;
         }
 
-        // Existing JSON combo
-
+        // Existing files combo
         //ImGui::InputText("##loadjson", &load_json_path, 0, nullptr, nullptr);
+        auto all_files = FileManager::GetFilesInFolder(Scene::save_dir, "json");
+        static std::string selected_file_path = "";
+        if (ImGui::BeginCombo("##chunkcombo", selected_file_path.c_str()))
+        {
+            for (auto& file_path : all_files)
+            {
+                bool is_selected = (file_path == selected_file_path);
+
+                if (ImGui::Selectable(file_path.c_str(), is_selected))
+                    selected_file_path = file_path;
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
 
         // Load JSON
-        if (ImGui::Button("Load Chunk"))
+        ImGui::SameLine();
+        if (ImGui::Button("Load") && selected_file_path.size())
         {
-            observer.enqueue_event(Scene::LoadChunkFromFileEvent{ load_json_path });
+            observer.enqueue_event(Scene::LoadChunkFromFileEvent{ selected_file_path });
         };
 
         // Chunk list
         static std::string label;
+        ImGui::Text("Loaded Chunks");
         ImGui::BeginChild("ChunkList", ImVec2(0, 100), true);
         for (auto& [chunk_tag, entities] : chunk_registry.chunks())
         {
@@ -1192,7 +1210,19 @@ namespace Inspector
         }
         ImGui::EndChild(); // Chunk list window
 
-        if (ImGui::Button("Unload Chunk"))
+        if (ImGui::Button("Save"))
+        {
+            observer.enqueue_event(Scene::SaveChunkToFileEvent{ selected_chunk_tag });
+        };
+
+        ImGui::SameLine();
+        if (ImGui::Button("Save All"))
+        {
+            observer.enqueue_event(Scene::SaveAllChunksToFileEvent{ });
+        };
+
+        ImGui::SameLine();
+        if (ImGui::Button("Unload"))
         {
             observer.enqueue_event(Scene::UnloadChunkEvent{ selected_chunk_tag });
         };
@@ -1419,8 +1449,12 @@ bool Scene::init(const v2i& windowSize)
     cmd_queue = std::make_shared<Editor::CommandQueue>();
 
     // Hook up Scene events
+    observer.register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
+    observer.register_callback([&](const SaveAllChunksToFileEvent& event) { this->OnSaveAllChunksToFileEvent(event); });
+
     observer.register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
     observer.register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
+
     observer.register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
     observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
     observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
@@ -2253,12 +2287,9 @@ Editor::Context Scene::create_context()
 
 void Scene::save_chunk(const std::string& chunk_tag)
 {
-    // 1. Save chunk entities to JSON
-    // -> ChunkRegistry?
-
     // Extract chunk entities
     auto chunk_it = chunk_registry.chunk(chunk_tag);
-    std::vector<entt::entity> entities (chunk_it.begin(), chunk_it.end());
+    std::vector<entt::entity> entities(chunk_it.begin(), chunk_it.end());
 
     // Serialize entities
     nlohmann::json entities_json =
@@ -2270,14 +2301,9 @@ void Scene::save_chunk(const std::string& chunk_tag)
     chunk_json["entities"] = entities_json;
 
     // Save JSON to file
-    // std::string file_path = save_dir + chunk_tag + ".json";
-    // std::ofstream file(file_path);
-    // if (file.is_open()) {
-    //     file << json_data.dump(4); // Pretty-print with an indent of 4 spaces
-    //     file.close();
-    // } else {
-    //     std::cerr << "Unable to open file for writing: " << file_path << std::endl;
-    // }
+    std::string file_path = save_dir + chunk_tag + ".json";
+    eeng::Log("Saving %s...", file_path.c_str());
+    FileManager::SaveToFile(file_path, chunk_json.dump(4));
 }
 
 void Scene::save_all_chunks()
@@ -2291,7 +2317,77 @@ void Scene::save_all_chunks()
 
 void Scene::load_chunk(const std::string& path)
 {
+    // 1. Deserialize entities in JSON file = create entities + register entities (to SG & chunk reg)
 
+        // std::string filePath = "data.json"; // Path to the JSON file
+    std::string fileContent;
+
+    // Load the file content into a string
+    if (!FileManager::LoadFromFile(path, fileContent)) {
+        std::cerr << "Failed to load file: " << path << std::endl;
+        // return 1;
+    }
+
+    try {
+        // Parse the string content into a nlohmann::json object
+        nlohmann::json jsonData = nlohmann::json::parse(fileContent);
+        nlohmann::json entities_json = jsonData["entities"];
+
+        // Output the JSON data
+        //std::cout << "JSON data loaded successfully:\n" << jsonData.dump(4) << std::endl;
+
+        auto context = create_context();
+        Meta::deserialize_entities(entities_json, context);
+
+    }
+    catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "Failed to parse JSON: " << e.what() << std::endl;
+        // return 1;
+    }
+
+}
+
+void Scene::OnSaveChunkToFileEvent(const SaveChunkToFileEvent& event)
+{
+    eeng::Log("SaveChunkToFileEvent: %s", event.chunk_tag.c_str());
+
+    save_chunk(event.chunk_tag);
+}
+
+void Scene::OnSaveAllChunksToFileEvent(const SaveAllChunksToFileEvent& event)
+{
+    eeng::Log("SaveAllChunksToFileEvent");
+
+    save_all_chunks();
+}
+
+void Scene::OnUnloadChunkEvent(const UnloadChunkEvent& event)
+{
+    eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
+
+    // NOT A COMMAND
+
+    // 1. Destroy all chunk entities (done below)
+    // 2. (?) Remove chunk from chunck registry
+
+    for (auto& entity : chunk_registry.chunk(event.chunk_tag))
+    {
+        // Either, 
+        // 1) rely on entt's onDestroy event for calling destroy() on scripts
+        queue_entity_for_destruction(entity);
+
+        // 2) Destroy scripts explicitly <- then BehaviorScript should store destroy()
+        // ...
+    }
+}
+
+void Scene::OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event)
+{
+    eeng::Log("LoadFileEvent: %s", event.path.c_str());
+
+    // NOT A COMMAND
+
+    load_chunk(event.path);
 }
 
 void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
@@ -2347,35 +2443,6 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
     // Stop
 
     // Pause
-}
-
-void Scene::OnUnloadChunkEvent(const UnloadChunkEvent& event)
-{
-    eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
-
-    // NOT A COMMAND
-
-    // 1. Destroy all chunk entities (done below)
-    // 2. (?) Remove chunk from chunck registry
-
-    for (auto& entity : chunk_registry.chunk(event.chunk_tag))
-    {
-        // Either, 
-        // 1) rely on entt's onDestroy event for calling destroy() on scripts
-        queue_entity_for_destruction(entity);
-
-        // 2) Destroy scripts explicitly <- then BehaviorScript should store destroy()
-        // ...
-    }
-}
-
-void Scene::OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event)
-{
-    eeng::Log("LoadFileEvent: %s", event.path.c_str());
-
-    // NOT A COMMAND
-
-    // 1. Deserialize entities in JSON file = create entities + register entities (to SG & chunk reg)
 }
 
 void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
@@ -2628,6 +2695,8 @@ void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEv
         });
 
     //...
+
+    // TODO: Remove + Command
 
     //     sol::table add_script_from_file(
     //     auto& registry,
