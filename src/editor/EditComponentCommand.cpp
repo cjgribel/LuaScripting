@@ -73,8 +73,8 @@ namespace Editor {
 
         // Push first data path entry manually (meta_any is the component itself)
         auto& entry0 = meta_path.entries[0];
-        entt::meta_data meta_data = meta_type.data(entry0.data_id);
-        Property last_prop{ meta_any, meta_data, entry0 };
+        const entt::meta_data meta_data0 = meta_type.data(entry0.data_id);
+        Property last_prop{ meta_any, meta_data0, entry0 };
         prop_stack.push(last_prop);
         prop_stack.top().meta_any = meta_any.as_ref(); // TODO
         assert(is_ref(prop_stack.top().meta_any)); // TODO
@@ -211,6 +211,18 @@ namespace Editor {
         std::cout << any_to_string(meta_any) << std::endl;
         std::cout << "Done executing command" << std::endl;
 #endif
+
+        // Call data field callback if present
+        {
+            // meta_data is the actual data field that was edited
+            using CallbackType = std::function<void(entt::meta_any)>;
+            if (auto prop = meta_data0.prop("callback"_hs); prop)
+            {
+                if (auto ptr = prop.value().try_cast<CallbackType>(); ptr)
+                    ptr->operator()(value_any);
+                else { assert(0); }
+            }
+        }
     }
 
     void ComponentCommand::execute()

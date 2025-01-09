@@ -2441,11 +2441,14 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 
     // (Editor -> Play)
     // 1. save_all_chunks()
-    // 2. Somehow keep track of which chunks (JSONs) are loaded (notably editor chunks)
-    //      load_during_play
+    // 2. Somehow keep track of which chunks (JSONs) are loaded (wip stuff, editor chunks ...)
+    //      - Push & Pop in ChunkRegistry?
     // 3. unload_all_chunks()
-    // 4. Change to Play mode
-    // 5. Which chunk should be loaded at this point?
+    // (We are here if the editor is skipped)
+    // 4. Load whick chunks?
+    //      For example: game_chunk (Player, PhaseManager, ProjectilePool ...) + level1_chunk (enemies)
+    //      Can have a property in the 
+    // 5. Change to Play mode
     // ...
     // run update() for scripts
 

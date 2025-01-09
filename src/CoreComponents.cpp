@@ -52,7 +52,7 @@ template<>
 void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
 {
     // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
-    
+
     entt::meta<Transform>()
         //.type("Transform"_hs)                 // <- this hashed string is used implicitly
         .prop(display_name_hs, "Transform")  // <- Can be used without .type()
@@ -78,7 +78,7 @@ void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
         //        .func<&vec3::to_string>(to_string_hs)
         //.func<&vec3_to_string>(to_string_hs)
         ;
-    
+
     assert("Transform"_hs == entt::resolve<Transform>().id());
 
     lua->new_usertype<Transform>("Transform",
@@ -130,11 +130,19 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
 {
     // Register to entt::meta
 
+    // chunk_tag callback
+    const std::function<void(entt::meta_any)> chunk_tag_cb = [](entt::meta_any any)
+        {
+            std::cout << any.cast<std::string>() << std::endl;
+        };
+
     entt::meta<HeaderComponent>()
         .type("HeaderComponent"_hs).prop(display_name_hs, "Header")
 
         .data<&HeaderComponent::name>("name"_hs).prop(display_name_hs, "name")
-        .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag").prop(readonly_hs, true)
+        .data<&HeaderComponent::chunk_tag>("chunk_tag"_hs).prop(display_name_hs, "chunk_tag") //.prop(readonly_hs, true)
+        .prop("callback"_hs, chunk_tag_cb)
+
         .data<&HeaderComponent::guid>("guid"_hs).prop(display_name_hs, "guid").prop(readonly_hs, true)
         .data<&HeaderComponent::entity_parent>("entity_parent"_hs).prop(display_name_hs, "entity_parent").prop(readonly_hs, true)
 
