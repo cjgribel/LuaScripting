@@ -9,41 +9,44 @@
 #define Context_hpp
 
 #include <memory>
-#include <entt/fwd.hpp>
+//#include <entt/fwd.hpp>
+#include "Entity.hpp"
 #include <sol/forward.hpp>
 //#include "SceneGraph.hpp"
 class SceneGraph;
 
 namespace Editor {
 
-    using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-    using CreateEmptyEntityFunc = std::function<entt::entity(entt::entity)>;
-    using DestroyEntityFunc = std::function<void(entt::entity)>;
-    using CanRegisterEntityFunc = std::function<bool(entt::entity)>;
-    using RegisterEntityFunc = std::function<void(entt::entity)>;
-    using ReparentEntityFunc = std::function<void(entt::entity, entt::entity)>;
-    using SetEntityHeaderParentFunc = std::function<void(entt::entity, entt::entity)>;
+    using CreateEntityFunc          = std::function<Entity(const Entity&, const Entity&)>;
+    using CreateEmptyEntityFunc     = std::function<Entity(const Entity&)>;
+    using DestroyEntityFunc         = std::function<void(const Entity&)>;
+    using CanRegisterEntityFunc     = std::function<bool(const Entity&)>;
+    using RegisterEntityFunc        = std::function<void(const Entity&)>;
+    using ReparentEntityFunc        = std::function<void(const Entity&, const Entity&)>;
+    using SetEntityHeaderParentFunc = std::function<void(const Entity&, const Entity&)>;
     // using GetParentFunc = std::function<entt::entity(entt::entity)>;
-    using EntityValidFunc = std::function<bool(entt::entity)>;
+    using EntityValidFunc = std::function<bool(const Entity&)>;
 
     struct Context
     {
-        std::shared_ptr<entt::registry> registry;
-        std::shared_ptr<sol::state> lua;
+        std::shared_ptr<entt::registry> registry;   // -> weak
+        std::shared_ptr<sol::state> lua;            // -> weak
         std::weak_ptr<SceneGraph> scenegraph;
 
         // shared_ptr<Scene>
-        CreateEntityFunc create_entity;
-        CreateEmptyEntityFunc create_empty_entity;
-        DestroyEntityFunc destroy_entity;
-        CanRegisterEntityFunc can_register_entity;
-        RegisterEntityFunc register_entity;
-        ReparentEntityFunc reparent_entity;
-        SetEntityHeaderParentFunc set_entity_header_parent;
+        CreateEntityFunc            create_entity;
+        CreateEmptyEntityFunc       create_empty_entity;
+        DestroyEntityFunc           destroy_entity;
+        CanRegisterEntityFunc       can_register_entity;
+        RegisterEntityFunc          register_entity;
+        ReparentEntityFunc          reparent_entity;
+        SetEntityHeaderParentFunc   set_entity_header_parent;
         // GetParentFunc get_parent;
         EntityValidFunc entity_valid;
 
         // shared_ptr<Resources>
+
+        std::unordered_map<Entity, Entity> entity_remap;
     };
 
 } // namespace Editor

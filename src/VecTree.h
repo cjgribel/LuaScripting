@@ -140,12 +140,12 @@ public:
         return nodes[get_parent_index(payload)].m_payload;
     }
 
-    bool is_descendant_of(entt::entity entity_child, entt::entity entity_parent)
+    bool is_descendant_of(const PayloadType& payload1, const PayloadType& payload2)
     {
         bool is_child = false;
-        ascend(entity_child, [&](auto& entity, size_t index) {
-            if (entity == entity_child) return;
-            if (entity == entity_parent) is_child = true;
+        ascend(payload1, [&](auto& payload, size_t index) {
+            if (payload == payload1) return;
+            if (payload == payload2) is_child = true;
             });
         return is_child;
     }

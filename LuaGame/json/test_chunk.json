@@ -5,7 +5,9 @@
             "components": {
                 "HeaderComponent": {
                     "chunk_tag": "test_chunk",
-                    "entity_parent": 4294967295,
+                    "entity_parent": {
+                        "id": 4294967295
+                    },
                     "guid": 0,
                     "name": "Node1"
                 },
@@ -485,7 +487,9 @@
             "components": {
                 "HeaderComponent": {
                     "chunk_tag": "test_chunk",
-                    "entity_parent": 0,
+                    "entity_parent": {
+                        "id": 0
+                    },
                     "guid": 0,
                     "name": "Node2"
                 },
@@ -965,7 +969,9 @@
             "components": {
                 "HeaderComponent": {
                     "chunk_tag": "test_chunk",
-                    "entity_parent": 1,
+                    "entity_parent": {
+                        "id": 1
+                    },
                     "guid": 0,
                     "name": "Node3"
                 },

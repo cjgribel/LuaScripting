@@ -23,7 +23,7 @@ namespace Editor {
 
         // std::deque<entt::entity> selected_entities;
 
-        Editor::SelectionManager<entt::entity> entity_selection;
+        Editor::SelectionManager<Entity> entity_selection;
 
         bool imgui_disabled = false;
 

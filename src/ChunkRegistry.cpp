@@ -54,14 +54,14 @@ ChunkRegistry::ChunkIterator ChunkRegistry::chunks()
     return ChunkIterator(registry);
 }
 
-void ChunkRegistry::addEntity(const std::string& chunk_id, entt::entity entity)
+void ChunkRegistry::addEntity(const std::string& chunk_id, const Entity& entity)
 {
     assert(!entity_exists(entity) && "Entity already exists in a chunk!");
 
     registry[chunk_id].push_back(entity);
 }
 
-void ChunkRegistry::removeEntity(const std::string& chunk_id, entt::entity entity)
+void ChunkRegistry::removeEntity(const std::string& chunk_id, const Entity& entity)
 {
     assert(chunk_exists(chunk_id) && "Chunk does not exist!");
 
@@ -73,7 +73,7 @@ void ChunkRegistry::removeEntity(const std::string& chunk_id, entt::entity entit
     }
 }
 
-void ChunkRegistry::removeEntity(entt::entity entity)
+void ChunkRegistry::removeEntity(const Entity& entity)
 {
     for (auto& [chunk_id, entities] : registry)
     {
@@ -86,14 +86,14 @@ void ChunkRegistry::removeEntity(entt::entity entity)
     }
 }
 
-bool ChunkRegistry::entity_exists_in_chunk(const std::string& chunk_id, entt::entity entity) const
+bool ChunkRegistry::entity_exists_in_chunk(const std::string& chunk_id, const Entity& entity) const
 {
     assert(chunk_exists(chunk_id) && "Chunk does not exist!");
     const auto& entities = registry.at(chunk_id);
     return std::find(entities.begin(), entities.end(), entity) != entities.end();
 }
 
-bool ChunkRegistry::entity_exists(entt::entity entity) const
+bool ChunkRegistry::entity_exists(const Entity& entity) const
 {
     for (const auto& [chunk_id, entities] : registry)
     {

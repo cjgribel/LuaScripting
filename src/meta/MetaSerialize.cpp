@@ -146,14 +146,14 @@ namespace Meta {
     }
 
     nlohmann::json serialize_entity(
-        entt::entity entity,
+        const Entity& entity,
         std::shared_ptr<entt::registry>& registry)
     {
         std::cout << "Serializing entity "
-            << entt::to_integral(entity) << std::endl;
+            << entity.to_integral() << std::endl;
 
         nlohmann::json entity_json;
-        entity_json["entity"] = entt::to_integral(entity);
+        entity_json["entity"] = entity.to_integral();
 
         // For all component types
         for (auto&& [id, type] : registry->storage())
@@ -176,7 +176,7 @@ namespace Meta {
     }
 
     nlohmann::json serialize_entities(
-        entt::entity* entity_first,
+        Entity* entity_first,
         int count,
         std::shared_ptr<entt::registry>& registry)
     {
@@ -191,12 +191,12 @@ namespace Meta {
     nlohmann::json serialize_registry(std::shared_ptr<entt::registry>& registry)
     {
 #if 1
-        std::vector<entt::entity> entities;
+        std::vector<Entity> entities;
 
         auto view = registry->view<entt::entity>();
         entities.reserve(view.size_hint());
         for (auto entity : view)
-            entities.push_back(entity);
+            entities.push_back(Entity{ entity });
 
         return serialize_entities(entities.data(), entities.size(), registry);
 #else
@@ -242,7 +242,7 @@ namespace Meta {
     void deserialize_any(
         const nlohmann::json& json,
         entt::meta_any& any,
-        entt::entity entity,
+        const Entity& entity,
         Editor::Context& context)
     {
         assert(any);
@@ -261,7 +261,7 @@ namespace Meta {
                     {},
                     entt::forward_as_meta(json),
                     any.data(),
-                    entity,
+                    entt::forward_as_meta(entity), //entity,
                     entt::forward_as_meta(context));
 #else
             // json node is possibly copied to an entt::meta_any here
@@ -394,18 +394,22 @@ namespace Meta {
 
     // deserialize_component
 
-    entt::entity deserialize_entity(
+    Entity deserialize_entity(
         const nlohmann::json& json,
         Editor::Context& context
     )
     {
-        assert(json.contains("entity"));
-        entt::entity entity_hint = json["entity"].get<entt::entity>();
-        assert(!context.registry->valid(entity_hint));
-        auto entity = context.registry->create(entity_hint);
-        assert(entity_hint == entity);
+        Entity entity_hint{ json["entity"].get<entt::entity>() };
+        auto entity = context.entity_remap.at(entity_hint);
 
-        std::cout << "Deserializing entity " << entt::to_integral(entity) << std::endl;
+        // assert(json.contains("entity"));
+        // entt::entity entity_hint = json["entity"].get<entt::entity>();
+        // assert(!context.registry->valid(entity_hint));
+
+        // auto entity = Entity{ context.registry->create(entity_hint) };
+        // assert(entity_hint == entity);
+
+        std::cout << "Deserializing entity " << entity.to_integral() << std::endl;
 
         assert(json.contains("components"));
         for (const auto& component_json : json["components"].items())
@@ -440,9 +444,25 @@ namespace Meta {
         Editor::Context& context)
     {
         assert(json.is_array());
-        std::vector<entt::entity> entity_buffer;
+        std::vector<Entity> entity_buffer; // For deferred scene graph registration
         entity_buffer.reserve(json.size());
 
+        // Map serialized entities to new or reused values depending on availability
+        context.entity_remap.clear();
+        for (const auto& entity_json : json)
+        {
+            assert(entity_json.contains("entity"));
+            Entity entity_hint{ entity_json["entity"].get<entt::entity>() };
+
+            Entity entity;
+            if (context.registry->valid(entity_hint))
+                entity = Entity{ context.registry->create() };
+            else
+                entity = Entity{ context.registry->create(entity_hint) };
+            context.entity_remap.insert({ entity_hint, entity });
+        }
+
+        // Deserialize entities
         for (const auto& entity_json : json)
         {
             auto entity = deserialize_entity(entity_json, context);
@@ -460,7 +480,7 @@ namespace Meta {
             {
                 auto& entity = entity_buffer.at(i);
                 if (!context.can_register_entity(entity)) continue;
-                
+
                 context.register_entity(entity);
                 std::swap(entity, entity_buffer[pivot++]);
                 swap_made = true;
@@ -469,7 +489,7 @@ namespace Meta {
             {
                 std::cerr << "Corrupt hierarchy: Unable to register entities due to missing or circular dependencies.\n";
                 for (int i = pivot; i < entity_buffer.size(); ++i)
-                    std::cerr << "Unregistered entity: " << entt::to_integral(entity_buffer[i]) << "\n";
+                    std::cerr << "Unregistered entity: " << entity_buffer[i].to_integral() << "\n";
                 throw std::runtime_error("Entity parent-child relationships corrupt");
             }
         }

@@ -9,7 +9,7 @@
 #define GuiCommands_hpp
 
 #include <deque>
-#include <entt/entt.hpp>
+// #include <entt/entt.hpp>
 // #include "Scene.hpp"
 #include "Command.hpp"
 #include "EditComponentCommand.hpp"
@@ -21,22 +21,14 @@ namespace Editor {
 
     class CreateEntityCommand : public Command
     {
-        entt::entity created_entity = entt::null;
-        entt::entity parent_entity = entt::null;
+        Entity created_entity;
+        Entity parent_entity;
         Context context;
         std::string display_name;
 
-        // using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-        // using DestroyEntityFunc = std::function<void(entt::entity)>;
-
-        // CreateEntityFunc create_func;
-        // DestroyEntityFunc destroy_func;
-
     public:
         CreateEntityCommand(
-            // const CreateEntityFunc&& create_func,
-            // const DestroyEntityFunc&& destroy_func,
-            entt::entity parent_entity,
+            const Entity& parent_entity,
             const Context& context);
 
         void execute() override;
@@ -50,14 +42,14 @@ namespace Editor {
 
     class DestroyEntityCommand : public Command
     {
-        entt::entity entity = entt::null;
+        Entity entity;
         nlohmann::json entity_json{};
         Context context;
         std::string display_name;
 
     public:
         DestroyEntityCommand(
-            entt::entity entity,
+            const Entity& entity,
             const Context& context
         );
 
@@ -72,17 +64,14 @@ namespace Editor {
 
     class CopyEntityCommand : public Command
     {
-        entt::entity entity_source = entt::null;
-        entt::entity entity_copy = entt::null;
+        Entity entity_source;
+        Entity entity_copy;
         Context context;
         std::string display_name;
 
-        using CreateEntityFunc = std::function<entt::entity(entt::entity, entt::entity)>;
-        using DestroyEntityFunc = std::function<void(entt::entity)>;
-
     public:
         CopyEntityCommand(
-            entt::entity entity,
+            const Entity& entity,
             const Context& context);
 
         void execute() override;
@@ -96,15 +85,15 @@ namespace Editor {
 
     class CopyEntityBranchCommand : public Command
     {
-        entt::entity root_entity = entt::null;
-        std::deque<entt::entity> source_entities; // top-down
-        std::deque<entt::entity> copied_entities; // top-down
+        Entity root_entity;
+        std::deque<Entity> source_entities; // top-down
+        std::deque<Entity> copied_entities; // top-down
         Context context;
         std::string display_name;
 
     public:
         CopyEntityBranchCommand(
-            entt::entity entity,
+            const Entity& entity,
             const Context& context);
 
         void execute() override;
@@ -118,16 +107,16 @@ namespace Editor {
 
     class ReparentEntityBranchCommand : public Command
     {
-        entt::entity entity = entt::null;
-        entt::entity prev_parent_entity = entt::null;
-        entt::entity new_parent_entity = entt::null;
+        Entity entity;
+        Entity prev_parent_entity;
+        Entity new_parent_entity;
         Context context;
         std::string display_name;
 
     public:
         ReparentEntityBranchCommand(
-            entt::entity entity,
-            entt::entity parent_entity,
+            const Entity& entity,
+            const Entity& parent_entity,
             const Context& context);
 
         void execute() override;
@@ -164,14 +153,14 @@ namespace Editor {
 
     class AddComponentToEntityCommand : public Command
     {
-        entt::entity entity = entt::null;
+        Entity entity;
         entt::id_type comp_id;
         Context context;
         std::string display_name;
 
     public:
         AddComponentToEntityCommand(
-            entt::entity entity,
+            const Entity& entity,
             entt::id_type comp_id,
             const Context& context);
 
@@ -186,7 +175,7 @@ namespace Editor {
 
     class RemoveComponentFromEntityCommand : public Command
     {
-        entt::entity entity = entt::null;
+        Entity entity;
         entt::id_type comp_id;
         nlohmann::json comp_json{};
         Context context;
@@ -194,7 +183,7 @@ namespace Editor {
 
     public:
         RemoveComponentFromEntityCommand(
-            entt::entity entity,
+            const Entity& entity,
             entt::id_type comp_id,
             const Context& context);
 

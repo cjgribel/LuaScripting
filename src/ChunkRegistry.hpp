@@ -6,14 +6,15 @@
 #include <string>
 #include <algorithm>
 #include <cassert>
-#include <entt/entt.hpp> // Ensure this is included for entt::entity
+//#include <entt/entt.hpp> // Ensure this is included for entt::entity
+#include "Entity.hpp"
 
 // namespace eeng {
 
 class ChunkRegistry
 {
 public:
-    using EntityVector = std::vector<entt::entity>;
+    using EntityVector = std::vector<Entity>;
 
     // Adapter for chunks
     class ChunkIterator
@@ -52,15 +53,15 @@ public:
 
     ChunkIterator chunks();
 
-    void addEntity(const std::string& chunk_id, entt::entity entity);
+    void addEntity(const std::string& chunk_id, const Entity& entity);
 
-    void removeEntity(const std::string& chunk_id, entt::entity entity);
+    void removeEntity(const std::string& chunk_id, const Entity& entity);
 
-    void removeEntity(entt::entity entity);
+    void removeEntity(const Entity& entity);
 
-    bool entity_exists_in_chunk(const std::string& chunk_id, entt::entity entity) const;
+    bool entity_exists_in_chunk(const std::string& chunk_id, const Entity& entity) const;
 
-    bool entity_exists(entt::entity entity) const;
+    bool entity_exists(const Entity& entity) const;
 
     void create_chunk(const std::string& chunk_id);
 

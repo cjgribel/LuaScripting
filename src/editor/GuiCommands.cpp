@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <cassert>
-// #include "MetaSerialize.hpp"
+#include "MetaSerialize.hpp"
 #include "MetaClone.hpp"
 #include "GuiCommands.hpp"
 // #include "meta_aux.h"
@@ -20,7 +20,7 @@ namespace Editor {
     CreateEntityCommand::CreateEntityCommand(
         // const CreateEntityFunc&& create_func,
         // const DestroyEntityFunc&& destroy_func,
-        entt::entity parent_entity,
+        const Entity& parent_entity,
         const Context& context) :
         // create_func(create_func),
         // destroy_func(destroy_func),
@@ -31,9 +31,9 @@ namespace Editor {
 
     void CreateEntityCommand::execute()
     {
-        if (created_entity == entt::null)
+        if (created_entity.is_null())
         {
-            created_entity = context.create_entity(parent_entity, entt::null);
+            created_entity = context.create_entity(parent_entity, Entity{});
             // created_entity = create_func(parent_entity, entt::null);
         }
         else
@@ -49,7 +49,7 @@ namespace Editor {
 
     void CreateEntityCommand::undo()
     {
-        assert(created_entity != entt::null);
+        assert(!created_entity.is_null());
         context.destroy_entity(created_entity);
         // destroy_func(created_entity);
 
@@ -64,7 +64,7 @@ namespace Editor {
     // ------------------------------------------------------------------------
 
     DestroyEntityCommand::DestroyEntityCommand(
-        entt::entity entity,
+        const Entity& entity,
         const Context& context
         // const DestroyEntityFunc&& destroy_func
     ) :
@@ -72,12 +72,12 @@ namespace Editor {
         context(context)
         // destroy_func(destroy_func)
     {
-        display_name = std::string("Destroy Entity ") + std::to_string(entt::to_integral(entity));
+        display_name = std::string("Destroy Entity ") + std::to_string(entity.to_integral());
     }
 
     void DestroyEntityCommand::execute()
     {
-        assert(entity != entt::null);
+        assert(!entity.is_null());
         entity_json = Meta::serialize_entities(&entity, 1, context.registry);
         context.destroy_entity(entity);
         // destroy_func(entity);
@@ -98,21 +98,21 @@ namespace Editor {
     // --- CopyEntityCommand (REMOVE) --------------------------------------------------
 
     CopyEntityCommand::CopyEntityCommand(
-        entt::entity entity,
+        const Entity& entity,
         const Context& context) :
         entity_source(entity),
         context(context)
     {
-        display_name = std::string("Copy Entity ") + std::to_string(entt::to_integral(entity));
+        display_name = std::string("Copy Entity ") + std::to_string(entity.to_integral());
     }
 
     void CopyEntityCommand::execute()
     {
-        assert(entity_copy == entt::null);
-        assert(entity_source != entt::null);
+        assert(entity_copy.is_null());
+        assert(!entity_source.is_null());
         assert(context.registry->valid(entity_source)); // context.entity_valid
 
-        entity_copy = context.create_empty_entity(entt::null); // context.registry->create(); // context.create_empty_entity
+        entity_copy = context.create_empty_entity(Entity{}); // context.registry->create(); // context.create_empty_entity
         Editor::clone_entity(context.registry, entity_source, entity_copy);
 
         assert(context.can_register_entity(entity_copy));
@@ -125,11 +125,11 @@ namespace Editor {
 
     void CopyEntityCommand::undo()
     {
-        assert(entity_copy != entt::null);
+        assert(!entity_copy.is_null());
         assert(context.registry->valid(entity_copy));
 
         context.destroy_entity(entity_copy);
-        entity_copy = entt::null;
+        entity_copy = Entity{};
 
         // Meta::deserialize_entities(entity_json, context);
 
@@ -144,18 +144,18 @@ namespace Editor {
     // --- CopyEntityBranchCommand --------------------------------------------
 
     CopyEntityBranchCommand::CopyEntityBranchCommand(
-        entt::entity entity,
+        const Entity& entity,
         const Context& context) :
         root_entity(entity),
         context(context)
     {
-        display_name = std::string("Copy Entity ") + std::to_string(entt::to_integral(entity));
+        display_name = std::string("Copy Entity ") + std::to_string(entity.to_integral());
     }
 
     void CopyEntityBranchCommand::execute()
     {
         //assert(copied_entities.empty());
-        assert(root_entity != entt::null);
+        assert(!root_entity.is_null());
         assert(context.entity_valid(root_entity));
 
         // Obtain entity branch
@@ -166,7 +166,7 @@ namespace Editor {
         // Hints for copied entites:
         // either no hints (not a redo) or previously copied & destroyed entities (undo-redo)
         auto entity_hints = copied_entities;
-        if (entity_hints.empty()) entity_hints.assign(source_entities.size(), entt::null);
+        if (entity_hints.empty()) entity_hints.assign(source_entities.size(), Entity{});
         copied_entities.clear();
 
         // Create copies top-down and resolve new parents
@@ -175,7 +175,7 @@ namespace Editor {
             auto& source_entity = source_entities[i];
 
             // Copy entity
-            entt::entity entity_copy = context.create_empty_entity(entity_hints[i]);
+            Entity entity_copy = context.create_empty_entity(entity_hints[i]);
             Editor::clone_entity(context.registry, source_entity, entity_copy);
 
             // Update entity parent for all except the root entity
@@ -224,17 +224,17 @@ namespace Editor {
     // --- ReparentEntityBranchCommand --------------------------------------------
 
     ReparentEntityBranchCommand::ReparentEntityBranchCommand(
-        entt::entity entity,
-        entt::entity parent_entity,
+        const Entity& entity,
+        const Entity& parent_entity,
         const Context& context) :
         entity(entity),
         new_parent_entity(parent_entity),
         context(context)
     {
         display_name = std::string("Reparent Entity ")
-            + std::to_string(entt::to_integral(entity))
+            + std::to_string(entity.to_integral())
             + " to "
-            + std::to_string(entt::to_integral(parent_entity));
+            + std::to_string(parent_entity.to_integral());
     }
 
     void ReparentEntityBranchCommand::execute()
@@ -243,7 +243,7 @@ namespace Editor {
         auto scenegraph = context.scenegraph.lock();
 
         if (scenegraph->is_root(entity))
-            prev_parent_entity = entt::null;
+            prev_parent_entity = Entity{};
         else
             prev_parent_entity = scenegraph->get_parent(entity);
 
@@ -316,7 +316,7 @@ namespace Editor {
     // --- AddComponentToEntityCommand ----------------------------------------
 
     AddComponentToEntityCommand::AddComponentToEntityCommand(
-        entt::entity entity,
+        const Entity& entity,
         entt::id_type comp_id,
         const Context& context) :
         entity(entity),
@@ -326,7 +326,7 @@ namespace Editor {
         display_name = std::string("Add Component ")
             + std::to_string(comp_id)
             + " to Entity "
-            + std::to_string(entt::to_integral(entity));
+            + std::to_string(entity.to_integral());
     }
 
     void AddComponentToEntityCommand::execute()
@@ -355,7 +355,7 @@ namespace Editor {
     // --- RemoveComponentFromEntityCommand ----------------------------------------
 
     RemoveComponentFromEntityCommand::RemoveComponentFromEntityCommand(
-        entt::entity entity,
+        const Entity& entity,
         entt::id_type comp_id,
         const Context& context) :
         entity(entity),
@@ -365,7 +365,7 @@ namespace Editor {
         display_name = std::string("Remove Component ")
             + std::to_string(comp_id)
             + " from Entity "
-            + std::to_string(entt::to_integral(entity));
+            + std::to_string(entity.to_integral());
     }
 
     void RemoveComponentFromEntityCommand::execute()

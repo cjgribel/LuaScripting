@@ -9,6 +9,7 @@
 
 #include "imgui.h"
 
+#include "Scene.hpp"
 #include "mat.h"
 
 #include "FileManager.hpp" // JSON IO
@@ -16,7 +17,6 @@
 #include "MetaClone.hpp"
 #include "MetaSerialize.hpp"
 
-#include "Scene.hpp"
 
 #include "bond.hpp"
 // #include "transform.hpp"
@@ -59,6 +59,7 @@ namespace {
 // std::cout << entt::type_id<int>().hash() << std::endl;
 // std::cout << entt::type_hash<int>::value() << std::endl;
 //
+
     template<class T>
     void register_basic_type()
     {
@@ -66,10 +67,12 @@ namespace {
             {
                 j = *static_cast<const T*>(ptr);
             };
-        const auto from_json = [](const nlohmann::json& j, void* ptr, entt::entity entity, Editor::Context& context)
+
+        const auto from_json = [](const nlohmann::json& j, void* ptr, const Entity& entity, Editor::Context& context)
             {
                 *static_cast<T*>(ptr) = j;
             };
+
         const auto inspect = [](void* ptr, Editor::InspectorState& inspector) -> bool
             {
                 return Editor::inspect_type(*static_cast<T*>(ptr), inspector);
@@ -673,7 +676,7 @@ namespace Inspector
         }
 
         //void operator()(const entt::entity& entity, size_t index, size_t level)
-        void visit(const entt::entity& entity, int level)
+        void visit(const Entity& entity, int level)
         {
             while (current_level >= level) { ImGui::TreePop(); current_level--; }
             if (closed_index != -1 && level > closed_index) return;
@@ -683,7 +686,7 @@ namespace Inspector
             auto& entity_selection = inspector.entity_selection;
 
             const std::string entity_name = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
-            const std::string label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + entity_name;
+            const std::string label = "[entity#" + std::to_string(entity.to_integral()) + "] " + entity_name;
 
             bool is_selected = entity_selection.contains(entity);
             bool is_leaf = scenegraph->get_nbr_children(entity) == 0;
@@ -719,7 +722,7 @@ namespace Inspector
             }
         }
 
-        void operator()(const entt::entity& entity, size_t index, size_t level)
+        void operator()(const Entity& entity, size_t index, size_t level)
         {
             visit(entity, (int)level);
         }
@@ -745,7 +748,7 @@ namespace Inspector
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
         // Add entity nbr to start for clarity
-        label = "[entity#" + std::to_string(entt::to_integral(entity)) + "] " + label;
+        label = "[entity#" + std::to_string(entity.to_integral()) + "] " + label;
 
         //bool is_selected = inspector.selected_entity == entity;
         auto& entity_selection = inspector.entity_selection;
@@ -818,7 +821,7 @@ namespace Inspector
         // New entity
         if (ImGui::Button("New"))
         {
-            entt::entity entity_parent = entt::null;
+            Entity entity_parent;
             if (has_selection) entity_parent = inspector.entity_selection.last();
             Scene::CreateEntityEvent event{ .parent_entity = entity_parent };
             observer.enqueue_event(event);
@@ -866,12 +869,14 @@ namespace Inspector
         }
         if (!has_selection) inspector.end_disabled();
 
+#if 0
         // Explicit traverse
         ImGui::SameLine();
         if (ImGui::Button("Traverse"))
         {
             scenegraph.traverse(registry);
         }
+#endif
 
         // Scene graph
         if (scenegraph.size())
@@ -885,9 +890,9 @@ namespace Inspector
             {
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
-            }
-#endif
         }
+#endif
+    }
 
         // Debug print selected
         ImGui::Separator();
@@ -898,7 +903,7 @@ namespace Inspector
             for (auto entity : inspector.entity_selection.get_all())
                 //ss << std::to_string(entt::to_integral(entity)) << " ";
                 //ss << Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>()) << " ";
-                ImGui::Text("Entity %d", static_cast<int>(entity));
+                ImGui::Text("Entity %u", entity.to_integral());
             // ImGui::Text("%s", ss.str().c_str());
         }
 
@@ -907,7 +912,7 @@ namespace Inspector
         // TEMP
         // if (!inspector.entity_selection.empty())
         //     inspector.selected_entity = inspector.entity_selection.last();
-    }
+}
 
     bool inspect_entity(
         Editor::InspectorState& inspector,
@@ -930,6 +935,8 @@ namespace Inspector
             ImGui::End();
             return mod;
         }
+
+        ImGui::Text("ADD/Remove Component");
 
         // Component combo
         static entt::id_type selected_comp_id = 0;
@@ -971,7 +978,7 @@ namespace Inspector
 
         // Add Component button
         ImGui::SameLine();
-        if (ImGui::Button("Add") && selected_comp_id)
+        if (ImGui::Button("Add##addcomponent") && selected_comp_id)
         {
             Scene::AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
@@ -979,11 +986,13 @@ namespace Inspector
 
         // Remove Component button
         ImGui::SameLine();
-        if (ImGui::Button("Remove") && selected_comp_id)
+        if (ImGui::Button("Remove##removecomponent") && selected_comp_id)
         {
             Scene::RemoveComponentFromEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
+
+        ImGui::Text("Add/Remove Script");
 
         // Scripts combo
         auto all_scripts = FileManager::GetFilesInFolder(Scene::script_dir, "lua");
@@ -1005,7 +1014,7 @@ namespace Inspector
 
         // Add script
         ImGui::SameLine();
-        if (ImGui::Button("Add Script") && selected_script_path.size())
+        if (ImGui::Button("Add##addscript") && selected_script_path.size())
         {
             Scene::AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
@@ -1014,7 +1023,7 @@ namespace Inspector
         // Remove script
         ImGui::SameLine();
         ImGui::BeginDisabled();
-        if (ImGui::Button("Remove Script") && selected_script_path.size())
+        if (ImGui::Button("Remove##removescript") && selected_script_path.size())
         {
             Scene::RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
@@ -1256,51 +1265,49 @@ inline void lua_panic_func(sol::optional<std::string> maybe_msg)
 //     return parent_entity;
 // }
 
-bool Scene::entity_valid(entt::entity entity)
+bool Scene::entity_valid(const Entity& entity)
 {
     return registry->valid(entity);
 }
 
-bool Scene::entity_parent_registered(
-    entt::entity entity)
+bool Scene::entity_parent_registered(const Entity& entity)
 {
     assert(registry->all_of<HeaderComponent>(entity));
     auto& header = registry->get<HeaderComponent>(entity);
-    auto entity_parent = entt::entity{ header.entity_parent };
+    auto entity_parent = Entity{ entt::entity{header.entity_parent} };
     // auto entity_parent = get_entity_parent(entity);
 
-    if (entity_parent == entt::null) return true;
+    if (entity_parent.is_null()) return true;
     return scenegraph->tree.contains(entity_parent);
 }
 
-void Scene::reparent_entity(entt::entity entity, entt::entity parent_entity)
+void Scene::reparent_entity(const Entity& entity, const Entity& parent_entity)
 {
     assert(registry->all_of<HeaderComponent>(entity));
-    registry->get<HeaderComponent>(entity).entity_parent = entt::to_integral(parent_entity);
+    registry->get<HeaderComponent>(entity).entity_parent = parent_entity;
 
     scenegraph->reparent(entity, parent_entity);
 }
 
-void Scene::set_entity_header_parent(entt::entity entity, entt::entity entity_parent)
+void Scene::set_entity_header_parent(const Entity& entity, const Entity& entity_parent)
 {
     assert(registry->all_of<HeaderComponent>(entity));
-    registry->get<HeaderComponent>(entity).entity_parent = entt::to_integral(entity_parent);
+    registry->get<HeaderComponent>(entity).entity_parent = entity_parent;
 
     // register_entity(entity);
 }
 
-void Scene::register_entity(
-    entt::entity entity)
+void Scene::register_entity(const Entity& entity)
 {
     assert(registry->all_of<HeaderComponent>(entity));
 
     auto& header = registry->get<HeaderComponent>(entity);
     auto& chunk_tag = header.chunk_tag;
-    auto entity_parent = entt::entity{ header.entity_parent };
+    auto entity_parent = Entity{ entt::entity{header.entity_parent} };
 
     chunk_registry.addEntity(header.chunk_tag, entity);
 
-    if (entity_parent == entt::null)
+    if (entity_parent.is_null())
     {
         scenegraph->insert_node(entity);
     }
@@ -1311,29 +1318,28 @@ void Scene::register_entity(
     }
 }
 
-entt::entity Scene::create_empty_entity(entt::entity entity_hint)
+Entity Scene::create_empty_entity(const Entity& entity_hint)
 {
-    entt::entity entity;
-    if (entity_hint == entt::null)
-        return registry->create();
+    if (entity_hint.is_null())
+        return Entity{ registry->create() };
 
-    entity = registry->create(entity_hint);
+    Entity entity = Entity{ registry->create(entity_hint) };
     assert(entity == entity_hint);
     return entity;
 }
 
-entt::entity Scene::create_entity(
+Entity Scene::create_entity(
     const std::string& chunk_tag,
     const std::string& name,
-    entt::entity entity_parent,
-    entt::entity entity_hint)
+    const Entity& entity_parent,
+    const Entity& entity_hint)
 {
-    entt::entity entity = create_empty_entity(entity_hint);
+    Entity entity = create_empty_entity(entity_hint);
 
-    std::string used_name = name.size() ? name : std::to_string(entt::to_integral(entity));
+    std::string used_name = name.size() ? name : std::to_string(entity.to_integral());
     std::string used_chunk_tag = chunk_tag.size() ? chunk_tag : "default_chunk";
     uint32_t guid = 0;
-    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid, entt::to_integral(entity_parent));
+    registry->emplace<HeaderComponent>(entity, used_name, used_chunk_tag, guid, entity_parent);
 
 #if 1
     register_entity(entity);
@@ -1349,10 +1355,10 @@ entt::entity Scene::create_entity(
     {
         assert(scenegraph.tree.contains(entity_parent));
         scenegraph.create_node(entity, entity_parent);
-    }
+}
 #endif
 
-    std::cout << "Scene::create_entity " << entt::to_integral(entity) << std::endl;
+    std::cout << "Scene::create_entity " << entity.to_integral() << std::endl;
     return entity;
 }
 
@@ -1369,7 +1375,7 @@ entt::entity Scene::create_entity(
 //     return create_entity("", "", parent_entity, entt::null);
 // }
 
-void Scene::queue_entity_for_destruction(entt::entity entity)
+void Scene::queue_entity_for_destruction(const Entity& entity)
 {
     // entities_pending_destruction.push_back(entity);
     entities_pending_destruction.push_back(entity);
@@ -1430,15 +1436,47 @@ bool Scene::init(const v2i& windowSize)
     register_basic_type<std::string>();
     registerDebugClass();
 
-    // Register meta for Scene related stuff
-    entt::meta<GamePlayState>()
-        .type("GamePlayState"_hs)
-        .prop(display_name_hs, "GamePlayState")
-        .prop("underlying_meta_type"_hs, entt::resolve<std::underlying_type_t<GamePlayState>>())
+    // Register Entity
+    {
+        const auto from_json = [](const nlohmann::json& j, void* ptr, const Entity& container_entity, Editor::Context& context)
+            {
+                // Deserialize entity
+                auto entity = Entity{ j["id"].get<Entity::entity_type>() };
 
-        .data<GamePlayState::Play>("Play"_hs).prop(display_name_hs, "Play")
-        .data<GamePlayState::Stop>("Stop"_hs).prop(display_name_hs, "Stop")
-        .data<GamePlayState::Pause>("Pause"_hs).prop(display_name_hs, "Pause");
+                // Do remap if another entity is available
+                if (context.entity_remap.contains(entity))
+                    entity = context.entity_remap.at(entity);
+
+                // Assign entity to object
+                *static_cast<Entity*>(ptr) = entity;
+            };
+
+        entt::meta<Entity>()
+            .type("Entity"_hs).prop(display_name_hs, "Entity")
+
+            .data<&Entity::set_id, &Entity::get_id>("id"_hs)
+            .prop(display_name_hs, "id")
+
+            // To/from JSON
+            // .template func<to_json, entt::as_void_t>(to_json_hs)
+            .template func<from_json, entt::as_void_t >(from_json_hs)
+
+            // Inspection
+            //.template func<inspect>(inspect_hs) // <- combo maybe
+            ;
+    }
+
+    // Register GamePlayState
+    {
+        entt::meta<GamePlayState>()
+            .type("GamePlayState"_hs)
+            .prop(display_name_hs, "GamePlayState")
+            .prop("underlying_meta_type"_hs, entt::resolve<std::underlying_type_t<GamePlayState>>())
+
+            .data<GamePlayState::Play>("Play"_hs).prop(display_name_hs, "Play")
+            .data<GamePlayState::Stop>("Stop"_hs).prop(display_name_hs, "Stop")
+            .data<GamePlayState::Pause>("Pause"_hs).prop(display_name_hs, "Pause");
+    }
 
     // Create registry
     registry = std::make_shared<entt::registry>();
@@ -1495,16 +1533,16 @@ bool Scene::init(const v2i& windowSize)
         lua->operator[]("engine")["create_entity"] = [&](
             const std::string& chunk_tag,
             const std::string& name,
-            entt::entity parent_entity) {
+            entt::entity parent_entity) -> entt::entity {
                 // return create_entity_and_attach_to_scenegraph(parent_entity);
-                return create_entity(chunk_tag, name, parent_entity, entt::null);
+                return entt::entity{ create_entity(chunk_tag, name, Entity{ parent_entity }, Entity{}) };
             };
 
         // Destroy entity
         //
         lua->operator[]("engine")["destroy_entity"] = [&](entt::entity entity) {
             assert(registry->valid(entity));
-            queue_entity_for_destruction(entity);
+            queue_entity_for_destruction(Entity{ entity });
             };
 
         // Register to Lua: helper functions for adding & obtaining scripts from entities
@@ -1679,7 +1717,7 @@ bool Scene::init(const v2i& windowSize)
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
-        auto debug_entity = create_entity("", "", entt::null, entt::null);// registry.create();
+        auto debug_entity = create_entity("", "", Entity{}, Entity{});// registry.create();
         registry->template emplace<DebugClass>(debug_entity);
 
 #if 0
@@ -1736,9 +1774,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1748,7 +1786,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-}
+    }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1801,7 +1839,7 @@ void Scene::update(float time_s, float deltaTime_s)
     if (entities_pending_destruction.size())
     {
         std::cout << "Destroying " << (int)entities_pending_destruction.size() << " entities... ";
-        for (auto entity : entities_pending_destruction) std::cout << entt::to_integral(entity) << " ";
+        for (auto entity : entities_pending_destruction) std::cout << entity.to_integral() << " ";
         std::cout << std::endl;
     }
 
@@ -1972,14 +2010,14 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-        }
-    } // anon
+    }
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
     observer.dispatch_all_events();
-}
+    }
 
 void Scene::renderUI()
 {
@@ -2026,9 +2064,9 @@ void Scene::renderUI()
     static Editor::InspectorState inspector{};
     inspector.context = create_context();
     inspector.cmd_queue = cmd_queue;
-    inspector.entity_selection.remove_invalid([&](entt::entity& entity)
+    inspector.entity_selection.remove_invalid([&](const Entity& entity)
         {
-            return entity != entt::null && registry->valid(entity);
+            return !entity.is_null() && registry->valid(entity);
         });
 
     if (Inspector::inspect_entity(inspector, observer)) {}
@@ -2175,7 +2213,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
@@ -2251,35 +2289,35 @@ Editor::Context Scene::create_context()
         lua,
         scenegraph,
         // Create entity
-        [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity {
+        [&](const Entity& entity_parent, const Entity& entity_hint) -> Entity {
             return this->create_entity("", "", entity_parent, entity_hint);
         },
         // Create empty entity
-        [&](entt::entity entity_hint) -> entt::entity {
+        [&](const Entity& entity_hint) -> Entity {
             return this->create_empty_entity(entity_hint);
         },
         // Destroy_entity
-        [&](entt::entity entity) -> void {
+        [&](const Entity& entity) -> void {
             this->queue_entity_for_destruction(entity);
         },
         // Can register entity
-        [&](entt::entity entity) -> bool {
+        [&](const Entity& entity) -> bool {
             return this->entity_parent_registered(entity);
             },
         // Register entity
-        [&](entt::entity entity) -> void {
+        [&](const Entity& entity) -> void {
             this->register_entity(entity);
             },
         // Reparent entity
-        [&](entt::entity entity, entt::entity parent_entity) -> void {
+        [&](const Entity& entity, const Entity& parent_entity) -> void {
             this->reparent_entity(entity, parent_entity);
         },
         // Set entity header parent
-        [&](entt::entity entity, entt::entity entity_parent) -> void {
+        [&](const Entity& entity, const Entity& entity_parent) -> void {
              this->set_entity_header_parent(entity, entity_parent);
         },
         // Entity validity
-        [&](entt::entity entity) -> bool {
+        [&](const Entity& entity) -> bool {
             return this->entity_valid(entity);
         }
     };
@@ -2289,7 +2327,7 @@ void Scene::save_chunk(const std::string& chunk_tag)
 {
     // Extract chunk entities
     auto chunk_it = chunk_registry.chunk(chunk_tag);
-    std::vector<entt::entity> entities(chunk_it.begin(), chunk_it.end());
+    std::vector<Entity> entities(chunk_it.begin(), chunk_it.end());
 
     // Serialize entities
     nlohmann::json entities_json =
@@ -2477,7 +2515,7 @@ namespace
     // }
 
     // TODO: Don't use this
-    bool is_child_of(SceneGraph& sg, entt::entity entity_child, entt::entity entity_parent)
+    bool is_child_of(SceneGraph& sg, const Entity& entity_child, const Entity& entity_parent)
     {
         return sg.tree.is_descendant_of(entity_child, entity_parent);
 
@@ -2492,7 +2530,7 @@ namespace
     template<class Iterable>
     auto filter_out_descendants(SceneGraph& scenegraph, const Iterable& entities)
     {
-        std::vector<entt::entity> filtered_entities;
+        std::vector<Entity> filtered_entities;
         for (auto& entity : entities)
         {
             bool is_child = false;
@@ -2592,8 +2630,8 @@ void Scene::OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent&
         {
             // Illegal to parent an entity to one of its descendants (unparent descendant first)
             eeng::LogError("Cannot parent entity %u to its descendant %u",
-                entt::to_integral(entity),
-                entt::to_integral(parent_entity));
+                entity.to_integral(),
+                parent_entity.to_integral());
 
             continue;
         }
@@ -2620,12 +2658,12 @@ void Scene::OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& e
     {
         if (scenegraph->is_root(entity))
         {
-            eeng::LogError("Entity %u already unparented", entt::to_integral(entity));
+            eeng::LogError("Entity %u already unparented", entity.to_integral());
             continue;
         }
 
         using namespace Editor;
-        auto command = ReparentEntityBranchCommand{ entity, entt::null, create_context() };
+        auto command = ReparentEntityBranchCommand{ entity, Entity{}, create_context() };
         cmd_queue->add(CommandFactory::Create<ReparentEntityBranchCommand>(command));
     }
 }
@@ -2647,7 +2685,7 @@ void Scene::OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelec
         if (storage->contains(entity))
         {
             eeng::LogError("Entity %u already contains Component %u",
-                entt::to_integral(entity),
+                entity.to_integral(),
                 event.component_id);
             continue;
         }
@@ -2674,7 +2712,7 @@ void Scene::OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromE
         if (!storage->contains(entity))
         {
             eeng::LogError("Entity %u does not contain Component %u",
-                entt::to_integral(entity),
+                entity.to_integral(),
                 event.component_id);
             continue;
         }

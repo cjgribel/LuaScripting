@@ -12,11 +12,11 @@
 #include "CoreComponents.hpp"
 
 bool SceneGraph::insert_node(
-    entt::entity entity,
-    entt::entity parent_entity
+    const Entity& entity,
+    const Entity& parent_entity
 )
 {
-    if (parent_entity == entt::null)
+    if (parent_entity.is_null())
     {
         tree.insert_as_root(entity);
         return true;
@@ -25,42 +25,42 @@ bool SceneGraph::insert_node(
         return tree.insert(entity, parent_entity);
 }
 
-bool SceneGraph::erase_node(entt::entity entity)
+bool SceneGraph::erase_node(const Entity& entity)
 {
     // assert(tree.is_leaf(entity));
     if (!tree.is_leaf(entity))
-        std::cout << "WARNING: erase_node: non-leaf node erased " << entt::to_integral(entity) << std::endl;
+        std::cout << "WARNING: erase_node: non-leaf node erased " << entity.to_integral() << std::endl;
 
     return tree.erase_branch(entity);
 }
 
-bool SceneGraph::is_root(entt::entity entity)
+bool SceneGraph::is_root(const Entity& entity)
 {
     return tree.is_root(entity);
 }
 
-bool SceneGraph::is_leaf(entt::entity entity)
+bool SceneGraph::is_leaf(const Entity& entity)
 {
     return tree.is_leaf(entity);
 }
 
-unsigned SceneGraph::get_nbr_children(entt::entity entity)
+unsigned SceneGraph::get_nbr_children(const Entity& entity)
 {
     return tree.get_nbr_children(entity);
 }
 
-entt::entity SceneGraph::get_parent(entt::entity entity)
+Entity SceneGraph::get_parent(const Entity& entity)
 {
     assert(!is_root(entity));
     return tree.get_parent(entity);
 }
 
-bool SceneGraph::is_descendant_of(entt::entity entity, entt::entity parent_entity)
+bool SceneGraph::is_descendant_of(const Entity& entity, const Entity& parent_entity)
 {
     return tree.is_descendant_of(entity, parent_entity);
 }
 
-void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
+void SceneGraph::reparent(const Entity& entity, const Entity& parent_entity)
 {
     // Do exception here?
     // Which checks?
@@ -70,7 +70,7 @@ void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
 
     assert(tree.contains(entity));
 
-    if (parent_entity == entt::null)
+    if (parent_entity.is_null())
     {
         unparent(entity);
         return;
@@ -80,7 +80,7 @@ void SceneGraph::reparent(entt::entity entity, entt::entity parent_entity)
     tree.reparent(entity, parent_entity);
 }
 
-void SceneGraph::unparent(entt::entity entity)
+void SceneGraph::unparent(const Entity& entity)
 {
     tree.unparent(entity);
 }
@@ -98,7 +98,7 @@ size_t SceneGraph::size()
 void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
 {
     // std::cout << "traverse:" << std::endl;
-    tree.traverse_progressive([&](entt::entity* entity_ptr, entt::entity* entity_parent_ptr) {
+    tree.traverse_progressive([&](Entity* entity_ptr, Entity* entity_parent_ptr) {
         // + Transform = parent tfm + tfm (+ maybe their aggregate)
 
         // std::cout << "node " << Editor::get_entity_name(registry, entity, entt::meta_type{});
@@ -134,22 +134,22 @@ void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
         });
 }
 
-SceneGraph::BranchQueue SceneGraph::get_branch_topdown(entt::entity entity)
+SceneGraph::BranchQueue SceneGraph::get_branch_topdown(const Entity& entity)
 {
     BranchQueue stack;
 
-    tree.traverse_breadthfirst(entity, [&](const entt::entity& entity, size_t index) {
+    tree.traverse_breadthfirst(entity, [&](const Entity& entity, size_t index) {
         stack.push_back(entity);
         });
 
     return stack;
 }
 
-SceneGraph::BranchQueue SceneGraph::get_branch_bottomup(entt::entity entity)
+SceneGraph::BranchQueue SceneGraph::get_branch_bottomup(const Entity& entity)
 {
     BranchQueue stack;
 
-    tree.traverse_breadthfirst(entity, [&](const entt::entity& entity, size_t index) {
+    tree.traverse_breadthfirst(entity, [&](const Entity& entity, size_t index) {
         stack.push_front(entity);
         });
 
@@ -161,7 +161,7 @@ void SceneGraph::dump_to_cout(
     const entt::meta_type meta_type_with_name) const
 {
     //std::cout << "Scene graph nodes:" << std::endl;
-    tree.traverse_depthfirst([&](const entt::entity& entity, size_t index, size_t level)
+    tree.traverse_depthfirst([&](const Entity& entity, size_t index, size_t level)
         {
             //auto entity = node.m_payload;
             auto entity_name = Editor::get_entity_name(registry, entity, meta_type_with_name);

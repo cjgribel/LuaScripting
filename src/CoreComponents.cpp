@@ -1577,7 +1577,7 @@ namespace {
     void BehaviorScript_from_json(
         const nlohmann::json& j,
         void* ptr,
-        entt::entity entity,
+        const Entity& entity,
         Editor::Context& context)
     {
         std::cout << "BehaviorScript_from_json\n";

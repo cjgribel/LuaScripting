@@ -19,7 +19,7 @@
 
 #include "ParticleBuffer.hpp"
 
-using EntitySelection = Editor::SelectionManager<entt::entity>;
+using EntitySelection = Editor::SelectionManager<Entity>;
 
 class Scene : public eeng::SceneBase
 {
@@ -42,7 +42,7 @@ public:
     struct UnloadChunkEvent { std::string chunk_tag; };
     struct LoadChunkFromFileEvent { std::string path; };
     struct SetGamePlayStateEvent { GamePlayState play_state; };
-    struct CreateEntityEvent { entt::entity parent_entity; };
+    struct CreateEntityEvent { Entity parent_entity; };
     struct DestroyEntityEvent { EntitySelection entity_selection; };
     struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
     struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
@@ -85,7 +85,7 @@ private:
     std::shared_ptr<sol::state> lua{};
     std::shared_ptr<SceneGraph> scenegraph{};
 
-    std::deque<entt::entity> entities_pending_destruction;
+    std::deque<Entity> entities_pending_destruction;
 
     linalg::v3f lightPos, eyePos;
     const float nearPlane = 1.0f, farPlane = 10.0f;
@@ -108,27 +108,25 @@ private:
     // entt::entity get_entity_parent(
     //     entt::entity entity);
 
-    bool entity_valid(entt::entity entity);
+    bool entity_valid(const Entity& entity);
 
-    bool entity_parent_registered(
-        entt::entity entity);
+    bool entity_parent_registered(const Entity& entity);
 
-    void reparent_entity(entt::entity entity, entt::entity parent_entity);
+    void reparent_entity(const Entity& entity, const Entity& parent_entity);
 
     /// Sets entity parent in HeaderComponent and registers entity to scene graph
-    void set_entity_header_parent(entt::entity entity, entt::entity entity_parent);
+    void set_entity_header_parent(const Entity& entity, const Entity& entity_parent);
 
     /// Registers entity to scene graph using parent registered in HeaderComponent
-    void register_entity(
-        entt::entity entity);
+    void register_entity(const Entity& entity);
 
-    entt::entity create_empty_entity(entt::entity entity_hint);
+    Entity create_empty_entity(const Entity& entity_hint);
 
-    entt::entity create_entity(
+    Entity create_entity(
         const std::string& chunk_tag,
         const std::string& name,
-        entt::entity parent_entity,
-        entt::entity entity_hint);
+        const Entity& parent_entity,
+        const Entity& entity_hint);
 
     // entt::entity create_entity_hint(
     //     entt::entity hint_entity,
@@ -137,7 +135,7 @@ private:
     // entt::entity create_entity(
     //     entt::entity parent_entity);
 
-    void queue_entity_for_destruction(entt::entity entity);
+    void queue_entity_for_destruction(const Entity&);
     void destroy_pending_entities();
 
     ChunkRegistry chunk_registry{};
