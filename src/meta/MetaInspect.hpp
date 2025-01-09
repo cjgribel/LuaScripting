@@ -39,7 +39,7 @@ namespace Editor {
         ComponentCommandBuilder& cmd_builder);
 
     bool inspect_entity(
-        entt::entity entity,
+        const Entity& entity,
         InspectorState& inspector);
 
 #if 0

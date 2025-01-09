@@ -8,25 +8,22 @@
 #ifndef meta_reg_h
 #define meta_reg_h
 
-#include <sol/forward.hpp>
+#include "Context.hpp"
+//#include <sol/forward.hpp>
 // #include <entt/entt.hpp>
 // #include <tuple>
 // #include <utility>
 // #include <cassert>
 
-namespace internal {
-
-
-
-} // internal
-
 /// @brief 
 /// @tparam Type 
 /// @param lua 
 template<class Type>
-void register_meta(std::shared_ptr<sol::state>& lua)
+void register_meta(Editor::Context& context)
 {
     assert(0 && "Specialization not available for type");
 }
+
+using ClassDataModifiedCallbackType = std::function<void(entt::meta_any)>;
 
 #endif /* meta_reg */

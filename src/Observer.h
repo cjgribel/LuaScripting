@@ -1,3 +1,6 @@
+#ifndef Observer_hpp
+#define Observer_hpp
+
 #include <any>
 #include <functional>
 #include <typeindex>
@@ -107,3 +110,5 @@ public:
         callback_map[typeid(EventType)].push_back(wrapped_callback);
     }
 };
+
+#endif

@@ -29,6 +29,8 @@
 using linalg::v2f;
 #define GridSize 64
 
+
+
 // === Transform ==============================================================
 
 struct Transform
@@ -207,24 +209,24 @@ void serialization_test(std::shared_ptr<sol::state>& lua);
 // === Meta registration ======================================================
 
 template<>
-void register_meta<Transform>(std::shared_ptr<sol::state>& lua);
+void register_meta<Transform>(Editor::Context& context);
 
 template<>
-void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<HeaderComponent>(Editor::Context& context);
 
 template<>
-void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<CircleColliderGridComponent>(Editor::Context& context);
 
 template<>
-void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<IslandFinderComponent>(Editor::Context& context);
 
 template<>
-void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<QuadGridComponent>(Editor::Context& context);
 
 template<>
-void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<DataGridComponent>(Editor::Context& context);
 
 template<>
-void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua);
+void register_meta<ScriptedBehaviorComponent>(Editor::Context& context);
 
 #endif // CoreComponents_hpp

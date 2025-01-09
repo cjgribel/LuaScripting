@@ -215,11 +215,11 @@ namespace Editor {
         // Call data field callback if present
         {
             // meta_data is the actual data field that was edited
-            using CallbackType = std::function<void(entt::meta_any)>;
+            using TypeModifiedCallbackType = std::function<void(entt::meta_any, const Entity&)>;
             if (auto prop = meta_data0.prop("callback"_hs); prop)
             {
-                if (auto ptr = prop.value().try_cast<CallbackType>(); ptr)
-                    ptr->operator()(value_any);
+                if (auto ptr = prop.value().try_cast<TypeModifiedCallbackType>(); ptr)
+                    ptr->operator()(value_any, entity);
                 else { assert(0); }
             }
         }
@@ -242,7 +242,7 @@ namespace Editor {
 
     ComponentCommandBuilder& ComponentCommandBuilder::registry(std::weak_ptr<entt::registry> registry) { command.registry = registry; return *this; }
 
-    ComponentCommandBuilder& ComponentCommandBuilder::entity(entt::entity entity) { command.entity = entity; return *this; }
+    ComponentCommandBuilder& ComponentCommandBuilder::entity(const Entity& entity) { command.entity = entity; return *this; }
 
     ComponentCommandBuilder& ComponentCommandBuilder::component(entt::id_type id) { command.component_id = id; return *this; }
 
@@ -292,7 +292,7 @@ namespace Editor {
         // Valdiate before returning command instance 
 
         assert(!command.registry.expired() && "registry pointer expired");
-        assert(command.entity != entt::null && "entity invalid");
+        assert(!command.entity.is_null() && "entity invalid");
         assert(command.component_id != 0 && "component id invalid");
 
         assert(command.prev_value);

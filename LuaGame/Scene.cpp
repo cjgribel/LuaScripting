@@ -626,7 +626,7 @@ int main() {
     return 0;
 }
 */
-void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
+void bind_conditional_observer(auto& lua, std::shared_ptr<ConditionalObserver> observer)
 {
     lua->template new_usertype<ConditionalObserver>("ConditionalObserver",
         "register_callback", [](ConditionalObserver& observer, const sol::table& lua_table, const std::string& event_name) {
@@ -658,7 +658,11 @@ void bind_conditional_observer(auto& lua, ConditionalObserver& observer)
         "clear", &ConditionalObserver::clear
     );
 
-    lua->operator[]("observer") = &observer;
+    // Ties ownership to Lua, which can be better fpr insight purposes
+    lua->operator[]("observer") = observer;
+
+    // Share raw pointer
+    // lua->operator[]("observer") = observer.get();
 }
 
 namespace Inspector
@@ -923,10 +927,10 @@ namespace Inspector
         static bool open = true;
         bool* p_open = &open;
 
-        entt::entity selected_entity = entt::null;
+        Entity selected_entity;
         if (!inspector.entity_selection.empty()) selected_entity = inspector.entity_selection.first();
         bool selected_entity_valid =
-            selected_entity != entt::null &&
+            !selected_entity.is_null() &&
             registry->valid(selected_entity);
 
         ImGui::SetNextWindowBgAlpha(0.35f);
@@ -936,7 +940,7 @@ namespace Inspector
             return mod;
         }
 
-        ImGui::Text("ADD/Remove Component");
+        ImGui::Text("Add/Remove Component");
 
         // Component combo
         static entt::id_type selected_comp_id = 0;
@@ -1483,30 +1487,30 @@ bool Scene::init(const v2i& windowSize)
     registry->on_destroy<ScriptedBehaviorComponent>().connect<&release_script>();
 
     scenegraph = std::make_shared<SceneGraph>();
-
     cmd_queue = std::make_shared<Editor::CommandQueue>();
+    observer = std::make_shared<ConditionalObserver>();
 
     // Hook up Scene events
-    observer.register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
-    observer.register_callback([&](const SaveAllChunksToFileEvent& event) { this->OnSaveAllChunksToFileEvent(event); });
+    observer->register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
+    observer->register_callback([&](const SaveAllChunksToFileEvent& event) { this->OnSaveAllChunksToFileEvent(event); });
 
-    observer.register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
-    observer.register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
+    observer->register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
+    observer->register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
 
-    observer.register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
-    observer.register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
-    observer.register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
+    observer->register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
+    observer->register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
+    observer->register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
     // observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
-    observer.register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
+    observer->register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
 
-    observer.register_callback([&](const SetParentEntitySelectionEvent& event) { this->OnSetParentEntitySelectionEvent(event); });
-    observer.register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
+    observer->register_callback([&](const SetParentEntitySelectionEvent& event) { this->OnSetParentEntitySelectionEvent(event); });
+    observer->register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
 
-    observer.register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
-    observer.register_callback([&](const RemoveComponentFromEntitySelectionEvent& event) { this->OnRemoveComponentFromEntitySelectionEvent(event); });
+    observer->register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
+    observer->register_callback([&](const RemoveComponentFromEntitySelectionEvent& event) { this->OnRemoveComponentFromEntitySelectionEvent(event); });
 
-    observer.register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
-    observer.register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
+    observer->register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
+    observer->register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
 
     try
     {
@@ -1648,13 +1652,14 @@ bool Scene::init(const v2i& windowSize)
 
         // Register core components to Lua
         // register_transform(lua);
-        register_meta<Transform>(lua);
-        register_meta<HeaderComponent>(lua);
-        register_meta<CircleColliderGridComponent>(lua);
-        register_meta<IslandFinderComponent>(lua);
-        register_meta<QuadGridComponent>(lua);
-        register_meta<DataGridComponent>(lua);
-        register_meta<ScriptedBehaviorComponent>(lua);
+        auto context = create_context();
+        register_meta<Transform>(context);
+        register_meta<HeaderComponent>(context);
+        register_meta<CircleColliderGridComponent>(context);
+        register_meta<IslandFinderComponent>(context);
+        register_meta<QuadGridComponent>(context);
+        register_meta<DataGridComponent>(context);
+        register_meta<ScriptedBehaviorComponent>(context);
         //
         registerQuadComponent(lua); // not used
         registerCircleColliderComponent(lua); // not used
@@ -2016,7 +2021,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     IslandFinderSystem(registry, deltaTime_s);
 
-    observer.dispatch_all_events();
+    observer->dispatch_all_events();
     }
 
 void Scene::renderUI()
@@ -2069,23 +2074,36 @@ void Scene::renderUI()
             return !entity.is_null() && registry->valid(entity);
         });
 
-    if (Inspector::inspect_entity(inspector, observer)) {}
+    // Begin inspection
+    // May issue events
+
+    if (Inspector::inspect_entity(inspector, *observer)) {}
 
     Inspector::inspect_command_queue(inspector);
 
     // Before inspect_entity ???
-    Inspector::inspect_scenegraph(*scenegraph, inspector, observer);
+    Inspector::inspect_scenegraph(*scenegraph, inspector, *observer);
 
-    Inspector::inspect_playstate(play_state, observer);
+    Inspector::inspect_playstate(play_state, *observer);
 
-    Inspector::inspect_chunkregistry(chunk_registry, observer);
+    Inspector::inspect_chunkregistry(chunk_registry, *observer);
 
-    observer.dispatch_all_events();
+    // LOOP OVER EVENT DISPATCH, COMMAND EXECUTION & ENTITY DESTRUCTION?
+
+    // Dispatch events
+    // May issue commands
+
+    observer->dispatch_all_events();
+
+    // Execute commands
+    // May queue entities for destruction and issue new events
+    // ??? Are Scene functions stored in Context actually events?
+
     //std::cout << cmd_queue->has_new() << std::endl;
     //std::cout << cmd_queue->has_new() << " " << cmd_queue->new_commands_pending() << std::endl;
     // if (cmd_queue->has_new())
     if (cmd_queue->new_commands_pending())
-        cmd_queue->execute_pending();
+        cmd_queue->execute_pending(); // <- queue entities for destruction & may dispatch new events
     destroy_pending_entities();
 }
 
@@ -2261,9 +2279,11 @@ void Scene::destroy()
     std::cout << "cmd_queue.use_count() " << cmd_queue.use_count() << std::endl;
     std::cout << "registry.use_count() " << registry.use_count() << std::endl;
     std::cout << "lua.use_count() " << lua.use_count() << std::endl;
+    std::cout << "observer.use_count() " << observer.use_count() << std::endl;
     cmd_queue.reset();
     scenegraph.reset();
     registry.reset();
+    observer.reset();
     lua.reset();
 
     is_initialized = false;
@@ -2288,6 +2308,7 @@ Editor::Context Scene::create_context()
         registry,
         lua,
         scenegraph,
+        observer,
         // Create entity
         [&](const Entity& entity_parent, const Entity& entity_hint) -> Entity {
             return this->create_entity("", "", entity_parent, entity_hint);

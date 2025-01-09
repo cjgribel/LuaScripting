@@ -16,6 +16,8 @@
 
 //#include <iostream>
 
+using TypeModifiedCallbackType = std::function<void(entt::meta_any, const Entity&)>;
+
 // === Transform ==============================================================
 
 std::string Transform::to_string() const
@@ -49,9 +51,9 @@ bool inspect_Transform(void* ptr, Editor::InspectorState& inspector)
 }
 
 template<>
-void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
+void register_meta<Transform>(Editor::Context& context)
 {
-    // Note: appends meta asssigned to type by register_meta_component() in bond.hpp
+    assert(context.lua);
 
     entt::meta<Transform>()
         //.type("Transform"_hs)                 // <- this hashed string is used implicitly
@@ -81,7 +83,7 @@ void register_meta<Transform>(std::shared_ptr<sol::state>& lua)
 
     assert("Transform"_hs == entt::resolve<Transform>().id());
 
-    lua->new_usertype<Transform>("Transform",
+    context.lua->new_usertype<Transform>("Transform",
 
         sol::call_constructor,
         sol::factories([](float x, float y, float angle) {
@@ -126,14 +128,18 @@ namespace {
 }
 
 template<>
-void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<HeaderComponent>(Editor::Context& context)
 {
-    // Register to entt::meta
 
     // chunk_tag callback
-    const std::function<void(entt::meta_any)> chunk_tag_cb = [](entt::meta_any any)
+    struct ChunkModifiedEvent { std::string chunk_tag; Entity entity; };
+    const TypeModifiedCallbackType chunk_tag_cb = [context](entt::meta_any any, const Entity& entity)
         {
-            std::cout << any.cast<std::string>() << std::endl;
+            std::cout << any.cast<std::string>() << ", " << entity.to_integral() << std::endl;
+            
+            ChunkModifiedEvent event{ "", entity };
+            assert(!context.observer.expired());
+            context.observer.lock()->enqueue_event(event);
         };
 
     entt::meta<HeaderComponent>()
@@ -162,7 +168,8 @@ void register_meta<HeaderComponent>(std::shared_ptr<sol::state>& lua)
 
         // Register to sol
 
-        lua->new_usertype<HeaderComponent>("HeaderComponent",
+        assert(context.lua);
+        context.lua->new_usertype<HeaderComponent>("HeaderComponent",
             //sol::constructors<HeaderComponent(), HeaderComponent(const std::string&)>(),
 
             // If the type has defined ctors
@@ -232,7 +239,7 @@ std::string CircleColliderGridComponent::to_string() const
 }
 
 template<>
-void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<CircleColliderGridComponent>(Editor::Context& context)
 {
     entt::meta<CircleColliderGridComponent>()
         .type("CircleColliderGridComponent"_hs).prop(display_name_hs, "CircleColliderGrid")
@@ -271,7 +278,8 @@ void register_meta<CircleColliderGridComponent>(std::shared_ptr<sol::state>& lua
         .data<&linalg::v2f::y>("y"_hs).prop(display_name_hs, "y")
         ;
 
-    lua->new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
+    assert(context.lua);
+    context.lua->new_usertype<CircleColliderGridComponent>("CircleColliderGridComponent",
         "type_id",
         &entt::type_hash<CircleColliderGridComponent>::value,
 
@@ -387,7 +395,7 @@ std::string IslandFinderComponent::to_string() const
 }
 
 template<>
-void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<IslandFinderComponent>(Editor::Context& context)
 {
     entt::meta<IslandFinderComponent>()
         .type("IslandFinderComponent"_hs).prop(display_name_hs, "IslandFinder")
@@ -397,7 +405,8 @@ void register_meta<IslandFinderComponent>(std::shared_ptr<sol::state>& lua)
         .data<&IslandFinderComponent::islands>("islands"_hs).prop(display_name_hs, "islands") // ???
         ;
 
-    lua->new_usertype<IslandFinderComponent>("IslandFinderComponent",
+    assert(context.lua);
+    context.lua->new_usertype<IslandFinderComponent>("IslandFinderComponent",
         "type_id",
         &entt::type_hash<IslandFinderComponent>::value,
         sol::call_constructor,
@@ -436,7 +445,7 @@ std::string QuadGridComponent::to_string() const
 }
 
 template<>
-void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<QuadGridComponent>(Editor::Context& context)
 {
     entt::meta<QuadGridComponent>()
         .type("QuadGridComponent"_hs).prop(display_name_hs, "QuadGrid")
@@ -452,7 +461,8 @@ void register_meta<QuadGridComponent>(std::shared_ptr<sol::state>& lua)
         .data<&QuadGridComponent::is_active_flags>("is_active_flags"_hs).prop(display_name_hs, "is_active_flags")
         ;
 
-    lua->new_usertype<QuadGridComponent>("QuadGridComponent",
+    assert(context.lua);
+    context.lua->new_usertype<QuadGridComponent>("QuadGridComponent",
 
         "type_id",
         &entt::type_hash<QuadGridComponent>::value,
@@ -575,7 +585,7 @@ std::string DataGridComponent::to_string() const
 }
 
 template<>
-void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<DataGridComponent>(Editor::Context& context)
 {
     entt::meta<DataGridComponent>()
         .type("DataGridComponent"_hs).prop(display_name_hs, "DataGrid")
@@ -588,7 +598,8 @@ void register_meta<DataGridComponent>(std::shared_ptr<sol::state>& lua)
         .data<&DataGridComponent::slot2>("slot2"_hs).prop(display_name_hs, "slot2")
         ;
 
-    lua->new_usertype<DataGridComponent>("DataGridComponent",
+    assert(context.lua);
+    context.lua->new_usertype<DataGridComponent>("DataGridComponent",
         "type_id",
         &entt::type_hash<DataGridComponent>::value,
 
@@ -1674,7 +1685,7 @@ void serialization_test(std::shared_ptr<sol::state>& lua)
 }
 
 template<>
-void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
+void register_meta<ScriptedBehaviorComponent>(Editor::Context& context)
 {
     // Note
     // sol::table and sol::function need meta definitions since BehaviorScript 
@@ -1760,7 +1771,8 @@ void register_meta<ScriptedBehaviorComponent>(std::shared_ptr<sol::state>& lua)
         .func<&copy_ScriptedBehaviorComponent>(clone_hs)
         ;
 
-    lua->new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
+    assert(context.lua);
+    context.lua->new_usertype<ScriptedBehaviorComponent>("ScriptedBehaviorComponent",
         "type_id",
         &entt::type_hash<ScriptedBehaviorComponent>::value,
         sol::call_constructor,

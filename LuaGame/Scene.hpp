@@ -84,6 +84,7 @@ private:
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
     std::shared_ptr<SceneGraph> scenegraph{};
+    std::shared_ptr<ConditionalObserver> observer{};
 
     std::deque<Entity> entities_pending_destruction;
 
@@ -98,8 +99,6 @@ private:
     // Particle buffer
     ParticleBuffer particleBuffer{};
 
-    // Observer
-    ConditionalObserver observer{};
 
     // (Editor) Command queue
     std::shared_ptr<Editor::CommandQueue> cmd_queue{};

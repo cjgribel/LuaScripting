@@ -31,7 +31,7 @@ namespace Editor {
     class ComponentCommand : public Command
     {
         std::weak_ptr<entt::registry>   registry;
-        entt::entity                    entity = entt::null;;
+        Entity                          entity;
         entt::id_type                   component_id = 0;
         MetaPath                        meta_path{};
         entt::meta_any                  prev_value{}, new_value{};
@@ -56,7 +56,7 @@ namespace Editor {
     public:
         ComponentCommandBuilder& registry(std::weak_ptr<entt::registry> registry);
 
-        ComponentCommandBuilder& entity(entt::entity entity);
+        ComponentCommandBuilder& entity(const Entity& entity);
 
         ComponentCommandBuilder& component(entt::id_type id);
 

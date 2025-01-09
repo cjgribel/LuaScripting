@@ -363,14 +363,14 @@ namespace Editor {
     }
 
     bool inspect_entity(
-        entt::entity entity,
+        const Entity& entity,
         InspectorState& inspector)
     {
         bool mod = false;
         ComponentCommandBuilder cmd_builder;
 
         auto& registry = inspector.context.registry;
-        assert(entity != entt::null);
+        assert(!entity.is_null());
         assert(registry->valid(entity));
 
         for (auto&& [id, type] : registry->storage())
