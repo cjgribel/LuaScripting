@@ -996,10 +996,10 @@ namespace Inspector
             observer.enqueue_event(event);
         }
 
-        ImGui::Text("Add/Remove Script");
+        ImGui::Text("Add/Remove Behavior");
 
         // Scripts combo
-        auto all_scripts = FileManager::GetFilesInFolder(Scene::script_dir, "lua");
+        auto all_scripts = FileManager::GetFilesInFolder(script_dir, "lua");
         static std::string selected_script_path = "";
         if (ImGui::BeginCombo("##addscriptcombo", selected_script_path.c_str()))
         {
@@ -1166,6 +1166,48 @@ namespace Inspector
         ImGui::End(); // Window
     }
 
+    void inspect_script_launcher(
+        ConditionalObserver& observer)
+    {
+        static bool open = true;
+        bool* p_open = &open;
+
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (!ImGui::Begin("Run Script", p_open))
+        {
+            ImGui::End();
+            return;
+        }
+
+        // Scripts combo
+        auto all_scripts = FileManager::GetFilesInFolder(script_dir, "lua");
+        static std::string selected_script_path = "";
+        if (ImGui::BeginCombo("##runscriptcombo", selected_script_path.c_str()))
+        {
+            for (auto& script_path : all_scripts)
+            {
+                bool is_selected = (script_path == selected_script_path);
+
+                if (ImGui::Selectable(script_path.c_str(), is_selected))
+                    selected_script_path = script_path;
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        // Run button
+        bool can_run = selected_script_path.size();
+        ImGui::SameLine();
+        if (!can_run) ImGui::BeginDisabled();
+        if (ImGui::Button("Run##runscript"))
+            observer.enqueue_event(RunScriptEvent{ selected_script_path });
+        if (!can_run) ImGui::EndDisabled();
+
+        ImGui::End(); // Window
+    }
+
     void inspect_chunkregistry(
         ChunkRegistry& chunk_registry,
         ConditionalObserver& observer)
@@ -1185,7 +1227,7 @@ namespace Inspector
 
         // Existing files combo
         //ImGui::InputText("##loadjson", &load_json_path, 0, nullptr, nullptr);
-        auto all_files = FileManager::GetFilesInFolder(Scene::save_dir, "json");
+        auto all_files = FileManager::GetFilesInFolder(save_dir, "json");
         static std::string selected_file_path = "";
         if (ImGui::BeginCombo("##chunkcombo", selected_file_path.c_str()))
         {
@@ -1513,6 +1555,8 @@ bool Scene::init(const v2i& windowSize)
     observer->register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
 
     observer->register_callback([&](const ChunkModifiedEvent& event) { this->OnChunkModifiedEvent(event); });
+
+    observer->register_callback([&](const RunScriptEvent& event) { this->OnRunScriptEvent(event); });
 
     try
     {
@@ -2087,6 +2131,8 @@ void Scene::renderUI()
     Inspector::inspect_scenegraph(*scenegraph, inspector, *observer);
 
     Inspector::inspect_playstate(play_state, *observer);
+
+    Inspector::inspect_script_launcher(*observer);
 
     Inspector::inspect_chunkregistry(chunk_registry, *observer);
 
@@ -2792,7 +2838,25 @@ void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntityS
 /// Dispatched without queueing
 void Scene::OnChunkModifiedEvent(const ChunkModifiedEvent& event)
 {
-    std::cout << event.chunk_tag << ", " << event.entity.to_integral() << std::endl;
+        eeng::Log("ChunkModifiedEvent: entity %u, chunk = %s",
+        event.entity.to_integral(),
+        event.chunk_tag.c_str());
 
     chunk_registry.reassign_entity(event.chunk_tag, event.entity);
+}
+
+void Scene::OnRunScriptEvent(const RunScriptEvent& event)
+{
+    auto script = FileManager::SplitPath(event.script_path).filename;
+    eeng::Log("OnRunScriptEvent: %s", script.c_str());
+
+    // Run the Lua file
+    try
+    {
+        lua->script_file(event.script_path);
+    }
+    catch (const sol::error& e)
+    {
+        eeng::LogError("Could not execute %s", e.what());
+    }
 }

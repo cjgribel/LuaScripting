@@ -52,9 +52,6 @@ public:
     // struct AddScriptToEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
     // struct RemoveScriptFromEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
 
-    // Todo: Should not be hard coded obviously
-    static inline const std::string script_dir = "../../LuaGame/lua/";
-    static inline const std::string save_dir = "../../LuaGame/json/";
 private:
 
     Editor::Context create_context();
@@ -87,6 +84,8 @@ private:
     void OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event);
     // Field update callbacks
     void OnChunkModifiedEvent(const ChunkModifiedEvent& event);
+        // Script execution callbacks
+    void OnRunScriptEvent(const RunScriptEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
