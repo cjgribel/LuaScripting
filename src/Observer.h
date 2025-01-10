@@ -82,6 +82,12 @@ public:
         events.clear();
     }
 
+    /// 
+    bool has_pending_events()
+    {
+        return events.size();
+    }
+
     /// Clears all stored events.
     void clear()
     {

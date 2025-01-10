@@ -58,6 +58,10 @@ public:
     void removeEntity(const std::string& chunk_id, const Entity& entity);
 
     void removeEntity(const Entity& entity);
+    
+    void reassign_entity(const std::string& chunk_id, const Entity& entity);
+
+    std::pair<std::string, bool> find_chunk(const Entity& entity) const;
 
     bool entity_exists_in_chunk(const std::string& chunk_id, const Entity& entity) const;
 

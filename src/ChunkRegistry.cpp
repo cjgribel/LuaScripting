@@ -64,6 +64,8 @@ void ChunkRegistry::addEntity(const std::string& chunk_id, const Entity& entity)
 void ChunkRegistry::removeEntity(const std::string& chunk_id, const Entity& entity)
 {
     assert(chunk_exists(chunk_id) && "Chunk does not exist!");
+    assert(entity_exists(entity) && "Entity does not exist!");
+    assert(entity_exists_in_chunk(chunk_id, entity) && "Entity does not exist!");
 
     auto& entities = registry.at(chunk_id);
     auto it = std::find(entities.begin(), entities.end(), entity);
@@ -75,15 +77,35 @@ void ChunkRegistry::removeEntity(const std::string& chunk_id, const Entity& enti
 
 void ChunkRegistry::removeEntity(const Entity& entity)
 {
+    assert(entity_exists(entity) && "Entity does not exist!");
+
     for (auto& [chunk_id, entities] : registry)
     {
         auto it = std::find(entities.begin(), entities.end(), entity);
         if (it != entities.end())
         {
             entities.erase(it);
-            return;
         }
     }
+}
+
+void ChunkRegistry::reassign_entity(const std::string& new_chunk_id, const Entity& entity)
+{
+    assert(entity_exists(entity) && "Entity does not exist!");
+    removeEntity(entity);
+    addEntity(new_chunk_id, entity);
+}
+
+std::pair<std::string, bool> ChunkRegistry::find_chunk(const Entity& entity) const
+{
+    assert(entity_exists(entity) && "Entity does not exist!");
+
+    for (const auto& [chunk_id, entities] : registry)
+    {
+        if (entity_exists_in_chunk(chunk_id, entity))
+            return { chunk_id, true };
+    }
+    return { std::string {}, true };
 }
 
 bool ChunkRegistry::entity_exists_in_chunk(const std::string& chunk_id, const Entity& entity) const
@@ -92,6 +114,7 @@ bool ChunkRegistry::entity_exists_in_chunk(const std::string& chunk_id, const En
     const auto& entities = registry.at(chunk_id);
     return std::find(entities.begin(), entities.end(), entity) != entities.end();
 }
+
 
 bool ChunkRegistry::entity_exists(const Entity& entity) const
 {

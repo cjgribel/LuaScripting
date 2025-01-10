@@ -894,9 +894,9 @@ namespace Inspector
             {
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
-        }
+            }
 #endif
-    }
+        }
 
         // Debug print selected
         ImGui::Separator();
@@ -916,7 +916,7 @@ namespace Inspector
         // TEMP
         // if (!inspector.entity_selection.empty())
         //     inspector.selected_entity = inspector.entity_selection.last();
-}
+    }
 
     bool inspect_entity(
         Editor::InspectorState& inspector,
@@ -1359,7 +1359,7 @@ Entity Scene::create_entity(
     {
         assert(scenegraph.tree.contains(entity_parent));
         scenegraph.create_node(entity, entity_parent);
-}
+    }
 #endif
 
     std::cout << "Scene::create_entity " << entity.to_integral() << std::endl;
@@ -1781,9 +1781,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1793,7 +1793,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-    }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -2017,14 +2017,14 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-    }
-} // anon
+        }
+    } // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
 
     observer->dispatch_all_events();
-    }
+}
 
 void Scene::renderUI()
 {
@@ -2090,23 +2090,24 @@ void Scene::renderUI()
 
     Inspector::inspect_chunkregistry(chunk_registry, *observer);
 
-    // LOOP OVER EVENT DISPATCH, COMMAND EXECUTION & ENTITY DESTRUCTION?
+    // Event & command loop
+    // TODO: Move to start of update?
 
-    // Dispatch events
-    // May issue commands
+    int cycles = 0;
+    const int max_cycles = 5;
+    while ((observer->has_pending_events() || cmd_queue->new_commands_pending()) && cycles++ <= max_cycles)
+    {
+        // Dispatch events. May lead to commands being issued.
+        observer->dispatch_all_events();
 
-    observer->dispatch_all_events();
+        // Execute commands. May lead to entities being queued for destruction
+        // and new events being issued.
+        cmd_queue->execute_pending();
 
-    // Execute commands
-    // May queue entities for destruction and issue new events
-    // ??? Are Scene functions stored in Context actually events?
-
-    //std::cout << cmd_queue->has_new() << std::endl;
-    //std::cout << cmd_queue->has_new() << " " << cmd_queue->new_commands_pending() << std::endl;
-    // if (cmd_queue->has_new())
-    if (cmd_queue->new_commands_pending())
-        cmd_queue->execute_pending(); // <- queue entities for destruction & may dispatch new events
-    destroy_pending_entities();
+        destroy_pending_entities();
+    }
+    if (cycles > 1) std::cout << "Event loop cycles " << cycles << std::endl;
+    assert(cycles <= max_cycles);
 }
 
 void Scene::render(float time_s, ShapeRendererPtr renderer)
@@ -2233,7 +2234,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
@@ -2788,7 +2789,10 @@ void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntityS
     //...
 }
 
+/// Dispatched without queueing
 void Scene::OnChunkModifiedEvent(const ChunkModifiedEvent& event)
 {
     std::cout << event.chunk_tag << ", " << event.entity.to_integral() << std::endl;
+
+    chunk_registry.reassign_entity(event.chunk_tag, event.entity);
 }
