@@ -1309,7 +1309,7 @@ void Scene::register_entity(const Entity& entity)
     auto& chunk_tag = header.chunk_tag;
     auto entity_parent = Entity{ entt::entity{header.entity_parent} };
 
-    chunk_registry.addEntity(header.chunk_tag, entity);
+    chunk_registry.add_entity(header.chunk_tag, entity);
 
     if (entity_parent.is_null())
     {
@@ -1395,7 +1395,7 @@ void Scene::destroy_pending_entities()
 
         // Remove from chunk registry
         assert(registry->all_of<HeaderComponent>(entity));
-        chunk_registry.removeEntity(registry->get<HeaderComponent>(entity).chunk_tag, entity);
+        chunk_registry.remove_entity(registry->get<HeaderComponent>(entity).chunk_tag, entity);
 
         // Remove from scene graph
         if (scenegraph->tree.contains(entity))
