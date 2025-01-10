@@ -10,7 +10,6 @@
 
 #include "meta_literals.h" // for entt literals
 #include "meta_aux.h"
-
 #include "CoreComponents.hpp"
 #include "InspectType.hpp"
 
@@ -132,14 +131,14 @@ void register_meta<HeaderComponent>(Editor::Context& context)
 {
 
     // chunk_tag callback
-    struct ChunkModifiedEvent { std::string chunk_tag; Entity entity; };
+    // struct ChunkModifiedEvent { std::string chunk_tag; Entity entity; };
     const TypeModifiedCallbackType chunk_tag_cb = [context](entt::meta_any any, const Entity& entity)
         {
-            std::cout << any.cast<std::string>() << ", " << entity.to_integral() << std::endl;
+            const auto& new_tag = any.cast<std::string>();
+            // std::cout << new_tag << ", " << entity.to_integral() << std::endl;
             
-            ChunkModifiedEvent event{ "", entity };
             assert(!context.observer.expired());
-            context.observer.lock()->enqueue_event(event);
+            context.observer.lock()->enqueue_event(ChunkModifiedEvent { entity, new_tag });
         };
 
     entt::meta<HeaderComponent>()

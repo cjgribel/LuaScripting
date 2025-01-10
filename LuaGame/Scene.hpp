@@ -7,6 +7,7 @@
 
 #include <entt/entt.hpp>
 
+#include "SceneTypes.h"
 #include "config.h"
 #include "vec.h"
 #include "Log.hpp"
@@ -19,7 +20,8 @@
 
 #include "ParticleBuffer.hpp"
 
-using EntitySelection = Editor::SelectionManager<Entity>;
+using namespace SceneTypes;
+struct ChunkModifiedEvent;
 
 class Scene : public eeng::SceneBase
 {
@@ -35,22 +37,20 @@ public:
 
     void destroy() override;
 
-    enum class GamePlayState : int { Play, Stop, Pause };
-
-    struct SaveChunkToFileEvent { std::string chunk_tag; };
-    struct SaveAllChunksToFileEvent { int placeholder; };
-    struct UnloadChunkEvent { std::string chunk_tag; };
-    struct LoadChunkFromFileEvent { std::string path; };
-    struct SetGamePlayStateEvent { GamePlayState play_state; };
-    struct CreateEntityEvent { Entity parent_entity; };
-    struct DestroyEntityEvent { EntitySelection entity_selection; };
-    struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
-    struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
-    struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
-    struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    struct RemoveComponentFromEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    struct AddScriptToEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
-    struct RemoveScriptFromEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
+    // struct SaveChunkToFileEvent { std::string chunk_tag; };
+    // struct SaveAllChunksToFileEvent { int placeholder; };
+    // struct UnloadChunkEvent { std::string chunk_tag; };
+    // struct LoadChunkFromFileEvent { std::string path; };
+    // struct SetGamePlayStateEvent { GamePlayState play_state; };
+    // struct CreateEntityEvent { Entity parent_entity; };
+    // struct DestroyEntityEvent { EntitySelection entity_selection; };
+    // struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
+    // struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
+    // struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
+    // struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    // struct RemoveComponentFromEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
+    // struct AddScriptToEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
+    // struct RemoveScriptFromEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
 
     // Todo: Should not be hard coded obviously
     static inline const std::string script_dir = "../../LuaGame/lua/";
@@ -66,20 +66,27 @@ private:
     void save_all_chunks();
     void load_chunk(const std::string& path);
 
+    // Saving and loading callbacks
     void OnSaveChunkToFileEvent(const SaveChunkToFileEvent& event);
     void OnSaveAllChunksToFileEvent(const SaveAllChunksToFileEvent& event);
     void OnUnloadChunkEvent(const UnloadChunkEvent& event);
     void OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event);
+    // State callbacks
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
+    // Creation callbacks
     void OnCreateEntityEvent(const CreateEntityEvent& event);
     void OnDestroyEntityEvent(const DestroyEntityEvent& event);
     void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event);
+    // Entity parenting callbacks
     void OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent& event);
     void OnUnparentEntitySelectionEvent(const UnparentEntitySelectionEvent& event);
+    // Add & remove component or script callbacks
     void OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelectionEvent& event);
     void OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromEntitySelectionEvent& event);
     void OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEvent& event);
     void OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event);
+    // Field update callbacks
+    void OnChunkModifiedEvent(const ChunkModifiedEvent& event);
 
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};

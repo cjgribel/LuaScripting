@@ -80,6 +80,12 @@ struct HeaderComponent
     std::string to_string() const;
 };
 
+struct ChunkModifiedEvent 
+{ 
+    Entity entity; 
+    std::string chunk_tag;
+};
+
 // === CircleColliderGridComponent ============================================
 
 struct CircleColliderGridComponent

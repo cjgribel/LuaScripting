@@ -827,7 +827,7 @@ namespace Inspector
         {
             Entity entity_parent;
             if (has_selection) entity_parent = inspector.entity_selection.last();
-            Scene::CreateEntityEvent event{ .parent_entity = entity_parent };
+            CreateEntityEvent event{ .parent_entity = entity_parent };
             observer.enqueue_event(event);
         }
 
@@ -836,7 +836,7 @@ namespace Inspector
         if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Delete"))
         {
-            Scene::DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
+            DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
             inspector.entity_selection.clear();
         }
@@ -848,7 +848,7 @@ namespace Inspector
         if (ImGui::Button("Copy"))
         {
             // Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
-            Scene::CopyEntitySelectionEvent event{ inspector.entity_selection };
+            CopyEntitySelectionEvent event{ inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
@@ -858,7 +858,7 @@ namespace Inspector
         if (!has_multi_selection) inspector.begin_disabled();
         if (ImGui::Button("Parent"))
         {
-            Scene::SetParentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
+            SetParentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_multi_selection) inspector.end_disabled();
@@ -868,7 +868,7 @@ namespace Inspector
         if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Unparent"))
         {
-            Scene::UnparentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
+            UnparentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
@@ -984,7 +984,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Add##addcomponent") && selected_comp_id)
         {
-            Scene::AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
+            AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
 
@@ -992,7 +992,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Remove##removecomponent") && selected_comp_id)
         {
-            Scene::RemoveComponentFromEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
+            RemoveComponentFromEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
             observer.enqueue_event(event);
         }
 
@@ -1020,7 +1020,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Add##addscript") && selected_script_path.size())
         {
-            Scene::AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
+            AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
         };
 
@@ -1029,7 +1029,7 @@ namespace Inspector
         ImGui::BeginDisabled();
         if (ImGui::Button("Remove##removescript") && selected_script_path.size())
         {
-            Scene::RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
+            RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
             observer.enqueue_event(event);
         };
         ImGui::EndDisabled();
@@ -1125,7 +1125,7 @@ namespace Inspector
     }
 
     void inspect_playstate(
-        const Scene::GamePlayState& play_state,
+        const GamePlayState& play_state,
         ConditionalObserver& observer)
     {
         static bool open = true;
@@ -1139,28 +1139,28 @@ namespace Inspector
         }
 
         // Fetch state
-        bool can_play = play_state != Scene::GamePlayState::Play;
-        bool can_stop = play_state != Scene::GamePlayState::Stop;
-        bool can_pause = play_state == Scene::GamePlayState::Play;
+        bool can_play = play_state != GamePlayState::Play;
+        bool can_stop = play_state != GamePlayState::Stop;
+        bool can_pause = play_state == GamePlayState::Play;
 
         // Play button
         if (!can_play) ImGui::BeginDisabled();
         if (ImGui::Button("Play##playpause"))
-            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Play });
+            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Play });
         if (!can_play) ImGui::EndDisabled();
 
         // Pause button
         ImGui::SameLine();
         if (!can_pause) ImGui::BeginDisabled();
         if (ImGui::Button("Pause##playpause"))
-            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Pause });
+            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Pause });
         if (!can_pause) ImGui::EndDisabled();
 
         // Stop button
         ImGui::SameLine();
         if (!can_stop) ImGui::BeginDisabled();
         if (ImGui::Button("Stop##playpause"))
-            observer.enqueue_event(Scene::SetGamePlayStateEvent{ Scene::GamePlayState::Stop });
+            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Stop });
         if (!can_stop) ImGui::EndDisabled();
 
         ImGui::End(); // Window
@@ -1206,7 +1206,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Load") && selected_file_path.size())
         {
-            observer.enqueue_event(Scene::LoadChunkFromFileEvent{ selected_file_path });
+            observer.enqueue_event(LoadChunkFromFileEvent{ selected_file_path });
         };
 
         // Chunk list
@@ -1225,19 +1225,19 @@ namespace Inspector
 
         if (ImGui::Button("Save"))
         {
-            observer.enqueue_event(Scene::SaveChunkToFileEvent{ selected_chunk_tag });
+            observer.enqueue_event(SaveChunkToFileEvent{ selected_chunk_tag });
         };
 
         ImGui::SameLine();
         if (ImGui::Button("Save All"))
         {
-            observer.enqueue_event(Scene::SaveAllChunksToFileEvent{ });
+            observer.enqueue_event(SaveAllChunksToFileEvent{ });
         };
 
         ImGui::SameLine();
         if (ImGui::Button("Unload"))
         {
-            observer.enqueue_event(Scene::UnloadChunkEvent{ selected_chunk_tag });
+            observer.enqueue_event(UnloadChunkEvent{ selected_chunk_tag });
         };
 
         ImGui::End(); // Window
@@ -1511,6 +1511,8 @@ bool Scene::init(const v2i& windowSize)
 
     observer->register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
     observer->register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
+
+    observer->register_callback([&](const ChunkModifiedEvent& event) { this->OnChunkModifiedEvent(event); });
 
     try
     {
@@ -2784,4 +2786,9 @@ void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntityS
         });
 
     //...
+}
+
+void Scene::OnChunkModifiedEvent(const ChunkModifiedEvent& event)
+{
+    std::cout << event.chunk_tag << ", " << event.entity.to_integral() << std::endl;
 }
