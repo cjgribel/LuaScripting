@@ -1739,11 +1739,13 @@ bool Scene::init(const v2i& windowSize)
 
         // Validate & init the game table
         {
+#if 0
             auto lua_game = lua->operator[]("game");
             assert(lua_game.valid());
             assert(lua_game["init"].valid());
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
+#endif
         }
         // lua["game"]["destroy"]();
 
@@ -1758,12 +1760,15 @@ bool Scene::init(const v2i& windowSize)
 
         // Dump Lua game & engine states
         {
+#if 0
             auto lua_game = lua->operator[]("game");
+            std::cout << "Inspect Lua game state:" << std::endl;
+            dump_lua_state(lua, lua_game, "    ");
+#endif
+
             auto lua_engine = lua->operator[]("engine");
             std::cout << "Inspect Lua engine state:" << std::endl;
             dump_lua_state(lua, lua_engine, "    ");
-            std::cout << "Inspect Lua game state:" << std::endl;
-            dump_lua_state(lua, lua_game, "    ");
         }
 
         // Debugging inspection
@@ -1831,8 +1836,9 @@ bool Scene::init(const v2i& windowSize)
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
-        std::cerr << "Exception: " << e.what();
-        throw std::runtime_error(e.what());
+        eeng::LogError("%s", e.what());
+        // std::cerr << "Exception: " << e.what();
+        //throw std::runtime_error(e.what());
     }
 
     is_initialized = true;
@@ -1873,7 +1879,13 @@ void Scene::update(float time_s, float deltaTime_s)
     update_input_lua(lua, SceneBase::axes, SceneBase::buttons);
 
     // Update scripts
+#if 0
     script_system_update(registry, deltaTime_s);
+#else
+    if (play_state == GamePlayState::Play)
+        script_system_update(registry, deltaTime_s);
+#endif
+
 
     // Destroy pending entities
     // After script update because: scripts may remove entities
@@ -1896,6 +1908,7 @@ void Scene::update(float time_s, float deltaTime_s)
 
     // Placeholder collision system
 #if 1
+    if (play_state == GamePlayState::Play)
     {
         const auto dispatch_collision_event_to_scripts = [&](
             float x,
@@ -2439,12 +2452,18 @@ void Scene::load_chunk(const std::string& path)
     try {
         // Parse the string content into a nlohmann::json object
         nlohmann::json jsonData = nlohmann::json::parse(fileContent);
-        nlohmann::json entities_json = jsonData["entities"];
+        assert(jsonData.contains("entities"));
+        assert(jsonData.contains("chunk"));
 
         // Output the JSON data
         //std::cout << "JSON data loaded successfully:\n" << jsonData.dump(4) << std::endl;
 
+        auto chunk_id = jsonData["chunk"].get<std::string>();
+        if (!chunk_registry.chunk_exists(chunk_id))
+            chunk_registry.create_chunk(chunk_id);
+
         auto context = create_context();
+        nlohmann::json entities_json = jsonData["entities"];
         Meta::deserialize_entities(entities_json, context);
 
     }
@@ -2838,7 +2857,7 @@ void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntityS
 /// Dispatched without queueing
 void Scene::OnChunkModifiedEvent(const ChunkModifiedEvent& event)
 {
-        eeng::Log("ChunkModifiedEvent: entity %u, chunk = %s",
+    eeng::Log("ChunkModifiedEvent: entity %u, chunk = %s",
         event.entity.to_integral(),
         event.chunk_tag.c_str());
 

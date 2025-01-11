@@ -8,7 +8,7 @@
 namespace SceneTypes {
 
     // Todo: Should not be hard coded obviously
-    static inline const std::string script_dir = "../../LuaGame/lua/";
+    static inline const std::string script_dir = "../../LuaGame/lua2/";
     static inline const std::string save_dir = "../../LuaGame/json/";
 
     enum class GamePlayState : int { Play, Stop, Pause };
