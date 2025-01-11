@@ -136,10 +136,10 @@ void register_meta<HeaderComponent>(Editor::Context& context)
         {
             const auto& new_tag = any.cast<std::string>();
             // std::cout << new_tag << ", " << entity.to_integral() << std::endl;
-            
+
             // Dispatch immediately since entity may be in an invalid state
             assert(!context.observer.expired());
-            context.observer.lock()->dispatch(ChunkModifiedEvent { entity, new_tag });
+            context.observer.lock()->dispatch(ChunkModifiedEvent{ entity, new_tag });
         };
 
     entt::meta<HeaderComponent>()
@@ -929,6 +929,12 @@ namespace Editor {
 
         assert(tbl.valid());
         if (!tbl.valid()) return mod;
+
+        // TODO inspect array_table
+        // if (is_array_table(tbl)) {
+        //     array_table_to_json(j, tbl);
+        //     return;
+        // }
 
         for (auto& [key, value] : tbl)
         {
