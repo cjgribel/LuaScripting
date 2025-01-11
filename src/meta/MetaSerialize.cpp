@@ -424,6 +424,7 @@ namespace Meta {
                 // Deserialize
                 deserialize_any(component_json.value(), any, entity, context);
                 // Add to entity storage
+                assert(context.registry->storage(id));
                 context.registry->storage(id)->push(entity, any.data());
             }
             else
