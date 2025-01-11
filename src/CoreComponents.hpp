@@ -97,7 +97,7 @@ struct CircleColliderGridComponent
     };
 
     std::array<Circle, GridSize> circles;
-    SparseSet<unsigned char, GridSize> active_indices;
+    SparseSet<unsigned char, GridSize> active_indices; // not meta
 
     // v2f pos[GridSize];
     // float radii[GridSize];
@@ -107,7 +107,7 @@ struct CircleColliderGridComponent
     // int nbr_active = 0;
 
     int element_count = 0;
-    int width = 0;
+    int width = 0; // not meta?
     bool is_active = true;
     unsigned char layer_bit, layer_mask;
 

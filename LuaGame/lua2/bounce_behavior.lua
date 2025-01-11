@@ -22,14 +22,14 @@ local node = {
 
     -- usertype tests: these types are defined as usertypes via sol
     --HEADER = HeaderComponent("Hello123"), <- Update sol constructor
-    TRANSFORM = Transform(1.0, 2.0, 3.0),
+    --TRANSFORM = Transform(1.0, 2.0, 3.0),
     --QUADGRID = QuadGridComponent(1,1,false),
 
     meta = {
         VELOCITY_MIN = {inspectable = true, serializable = true},
         VELOCITY_MAX = {inspectable = true, serializable = true},
         inventory = {inspectable = true, serializable = true},
-        velocity = {inspectable = true, serializable = true},
+        velocity = {inspectable = true, serializable = true}
         --HEADER = {inspectable = true, serializable = true}
     }
 }
@@ -78,6 +78,7 @@ function node:update(dt)
     transform.x = math.max(game.config.bounds.left + radius, math.min(transform.x, game.config.bounds.right - radius))
     transform.y = math.max(game.config.bounds.bottom + radius, math.min(transform.y, game.config.bounds.top - radius))
 
+    --[[
     -- Destroy detected islands
     -- Edit: Break one at a time with some frequency, rather than all at once
     local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
@@ -91,6 +92,7 @@ function node:update(dt)
     end
     self:check_if_destroyed()
     --print(nbr_islands)
+    ]]
 end
 
 function node:destroy()
@@ -109,6 +111,7 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
     --    --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     --end
 
+    --[[
     -- Hit by projectile?
     local projectileBehavior = engine.get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
@@ -131,6 +134,7 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
         self:check_if_destroyed()
         --end
     end
+    ]]
 end
 
 function node:hit_element(element_index, vel_x, vel_y)
@@ -224,7 +228,5 @@ function node:scale_alpha(color, f, fmax)
     return scaled_color
 end
 
-print("HELLO")
 node:init()
-
 return node

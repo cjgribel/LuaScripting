@@ -189,8 +189,8 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
     // if (auto&& f = script.self["init"]; f.valid())
     //     f(script.self);
     // inspect_script(script);
+#if 0
     assert(script.self["init"].valid());
-#if 1
     script.self["init"](script.self);
 #endif
 

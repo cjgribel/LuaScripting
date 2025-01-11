@@ -364,12 +364,14 @@ namespace {
         // -> registry?
         script.self["owner"] = std::ref(registry); // &registry also seems to work
 
+#if 0
         // Run script init()
         // if (auto&& f = script.self["init"]; f.valid())
         //     f(script.self);
         // inspect_script(script);
         assert(script.self["init"].valid());
         script.self["init"](script.self);
+#endif
 
         // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
@@ -390,8 +392,8 @@ namespace {
             }
             else {
                 std::cout << "Unknown type" << std::endl;
-            }
-        }
+    }
+}
 #endif
         // return script.self;
         return script_comp.scripts.back().self;
@@ -530,7 +532,7 @@ namespace {
                 auto& grid_comp = view.get<IslandFinderComponent>(entity);
                 auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
                 update_IslandFinderComponent(grid_comp, colliderset_comp);
-            });
+        });
 #endif
     }
 }
@@ -879,7 +881,7 @@ namespace Inspector
         if (ImGui::Button("Traverse"))
         {
             scenegraph.traverse(registry);
-        }
+    }
 #endif
 
         // Scene graph
@@ -894,9 +896,9 @@ namespace Inspector
             {
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
-            }
-#endif
         }
+#endif
+}
 
         // Debug print selected
         ImGui::Separator();
@@ -1401,7 +1403,7 @@ Entity Scene::create_entity(
     {
         assert(scenegraph.tree.contains(entity_parent));
         scenegraph.create_node(entity, entity_parent);
-    }
+}
 #endif
 
     std::cout << "Scene::create_entity " << entity.to_integral() << std::endl;
@@ -1746,7 +1748,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-        }
+    }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -1769,7 +1771,7 @@ bool Scene::init(const v2i& windowSize)
             auto lua_engine = lua->operator[]("engine");
             std::cout << "Inspect Lua engine state:" << std::endl;
             dump_lua_state(lua, lua_engine, "    ");
-        }
+}
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
@@ -1944,8 +1946,12 @@ void Scene::update(float time_s, float deltaTime_s)
                 const auto& collider2 = view.get<CircleColliderGridComponent>(entity2);
 
                 if (!collider2.is_active) continue;
+
                 // LAYER CHECK
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
+                
+                //std::cout << "(" << entt::to_integral(entity1) << "," << entt::to_integral(entity2) << ") ";
+                std::cout << collider1.active_indices.get_dense_count() << "-" << collider2.active_indices.get_dense_count() << ",";
 
                 const auto R2 = m2f::rotation(transform2.angle_global);
                 // for (auto i = 0; i < collider1.count; i++)
@@ -2074,8 +2080,8 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-        }
-    } // anon
+    }
+} // anon
 #endif
 
     IslandFinderSystem(registry, deltaTime_s);
@@ -2293,7 +2299,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles

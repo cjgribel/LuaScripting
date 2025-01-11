@@ -28,7 +28,7 @@ function node:update_blink(time)
 end
 
 function node:init()
-	print('player_behavior [#' .. self.id() .. '] init ()', self)
+	--print('player_behavior [#' .. self.id() .. '] init ()', self)
 
     -- fetch projectile_pool
 end
@@ -103,6 +103,8 @@ end
 -- (nx, ny) points away from this entity
 function node:on_collision(x, y, nx, ny, collider_index, entity)
     
+    --print(".")
+
     if self.invincible then 
         return 
     end
@@ -134,4 +136,5 @@ function node:destroy()
     print("player_behavior:destroy() " .. self.id() )
 end
 
+node:init()
 return node
