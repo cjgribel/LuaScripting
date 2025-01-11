@@ -190,7 +190,9 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
     //     f(script.self);
     // inspect_script(script);
     assert(script.self["init"].valid());
-    // script.self["init"](script.self);
+#if 1
+    script.self["init"](script.self);
+#endif
 
     return script;
 
@@ -214,7 +216,7 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
         else {
             std::cout << "Unknown type" << std::endl;
         }
-    }
+}
 #endif
     // return script.self;
 }
