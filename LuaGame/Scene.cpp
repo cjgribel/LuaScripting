@@ -2768,6 +2768,7 @@ void Scene::OnAddComponentToEntitySelectionEvent(const AddComponentToEntitySelec
         return entity != entt::null && registry->valid(entity);
         });
 
+    Meta::ensure_storage(*registry, event.component_id);
     auto storage = registry->storage(event.component_id);
     auto context = create_context();
     using namespace Editor;

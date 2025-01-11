@@ -17,16 +17,28 @@
 
 namespace Meta {
 
-    // class Serializer
-    // {
-    //     std::shared_ptr<entt::registry> registry;
+    void ensure_storage(entt::registry& registry, entt::id_type component_id)
+    {
+        // Check if the storage for the component exists
+        if (!registry.storage(component_id))
+        {
+            auto meta_type = entt::resolve(component_id);
+            assert(meta_type); // Component type must be registered with entt::meta
 
-    //     Serializer(
-    //         std::shared_ptr<entt::registry>& registry) :
-    //         registry(registry) {}
+            // Temporary entity
+            entt::entity temp_entity = registry.create();
 
-    //     ~Serializer() {}
-    // };
+            // Use meta function to emplace a default instance of the component
+            auto emplace_func = meta_type.func("emplace_component"_hs);
+            assert(emplace_func);
+            emplace_func.invoke({}, entt::forward_as_meta(registry), temp_entity);
+
+            // Destroy the temporary entity
+            registry.destroy(temp_entity);
+
+            // std::cout << "Ceeated storage for " << meta_type_name(meta_type) << std::endl;
+        }
+    }
 
     nlohmann::json serialize_any(const entt::meta_any& any)
     {
@@ -308,7 +320,7 @@ namespace Meta {
                 }
             }
             return;
-        }
+            }
 
         // any is not a meta type
 
@@ -390,7 +402,7 @@ namespace Meta {
             if (!res)
                 throw std::runtime_error(std::string("Unable to cast ") + meta_type_name(any.type()));
         }
-    }
+        }
 
     // deserialize_component
 
@@ -423,8 +435,9 @@ namespace Meta {
                 entt::meta_any any = meta_type.construct();
                 // Deserialize
                 deserialize_any(component_json.value(), any, entity, context);
-                // Add to entity storage
-                assert(context.registry->storage(id));
+                // Ensure storage and add component to entity
+                ensure_storage(*context.registry, id);
+                // assert(context.registry->storage(id));
                 context.registry->storage(id)->push(entity, any.data());
             }
             else

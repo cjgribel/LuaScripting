@@ -15,7 +15,19 @@ auto is_valid(const entt::registry* registry, entt::entity entity)
 }
 
 template <typename Component>
-auto emplace_component(entt::registry* registry, entt::entity entity,
+auto emplace_or_replace_component(entt::registry& registry, entt::entity entity) 
+{
+    return registry.emplace_or_replace<Component>(entity);
+}
+
+template <typename Component>
+auto get_or_emplace_component(entt::registry& registry, entt::entity entity) 
+{
+    return registry.get_or_emplace<Component>(entity);
+}
+
+template <typename Component>
+auto lua_emplace_or_replace_component(entt::registry* registry, entt::entity entity,
     const sol::table& instance, sol::this_state s) {
     assert(registry);
     auto& comp = registry->emplace_or_replace<Component>(
@@ -24,7 +36,7 @@ auto emplace_component(entt::registry* registry, entt::entity entity,
 }
 
 template <typename Component>
-auto get_component(entt::registry* registry, entt::entity entity,
+auto lua_get_or_emplace_component(entt::registry* registry, entt::entity entity,
     sol::this_state s) {
     assert(registry);
     auto& comp = registry->get_or_emplace<Component>(entity);
@@ -56,13 +68,19 @@ template <typename Component> void register_meta_component()
 
         .prop("is_component"_hs, true)
 
-        // These are Lua specific
-        .template func<&is_valid<Component>>("valid"_hs)
-        .template func<&emplace_component<Component>>("emplace"_hs)
-        .template func<&get_component<Component>>("get"_hs)
-        .template func<&has_component<Component>>("has"_hs)
-        .template func<&clear_component<Component>>("clear"_hs)
-        .template func<&remove_component<Component>>("remove"_hs);
+        .template func<&is_valid<Component>>("valid_component"_hs)
+        .template func<&clear_component<Component>>("clear_component"_hs)
+        .template func<&has_component<Component>>("has_component"_hs)
+        .template func<&remove_component<Component>>("remove_component"_hs)
+
+        // C++ specific
+        .template func<&emplace_or_replace_component<Component>>("emplace_component"_hs)
+        .template func<&get_or_emplace_component<Component>>("get_component"_hs)
+
+        // Lua specific
+        .template func<&lua_emplace_or_replace_component<Component>>("lua_emplace"_hs)
+        .template func<&lua_get_or_emplace_component<Component>>("lua_get"_hs)
+        ;
 }
 
 auto collect_types(const sol::variadic_args& va) {
@@ -123,7 +141,7 @@ sol::table open_registry(sol::this_state s)
         [](entt::registry& self, entt::entity entity, const sol::table& comp,
             sol::this_state s) -> sol::object {
                 if (!comp.valid()) return sol::lua_nil_t{};
-                const auto maybe_any = invoke_meta_func(get_type_id(comp), "emplace"_hs,
+                const auto maybe_any = invoke_meta_func(get_type_id(comp), "lua_emplace"_hs,
                     &self, entity, comp, s);
                 return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
         },
@@ -131,14 +149,14 @@ sol::table open_registry(sol::this_state s)
         "remove",
         [](entt::registry& self, entt::entity entity, const sol::object& type_or_id) {
             const auto maybe_any =
-                invoke_meta_func(deduce_type(type_or_id), "remove"_hs, &self, entity);
+                invoke_meta_func(deduce_type(type_or_id), "remove_component"_hs, &self, entity);
             return maybe_any ? maybe_any.cast<size_t>() : 0;
         },
 
         "has",
         [](entt::registry& self, entt::entity entity, const sol::object& type_or_id) {
             const auto maybe_any =
-                invoke_meta_func(deduce_type(type_or_id), "has"_hs, &self, entity);
+                invoke_meta_func(deduce_type(type_or_id), "has_component"_hs, &self, entity);
             return maybe_any ? maybe_any.cast<bool>() : false;
         },
 
@@ -162,7 +180,7 @@ sol::table open_registry(sol::this_state s)
         {
             const auto maybe_any = invoke_meta_func(
                 deduce_type(type_or_id),
-                "get"_hs,
+                "lua_get"_hs,
                 &self, entity,
                 s);
             return maybe_any ? maybe_any.cast<sol::reference>() : sol::lua_nil_t{};
@@ -174,7 +192,7 @@ sol::table open_registry(sol::this_state s)
             [](entt::registry& self,
                 sol::object type_or_id)
             {
-                invoke_meta_func(deduce_type(type_or_id), "clear"_hs, &self);
+                invoke_meta_func(deduce_type(type_or_id), "clear_component"_hs, &self);
             }
         ),
 

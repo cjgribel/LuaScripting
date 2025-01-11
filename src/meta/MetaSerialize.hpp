@@ -16,6 +16,12 @@
 
 namespace Meta {
 
+    /// @brief Makes sure entt has storage for a given component.
+    /// @param registry 
+    /// @param component_id 
+    /// If no storage exists, a component of the given type is added to a temporary entity.
+    void ensure_storage(entt::registry& registry, entt::id_type component_id);
+
     nlohmann::json serialize_any(
         const entt::meta_any& meta_any);
 
