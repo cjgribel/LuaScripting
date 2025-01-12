@@ -37,42 +37,32 @@ public:
 
     void destroy() override;
 
-    // struct SaveChunkToFileEvent { std::string chunk_tag; };
-    // struct SaveAllChunksToFileEvent { int placeholder; };
-    // struct UnloadChunkEvent { std::string chunk_tag; };
-    // struct LoadChunkFromFileEvent { std::string path; };
-    // struct SetGamePlayStateEvent { GamePlayState play_state; };
-    // struct CreateEntityEvent { Entity parent_entity; };
-    // struct DestroyEntityEvent { EntitySelection entity_selection; };
-    // struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
-    // struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };
-    // struct UnparentEntitySelectionEvent { EntitySelection entity_selection; };
-    // struct AddComponentToEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    // struct RemoveComponentFromEntitySelectionEvent { entt::id_type component_id; EntitySelection entity_selection; };
-    // struct AddScriptToEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
-    // struct RemoveScriptFromEntitySelectionEvent { std::string script_path; EntitySelection entity_selection; };
-
 private:
+
+    void event_loop();
 
     Editor::Context create_context();
 
     // Content management
     // void assign_entity_to_chunk(entt::registry& registry, entt::entity);
     // void destroy_chunk(const std::string& chunk_tag);
-    void save_chunk(const std::string& chunk_tag);
+    void save_chunk(const std::string& chunk_id);
     void save_all_chunks();
     void load_chunk(const std::string& path);
+    void unload_chunk(const std::string& chunk_id);
+    void unload_all_chunks();
 
     // Saving and loading callbacks
     void OnSaveChunkToFileEvent(const SaveChunkToFileEvent& event);
     void OnSaveAllChunksToFileEvent(const SaveAllChunksToFileEvent& event);
     void OnUnloadChunkEvent(const UnloadChunkEvent& event);
+    void OnUnloadAllChunksEvent(const UnloadAllChunksEvent& event);
     void OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event);
     // State callbacks
     void OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event);
     // Creation callbacks
     void OnCreateEntityEvent(const CreateEntityEvent& event);
-    void OnDestroyEntityEvent(const DestroyEntityEvent& event);
+    void OnDestroyEntitySelectionEvent(const DestroyEntitySelectionEvent& event);
     void OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event);
     // Entity parenting callbacks
     void OnSetParentEntitySelectionEvent(const SetParentEntitySelectionEvent& event);

@@ -18,12 +18,13 @@ namespace SceneTypes {
     struct SaveChunkToFileEvent { std::string chunk_tag; };
     struct SaveAllChunksToFileEvent { int placeholder; };
     struct UnloadChunkEvent { std::string chunk_tag; };
+    struct UnloadAllChunksEvent { int placeholder; };
     struct LoadChunkFromFileEvent { std::string path; };
 
     struct SetGamePlayStateEvent { GamePlayState play_state; };
 
     struct CreateEntityEvent { Entity parent_entity; };
-    struct DestroyEntityEvent { EntitySelection entity_selection; };
+    struct DestroyEntitySelectionEvent { EntitySelection entity_selection; };
     struct CopyEntitySelectionEvent { EntitySelection entity_selection; };
 
     struct SetParentEntitySelectionEvent { EntitySelection entity_selection; };

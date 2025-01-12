@@ -392,8 +392,8 @@ namespace {
             }
             else {
                 std::cout << "Unknown type" << std::endl;
-    }
-}
+            }
+        }
 #endif
         // return script.self;
         return script_comp.scripts.back().self;
@@ -532,7 +532,7 @@ namespace {
                 auto& grid_comp = view.get<IslandFinderComponent>(entity);
                 auto& colliderset_comp = registry.get<CircleColliderGridComponent>(entity);
                 update_IslandFinderComponent(grid_comp, colliderset_comp);
-        });
+            });
 #endif
     }
 }
@@ -838,7 +838,7 @@ namespace Inspector
         if (!has_selection) inspector.begin_disabled();
         if (ImGui::Button("Delete"))
         {
-            DestroyEntityEvent event{ .entity_selection = inspector.entity_selection };
+            DestroyEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
             observer.enqueue_event(event);
             inspector.entity_selection.clear();
         }
@@ -881,7 +881,7 @@ namespace Inspector
         if (ImGui::Button("Traverse"))
         {
             scenegraph.traverse(registry);
-    }
+        }
 #endif
 
         // Scene graph
@@ -896,9 +896,9 @@ namespace Inspector
             {
                 inspect_scene_graph_node(scenegraph, inspector, i);
                 i += scenegraph.tree.nodes[i].m_branch_stride;
-        }
+            }
 #endif
-}
+        }
 
         // Debug print selected
         ImGui::Separator();
@@ -1284,6 +1284,12 @@ namespace Inspector
             observer.enqueue_event(UnloadChunkEvent{ selected_chunk_tag });
         };
 
+        ImGui::SameLine();
+        if (ImGui::Button("Unload All"))
+        {
+            observer.enqueue_event(UnloadAllChunksEvent{ });
+        };
+
         ImGui::End(); // Window
     }
 } // Inspector
@@ -1403,7 +1409,7 @@ Entity Scene::create_entity(
     {
         assert(scenegraph.tree.contains(entity_parent));
         scenegraph.create_node(entity, entity_parent);
-}
+    }
 #endif
 
     std::cout << "Scene::create_entity " << entity.to_integral() << std::endl;
@@ -1438,6 +1444,7 @@ void Scene::destroy_pending_entities()
         entities_pending_destruction.pop_front();
 
         // Remove from chunk registry
+        assert(registry->valid(entity));
         assert(registry->all_of<HeaderComponent>(entity));
         chunk_registry.remove_entity(registry->get<HeaderComponent>(entity).chunk_tag, entity);
 
@@ -1540,10 +1547,11 @@ bool Scene::init(const v2i& windowSize)
 
     observer->register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
     observer->register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
+    observer->register_callback([&](const UnloadAllChunksEvent& event) { this->OnUnloadAllChunksEvent(event); });
 
     observer->register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
     observer->register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
-    observer->register_callback([&](const DestroyEntityEvent& event) { this->OnDestroyEntityEvent(event); });
+    observer->register_callback([&](const DestroyEntitySelectionEvent& event) { this->OnDestroyEntitySelectionEvent(event); });
     // observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
     observer->register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
 
@@ -1748,7 +1756,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-    }
+        }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -1771,7 +1779,7 @@ bool Scene::init(const v2i& windowSize)
             auto lua_engine = lua->operator[]("engine");
             std::cout << "Inspect Lua engine state:" << std::endl;
             dump_lua_state(lua, lua_engine, "    ");
-}
+        }
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
@@ -1949,9 +1957,9 @@ void Scene::update(float time_s, float deltaTime_s)
 
                 // LAYER CHECK
                 if (!(collider1.layer_bit & collider2.layer_mask)) continue;
-                
+
                 //std::cout << "(" << entt::to_integral(entity1) << "," << entt::to_integral(entity2) << ") ";
-                std::cout << collider1.active_indices.get_dense_count() << "-" << collider2.active_indices.get_dense_count() << ",";
+                // std::cout << collider1.active_indices.get_dense_count() << "-" << collider2.active_indices.get_dense_count() << ",";
 
                 const auto R2 = m2f::rotation(transform2.angle_global);
                 // for (auto i = 0; i < collider1.count; i++)
@@ -2080,11 +2088,12 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-    }
-} // anon
+        }
+    } // anon
 #endif
 
-    IslandFinderSystem(registry, deltaTime_s);
+    if (play_state == GamePlayState::Play)
+        IslandFinderSystem(registry, deltaTime_s);
 
     observer->dispatch_all_events();
 }
@@ -2158,21 +2167,7 @@ void Scene::renderUI()
     // Event & command loop
     // TODO: Move to start of update?
 
-    int cycles = 0;
-    const int max_cycles = 5;
-    while ((observer->has_pending_events() || cmd_queue->new_commands_pending()) && cycles++ <= max_cycles)
-    {
-        // Dispatch events. May lead to commands being issued.
-        observer->dispatch_all_events();
-
-        // Execute commands. May lead to entities being queued for destruction
-        // and new events being issued.
-        cmd_queue->execute_pending();
-
-        destroy_pending_entities();
-    }
-    if (cycles > 1) std::cout << "Event loop cycles " << cycles << std::endl;
-    assert(cycles <= max_cycles);
+    event_loop();
 }
 
 void Scene::render(float time_s, ShapeRendererPtr renderer)
@@ -2299,7 +2294,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
@@ -2313,13 +2308,17 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
 void Scene::destroy()
 {
     std::cout << "Scene::destroy()" << std::endl;
-    std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
 
-    std::cout << "Destroying game..." << std::endl;
-    {
-        auto lua_game = lua->operator[]("game");
-        lua_game["destroy"](lua_game); // <- entities flagged for destruction ???
-    }
+    // std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
+    // std::cout << "Destroying game..." << std::endl;
+    // {
+    //     auto lua_game = lua->operator[]("game");
+    //     lua_game["destroy"](lua_game); // <- entities flagged for destruction ???
+    // }
+    unload_all_chunks();
+    event_loop();
+
+    // std::cout << "Command queue size " << cmd_queue->execute_pending << std::endl;
 
     std::cout << "Entities pending destruction " << entities_pending_destruction.size() << std::endl;
     destroy_pending_entities();
@@ -2356,6 +2355,32 @@ void Scene::destroy()
 
     is_initialized = false;
     std::cout << "Done: Scene::destroy()" << std::endl;
+}
+
+void Scene::event_loop()
+{
+    int cycles = 0;
+    const int max_cycles = 5;
+
+    while ((observer->has_pending_events() ||
+        cmd_queue->has_new_commands_pending() ||
+        observer->has_pending_events())
+        && cycles++ <= max_cycles)
+    {
+        // Dispatch events. May lead to commands being issued.
+        observer->dispatch_all_events();
+
+        // Execute commands. May lead to entities being queued for destruction
+        // and new events being issued.
+        if (cmd_queue->has_new_commands_pending())
+            cmd_queue->execute_pending();
+
+        // Destroy entities flagged for destruction.
+        // May lead to additional entities being flagged for destruction.
+        destroy_pending_entities();
+    }
+    if (cycles > 1) std::cout << "Event loop cycles " << cycles << std::endl;
+    assert(cycles <= max_cycles);
 }
 
 // void Scene::destroy_chunk(const std::string& chunk_tag)
@@ -2412,10 +2437,10 @@ Editor::Context Scene::create_context()
     };
 }
 
-void Scene::save_chunk(const std::string& chunk_tag)
+void Scene::save_chunk(const std::string& chunk_id)
 {
     // Extract chunk entities
-    auto chunk_it = chunk_registry.chunk(chunk_tag);
+    auto chunk_it = chunk_registry.chunk(chunk_id);
     std::vector<Entity> entities(chunk_it.begin(), chunk_it.end());
 
     // Serialize entities
@@ -2424,11 +2449,11 @@ void Scene::save_chunk(const std::string& chunk_tag)
 
     // Create JSON object
     nlohmann::json chunk_json;
-    chunk_json["chunk"] = chunk_tag;
+    chunk_json["chunk"] = chunk_id;
     chunk_json["entities"] = entities_json;
 
     // Save JSON to file
-    std::string file_path = save_dir + chunk_tag + ".json";
+    std::string file_path = save_dir + chunk_id + ".json";
     eeng::Log("Saving %s...", file_path.c_str());
     FileManager::SaveToFile(file_path, chunk_json.dump(4));
 }
@@ -2438,46 +2463,77 @@ void Scene::save_all_chunks()
     for (auto& chunk : chunk_registry.chunks()) save_chunk(chunk.first);
 }
 
-// unload_chunk()
+// TODO: Command based. If used in e.g. destroy, must run execute + destroy_pending_entities()
+void Scene::unload_chunk(const std::string& chunk_id)
+{
+    DestroyEntitySelectionEvent event;
 
-// unload_all_chunks()
+    for (auto& entity : chunk_registry.chunk(chunk_id))
+    {
+        event.entity_selection.add(entity);
+
+        // Either, 
+        // 1) rely on entt's onDestroy event for calling destroy() on scripts
+        // queue_entity_for_destruction(entity);
+
+        // 2) Destroy scripts explicitly <- then BehaviorScript should store destroy()
+        // ...
+    }
+
+    OnDestroyEntitySelectionEvent(event);
+    // cmd_queue->execute_pending();
+    // destroy_pending_entities();
+}
+
+void Scene::unload_all_chunks()
+{
+    for (auto& chunk : chunk_registry.chunks()) unload_chunk(chunk.first);
+
+    // Can't do this until entities are actually unloaded
+    // chunk_registry.clear();
+}
 
 void Scene::load_chunk(const std::string& path)
 {
-    // 1. Deserialize entities in JSON file = create entities + register entities (to SG & chunk reg)
-
-        // std::string filePath = "data.json"; // Path to the JSON file
-    std::string fileContent;
-
     // Load the file content into a string
-    if (!FileManager::LoadFromFile(path, fileContent)) {
-        std::cerr << "Failed to load file: " << path << std::endl;
-        // return 1;
+    std::string fileContent;
+    if (!FileManager::LoadFromFile(path, fileContent))
+    {
+        eeng::LogError("Failed to load file %s", path.c_str());
+        return;
     }
 
-    try {
+    // Parse JSON
+    nlohmann::json file_json;
+    try
+    {
         // Parse the string content into a nlohmann::json object
-        nlohmann::json jsonData = nlohmann::json::parse(fileContent);
-        assert(jsonData.contains("entities"));
-        assert(jsonData.contains("chunk"));
-
-        // Output the JSON data
+        file_json = nlohmann::json::parse(fileContent);
         //std::cout << "JSON data loaded successfully:\n" << jsonData.dump(4) << std::endl;
-
-        auto chunk_id = jsonData["chunk"].get<std::string>();
-        if (!chunk_registry.chunk_exists(chunk_id))
-            chunk_registry.create_chunk(chunk_id);
-
-        auto context = create_context();
-        nlohmann::json entities_json = jsonData["entities"];
-        Meta::deserialize_entities(entities_json, context);
-
     }
-    catch (const nlohmann::json::parse_error& e) {
-        std::cerr << "Failed to parse JSON: " << e.what() << std::endl;
-        // return 1;
+    catch (const nlohmann::json::parse_error& e)
+    {
+        eeng::LogError("Failed to parse JSON %s", e.what());
+        return;
     }
 
+    // Fetch elements
+    assert(file_json.contains("entities"));
+    assert(file_json.contains("chunk"));
+    auto chunk_id = file_json["chunk"].get<std::string>();
+    assert(chunk_id.size());
+    nlohmann::json entities_json = file_json["entities"];
+
+    // Deserialize entities
+    // if (!chunk_registry.chunk_exists(chunk_id)) chunk_registry.create_chunk(chunk_id);
+    auto context = create_context();
+    Meta::deserialize_entities(entities_json, context);
+
+    // Quick fix to keep command state persistent
+    // cmd_queue->remove_pending();
+    cmd_queue->clear();
+
+    eeng::Log("Loaded chunk %s from file %s", chunk_id.c_str(), path.c_str());
 }
 
 void Scene::OnSaveChunkToFileEvent(const SaveChunkToFileEvent& event)
@@ -2498,34 +2554,30 @@ void Scene::OnUnloadChunkEvent(const UnloadChunkEvent& event)
 {
     eeng::Log("DestroyChunkEvent: %s", event.chunk_tag.c_str());
 
-    // NOT A COMMAND
+    // COMMAND ?
 
-    // 1. Destroy all chunk entities (done below)
-    // 2. (?) Remove chunk from chunck registry
+    unload_chunk(event.chunk_tag);
+}
 
-    for (auto& entity : chunk_registry.chunk(event.chunk_tag))
-    {
-        // Either, 
-        // 1) rely on entt's onDestroy event for calling destroy() on scripts
-        queue_entity_for_destruction(entity);
+void Scene::OnUnloadAllChunksEvent(const UnloadAllChunksEvent& event)
+{
+    // COMMAND ?
 
-        // 2) Destroy scripts explicitly <- then BehaviorScript should store destroy()
-        // ...
-    }
+    unload_all_chunks();
 }
 
 void Scene::OnLoadChunkFromFileEvent(const LoadChunkFromFileEvent& event)
 {
     eeng::Log("LoadFileEvent: %s", event.path.c_str());
 
-    // NOT A COMMAND
+    // COMMAND ?
 
     load_chunk(event.path);
 }
 
 void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
 {
-    // NOT A COMMAND
+    // COMMAND ?
 
     auto j_play_state = Meta::serialize_any(event.play_state);
     assert(!j_play_state.is_null());
@@ -2585,34 +2637,13 @@ void Scene::OnCreateEntityEvent(const CreateEntityEvent& event)
 {
     eeng::Log("CreateEntityEvent");
 
-    // const auto create_entity = [&](entt::entity entity_parent, entt::entity entity_hint) -> entt::entity
-    //     {
-    //         return this->create_entity("", "", entity_parent, entity_hint);
-    //     };
-    // const auto destroy_entity = [&](entt::entity entity) -> void
-    //     {
-    //         this->queue_entity_for_destruction(entity);
-    //     };
-
     using namespace Editor;
     auto command = CreateEntityCommand{ event.parent_entity, create_context() };
-    // auto command = CreateEntityCommand{ create_entity, destroy_entity, event.parent_entity };
     cmd_queue->add(CommandFactory::Create<CreateEntityCommand>(command));
 }
 
 namespace
 {
-    // Add scene graph branch to a stack with leafs on top
-    // auto stack_branch(SceneGraph& sg, entt::entity entity)
-    // {
-    //     std::stack<entt::entity> stack;
-    //     sg.tree.traverse_breadthfirst(entity, [&](auto& entity, size_t index) {
-    //         stack.push(entity);
-    //         });
-    //     return stack;
-    // }
-
-    // TODO: Don't use this
     bool is_child_of(SceneGraph& sg, const Entity& entity_child, const Entity& entity_parent)
     {
         return sg.tree.is_descendant_of(entity_child, entity_parent);
@@ -2646,7 +2677,7 @@ namespace
     }
 }
 
-void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
+void Scene::OnDestroyEntitySelectionEvent(const DestroyEntitySelectionEvent& event)
 {
     eeng::Log("DestroyEntityEvent: count = %i", event.entity_selection.size());
 
@@ -2668,23 +2699,6 @@ void Scene::OnDestroyEntityEvent(const DestroyEntityEvent& event)
         }
     }
 }
-
-// void Scene::OnCopyEntityEvent(const CopyEntityEvent& event)
-// {
-//     eeng::Log("CopyEntityEvent: %s", std::to_string(entt::to_integral(event.entity)).c_str());
-
-//     assert(event.entity != entt::null);
-//     assert(registry->valid(event.entity));
-
-//     auto context = create_context();
-//     auto branch = scenegraph->get_branch_bottomup(event.entity);
-//     using namespace Editor;
-//     for (auto& entity : branch)
-//     {
-//         auto command = CopyEntityCommand{ entity, context };
-//         cmd_queue->add(CommandFactory::Create<CopyEntityCommand>(command));
-//     }
-// }
 
 void Scene::OnCopyEntitySelectionEvent(const CopyEntitySelectionEvent& event)
 {
@@ -2821,6 +2835,7 @@ void Scene::OnRemoveComponentFromEntitySelectionEvent(const RemoveComponentFromE
     }
 }
 
+// TODO: Remove + Command
 void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEvent& event)
 {
     eeng::Log("AddScriptToEntitySelectionEvent: path %s, count = %i",
@@ -2833,7 +2848,6 @@ void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEv
 
     //...
 
-    // TODO: Remove + Command
 
     //     sol::table add_script_from_file(
     //     auto& registry,
@@ -2848,6 +2862,7 @@ void Scene::OnAddScriptToEntitySelectionEvent(const AddScriptToEntitySelectionEv
     add_script_from_file(*registry, event.entity_selection.first(), lua, path, just_filename);
 }
 
+// TODO: Remove + Command
 void Scene::OnRemoveScriptFromEntitySelectionEvent(const RemoveScriptFromEntitySelectionEvent& event)
 {
     eeng::Log("RemoveScriptFromEntitySelectionEvent: path %s, count = %i",
@@ -2885,4 +2900,8 @@ void Scene::OnRunScriptEvent(const RunScriptEvent& event)
     {
         eeng::LogError("Could not execute %s", e.what());
     }
+
+    // Quick fix to keep command state persistent
+    // cmd_queue->remove_pending();
+    cmd_queue->clear();
 }
