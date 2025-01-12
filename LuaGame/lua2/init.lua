@@ -74,8 +74,10 @@ engine.audio:setEffectVolume(sounds.element_explode, 32)
 
 -- -> spawners
 
+
 --[[
--- Debug hierarchy entitity (not destroyed when game is destroyed)
+Debug entities
+]]
 local node1 = engine.create_entity("test_chunk", "Node1", engine.entity_null)
 local node2 = engine.create_entity("test_chunk", "Node2", node1)
 local node3 = engine.create_entity("test_chunk", "Node3", node2)
@@ -93,7 +95,7 @@ engine.registry:emplace(node2, quadgrid2)
 local quadgrid3 = QuadGridComponent(1, 1, true)
 quadgrid3:set_quad_at(0, 0.0, 0.0, 0.3, 0xff00ffff, true)
 engine.registry:emplace(node3, quadgrid3)
-]]
+
 
 --[[
 -- Game root entity
