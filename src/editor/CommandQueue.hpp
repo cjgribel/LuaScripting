@@ -66,8 +66,14 @@ namespace Editor {
             return queue[index]->get_name();
         }
 
-        //
-        bool new_commands_pending()
+        int new_commands_pending()
+        {
+            if (latest_index >= 0)
+                return queue.size() - latest_index;
+            return 0;
+        }
+
+        bool has_new_commands_pending()
         {
             return latest_index >= 0 && latest_index < queue.size();
         }
@@ -81,6 +87,7 @@ namespace Editor {
         {
             if (!commands_pending()) return;
             queue.erase(queue.begin() + current_index, queue.end());
+            latest_index = current_index;
         }
 
         void execute_next()
