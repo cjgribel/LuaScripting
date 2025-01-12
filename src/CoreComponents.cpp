@@ -241,14 +241,75 @@ std::string CircleColliderGridComponent::to_string() const
 template<>
 void register_meta<CircleColliderGridComponent>(Editor::Context& context)
 {
+    entt::meta<CircleColliderGridComponent::Circle>()
+        .type("Circle"_hs)
+        .prop(display_name_hs, "Circle")
+
+        .data<&CircleColliderGridComponent::Circle::pos>("pos"_hs)
+        .prop(display_name_hs, "position")
+
+        .data<&CircleColliderGridComponent::Circle::radius>("radius"_hs)
+        .prop(display_name_hs, "radius")
+        ;
+
+    entt::meta<linalg::v2f>()
+        .type("v2f"_hs)
+        .prop(display_name_hs, "Vector2D")
+
+        .data<&linalg::v2f::x>("x"_hs)
+        .prop(display_name_hs, "x")
+
+        .data<&linalg::v2f::y>("y"_hs)
+        .prop(display_name_hs, "y")
+        ;
+
+    entt::meta<GridSparseSet>()
+        .type("GridSparseSet"_hs)
+        .prop(display_name_hs, "GridSparseSet")
+
+        .data<&GridSparseSet::set_dense_array, &GridSparseSet::get_dense_array>("dense_array"_hs)
+        // .data<nullptr, &GridSparseSet::get_dense_array>("dense_array"_hs) // Prevents deserialization
+        .prop(display_name_hs, "dense_array")
+        .prop(readonly_hs, true)
+
+        .data<&GridSparseSet::set_sparse_array, &GridSparseSet::get_sparse_array>("sparse_array"_hs)
+        // .data<nullptr, &GridSparseSet::get_sparse_array>("sparse_array"_hs) // Prevents deserialization
+        .prop(display_name_hs, "sparse_array")
+        .prop(readonly_hs, true)
+
+        .data<&GridSparseSet::set_dense_count, &GridSparseSet::get_dense_count>("dense_count"_hs)
+        // .data<nullptr, &GridSparseSet::get_dense_count>("dense_count"_hs) // Prevents deserialization
+        .prop(display_name_hs, "dense_count")
+        .prop(readonly_hs, true)
+        ;
+
     entt::meta<CircleColliderGridComponent>()
         .type("CircleColliderGridComponent"_hs).prop(display_name_hs, "CircleColliderGrid")
 
-        .data<&CircleColliderGridComponent::is_active>("is_active"_hs).prop(display_name_hs, "is_active")
-        .data<&CircleColliderGridComponent::element_count>("element_count"_hs).prop(display_name_hs, "element_count").prop(readonly_hs, true)
-        .data<&CircleColliderGridComponent::layer_bit>("layer_bit"_hs).prop(display_name_hs, "layer_bit")
-        .data<&CircleColliderGridComponent::layer_mask>("layer_mask"_hs).prop(display_name_hs, "layer_mask")
-        .data<&CircleColliderGridComponent::circles>("circles"_hs).prop(display_name_hs, "circles")
+        .data<&CircleColliderGridComponent::is_active>("is_active"_hs)
+        .prop(display_name_hs, "is_active")
+
+        .data<&CircleColliderGridComponent::element_count>("element_count"_hs)
+        .prop(display_name_hs, "element_count")
+        .prop(readonly_hs, true)
+
+        .data<&CircleColliderGridComponent::width>("width"_hs)
+        .prop(display_name_hs, "width")
+        .prop(readonly_hs, true)
+
+        .data<&CircleColliderGridComponent::layer_bit>("layer_bit"_hs)
+        .prop(display_name_hs, "layer_bit")
+
+        .data<&CircleColliderGridComponent::layer_mask>("layer_mask"_hs)
+        .prop(display_name_hs, "layer_mask")
+
+        .data<&CircleColliderGridComponent::circles>("circles"_hs)
+        .prop(display_name_hs, "circles")
+
+        .data<&CircleColliderGridComponent::active_indices>("active_indices"_hs)
+        .prop(display_name_hs, "active_indices")
+        // .prop(readonly_hs, true)
+        // + hidden from GUI?
 
         // Optional meta functions
 
@@ -262,20 +323,6 @@ void register_meta<CircleColliderGridComponent>(Editor::Context& context)
                 // .func<&inspect_Transform>(inspect_hs)
             // clone
                 //.func<&cloneDebugClass>(clone_hs)
-        ;
-
-    entt::meta<CircleColliderGridComponent::Circle>()
-        .type("Circle"_hs).prop(display_name_hs, "Circle")
-
-        .data<&CircleColliderGridComponent::Circle::pos>("pos"_hs).prop(display_name_hs, "position")
-        .data<&CircleColliderGridComponent::Circle::radius>("radius"_hs).prop(display_name_hs, "radius")
-        ;
-
-    entt::meta<linalg::v2f>()
-        .type("v2f"_hs).prop(display_name_hs, "Vector2D")
-
-        .data<&linalg::v2f::x>("x"_hs).prop(display_name_hs, "x")
-        .data<&linalg::v2f::y>("y"_hs).prop(display_name_hs, "y")
         ;
 
     assert(context.lua);
@@ -857,7 +904,7 @@ namespace Editor {
                 ImGui::TextDisabled("[Unvailable]");
             return mod;
 #endif
-        }
+}
 
         assert(type_id.get_type() == sol::type::function);
         entt::id_type id = type_id.call();

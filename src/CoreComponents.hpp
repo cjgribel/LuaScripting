@@ -28,8 +28,7 @@
 
 using linalg::v2f;
 #define GridSize 64
-
-
+using GridSparseSet = SparseSet<unsigned char, GridSize>;
 
 // === Transform ==============================================================
 
@@ -97,7 +96,7 @@ struct CircleColliderGridComponent
     };
 
     std::array<Circle, GridSize> circles;
-    SparseSet<unsigned char, GridSize> active_indices; // not meta
+    GridSparseSet active_indices; // not meta
 
     // v2f pos[GridSize];
     // float radii[GridSize];
@@ -120,11 +119,11 @@ struct IslandFinderComponent
 {
     int core_x, core_y;
 
-    // For flood-fill
+    // For flood-fill. Not serialized.
     std::vector<bool> visited;
     std::queue<std::pair<int, int>> visit_queue;
 
-    // Exposed to Lua
+    // Exposed to Lua. Not serialized.
     std::vector<int> islands;
 
     std::string to_string() const;

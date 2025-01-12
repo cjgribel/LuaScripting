@@ -7,8 +7,11 @@
 template<class T, int N>
 class SparseSet
 {
-    std::array<T, N> dense;
-    std::array<int, N> sparse;
+    using DenseArray = std::array<T, N>;
+    using SparseArray = std::array<int, N>;
+
+    DenseArray dense;
+    SparseArray sparse;
     int dense_count = 0;
 
 public:
@@ -16,6 +19,16 @@ public:
     {
         sparse.fill(-1);
     }
+
+    // Setters and getters for inspection
+    
+    void set_dense_array(const DenseArray& array) { dense = array; }
+    const DenseArray& get_dense_array() const { return dense; }
+    
+    void set_sparse_array(const SparseArray& array) { sparse = array; }
+    const SparseArray& get_sparse_array() const { return sparse; }
+    
+    void set_dense_count(int count) { dense_count = count; }
 
     /// @brief Check if an index exists in the set
     /// @param index 
