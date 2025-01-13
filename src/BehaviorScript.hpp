@@ -21,8 +21,10 @@ struct BehaviorScript
     // Lua object
     sol::table self;
     // Update function of Lua object
-    sol::protected_function update;
-    sol::protected_function on_collision;
+    std::optional<sol::protected_function> run = std::nullopt;
+    std::optional<sol::protected_function> stop = std::nullopt;
+    std::optional<sol::protected_function> update;
+    std::optional<sol::protected_function> on_collision;
     std::string identifier;
     std::string path;
 

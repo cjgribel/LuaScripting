@@ -304,7 +304,11 @@ namespace {
             {
                 assert(script.self.valid());
                 // std::cout << script.identifier << std::endl;
-                script.update(script.self, delta_time);
+
+                // script.update(script.self, delta_time);
+                if (script.update) script.update->operator()(script.self, delta_time);
+
+                // if (script.run) script.run->operator()(script.self);
             }
         }
     }
@@ -342,36 +346,12 @@ namespace {
         const std::string& identifier,
         const std::string& script_path)
     {
-        std::cout << "add_script " << identifier << " entity " << (uint32_t)entity << std::endl;
-        //return;
+        std::cout << "Add_script " << identifier << " entity "
+            << entt::to_integral(entity) << std::endl;
         assert(script_table.valid());
 
-        BehaviorScript script;
-
-        script.self = script_table;
-
-        script.update = script.self["update"];
-        assert(script.update.valid());
-
-        script.on_collision = script.self["on_collision"];
-        assert(script.on_collision.valid());
-
-        script.identifier = identifier;
-        script.path = script_path;
-
-        // -> entityID?
-        script.self["id"] = sol::readonly_property([entity] { return entity; });
-        // -> registry?
-        script.self["owner"] = std::ref(registry); // &registry also seems to work
-
-#if 0
-        // Run script init()
-        // if (auto&& f = script.self["init"]; f.valid())
-        //     f(script.self);
-        // inspect_script(script);
-        assert(script.self["init"].valid());
-        script.self["init"](script.self);
-#endif
+        BehaviorScript script =
+            BehaviorScriptFactory::create_from_lua_object(registry, entity, script_table, identifier, script_path);
 
         // Add script to the list of scripts
         auto& script_comp = registry.get_or_emplace<ScriptedBehaviorComponent>(entity);
@@ -1934,7 +1914,8 @@ void Scene::update(float time_s, float deltaTime_s)
                 for (auto& script : script_comp.scripts)
                 {
                     assert(script.self.valid());
-                    script.on_collision(script.self, x, y, nx, ny, collider_index, other_entity);
+                    if (script.on_collision)
+                        script.on_collision->operator()(script.self, x, y, nx, ny, collider_index, other_entity);
                 }
             };
 
@@ -2894,7 +2875,7 @@ void Scene::OnRunScriptEvent(const RunScriptEvent& event)
     // Run the Lua file
     try
     {
-        lua->script_file(event.script_path);
+        lua->safe_script_file(event.script_path);
     }
     catch (const sol::error& e)
     {

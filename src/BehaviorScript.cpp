@@ -170,15 +170,32 @@ BehaviorScript BehaviorScriptFactory::create_from_lua_object(
     BehaviorScript script;
 
     script.self = script_table;
-
-    script.update = script.self["update"];
-    assert(script.update.valid());
-
-    script.on_collision = script.self["on_collision"];
-    assert(script.on_collision.valid());
-
     script.identifier = identifier;
     script.path = script_path;
+
+    if (sol::object obj = script_table["run"];
+        obj.is<sol::protected_function>())
+    {
+        script.run = obj.as<sol::protected_function>();
+    }
+
+    if (sol::object obj = script_table["stop"];
+        obj.is<sol::protected_function>())
+    {
+        script.stop = obj.as<sol::protected_function>();
+    }
+
+    if (sol::object obj = script_table["update"];
+        obj.is<sol::protected_function>())
+    {
+        script.update = obj.as<sol::protected_function>();
+    }
+
+    if (sol::object obj = script_table["on_collision"];
+        obj.is<sol::protected_function>())
+    {
+        script.on_collision = obj.as<sol::protected_function>();
+    }
 
     // -> entityID?
     script.self["id"] = sol::readonly_property([entity] { return entity; });
