@@ -282,7 +282,50 @@ namespace {
         }
     }
 
-    /// @brief Run update for all scripts
+    // void release_all_scripts(entt::registry& registry)
+    // {
+    //     auto view = registry.view<ScriptedBehaviorComponent>();
+    //     for (auto entity : view)
+    //     {
+    //         release_script(registry, entity);
+    //     }
+    // }
+
+    /// @brief Call run for all scripts
+    /// @param registry 
+    void run_scripts(entt::registry& registry)
+    {
+        //std::cout << "update" << std::endl;
+        auto view = registry.template view<ScriptedBehaviorComponent>();
+        for (auto entity : view)
+        {
+            auto& script_comp = view.template get<ScriptedBehaviorComponent>(entity);
+            for (auto& script : script_comp.scripts)
+            {
+                assert(script.self.valid());
+                if (script.run) script.run->operator()(script.self);
+            }
+        }
+    }
+
+    /// @brief Call run for all scripts
+/// @param registry 
+    void stop_scripts(entt::registry& registry)
+    {
+        //std::cout << "update" << std::endl;
+        auto view = registry.template view<ScriptedBehaviorComponent>();
+        for (auto entity : view)
+        {
+            auto& script_comp = view.template get<ScriptedBehaviorComponent>(entity);
+            for (auto& script : script_comp.scripts)
+            {
+                assert(script.self.valid());
+                if (script.stop) script.stop->operator()(script.self);
+            }
+        }
+    }
+
+    /// @brief Call update for all scripts
     /// @param registry 
     /// @param delta_time 
     /// Entities inside scripts that need to be destroyed are flagged for 
@@ -290,22 +333,16 @@ namespace {
     /// inside a view (i.e. inside scripts) while the view is iterated leads to
     /// undefined behavior: 
     /// https://github.com/skypjack/entt/issues/772#issuecomment-907814984
-    void script_system_update(auto& registry, float delta_time)
+    void update_scripts(entt::registry& registry, float delta_time)
     {
         //std::cout << "update" << std::endl;
-        auto view = registry->template view<ScriptedBehaviorComponent>();
+        auto view = registry.template view<ScriptedBehaviorComponent>();
         for (auto entity : view)
         {
-            assert(entity != entt::null);
-            assert(registry->valid(entity));
-
             auto& script_comp = view.template get<ScriptedBehaviorComponent>(entity);
             for (auto& script : script_comp.scripts)
             {
                 assert(script.self.valid());
-                // std::cout << script.identifier << std::endl;
-
-                // script.update(script.self, delta_time);
                 if (script.update) script.update->operator()(script.self, delta_time);
 
                 // if (script.run) script.run->operator()(script.self);
@@ -1594,6 +1631,29 @@ bool Scene::init(const v2i& windowSize)
             };
         lua->operator[]("engine")["get_script"] = &get_script;
 
+        lua->operator[]("engine")["get_script_by_entity_name"] = [&](
+            const std::string& script_name,
+            const std::string& entity_name) -> sol::table
+            {
+                auto entity = chunk_registry.get_entity_by_name(entity_name, [&](
+                    const Entity& entity) -> std::string
+                    {
+                        assert(registry->all_of<HeaderComponent>(entity));
+                        return registry->get<HeaderComponent>(entity).name;
+                    });
+                return get_script(*registry, entity, script_name);
+            };
+
+        // Register get_entity_by_name function
+        lua->operator[]("engine")["get_entity_by_name"] = [&](const std::string& name) -> entt::entity
+            {
+                return chunk_registry.get_entity_by_name(name, [&](const Entity& entity) -> std::string
+                    {
+                        assert(registry->all_of<HeaderComponent>(entity));
+                        return registry->get<HeaderComponent>(entity).name;
+                    });
+            };
+
         // // Try to reserve entity root ...
         // auto entity = registry.create(root_entity);
         // assert(root_entity == entity);
@@ -1820,9 +1880,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-        }
-#endif
     }
+#endif
+}
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1833,7 +1893,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-}
+        }
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -1870,10 +1930,10 @@ void Scene::update(float time_s, float deltaTime_s)
 
     // Update scripts
 #if 0
-    script_system_update(registry, deltaTime_s);
+    update_scripts(*registry, deltaTime_s);
 #else
     if (play_state == GamePlayState::Play)
-        script_system_update(registry, deltaTime_s);
+        update_scripts(*registry, deltaTime_s);
 #endif
 
 
@@ -2070,14 +2130,14 @@ void Scene::update(float time_s, float deltaTime_s)
                 }
             }
         }
-    } // anon
+} // anon
 #endif
 
     if (play_state == GamePlayState::Play)
         IslandFinderSystem(registry, deltaTime_s);
 
     observer->dispatch_all_events();
-}
+        }
 
 void Scene::renderUI()
 {
@@ -2275,7 +2335,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles
@@ -2563,6 +2623,20 @@ void Scene::OnSetGamePlayStateEvent(const SetGamePlayStateEvent& event)
     auto j_play_state = Meta::serialize_any(event.play_state);
     assert(!j_play_state.is_null());
     eeng::Log("SetGamePlayStateEvent: %s", j_play_state.dump().c_str());
+
+    auto new_playstate = event.play_state;
+    if (new_playstate == GamePlayState::Play)
+    {
+        // save_all_chunks();
+
+        run_scripts(*registry);
+    }
+    else if (new_playstate == GamePlayState::Stop)
+    {
+        // unload_all_chunks();
+
+        stop_scripts(*registry);
+    }
 
     play_state = event.play_state;
 

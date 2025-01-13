@@ -30,7 +30,9 @@ end
 engine.log("Running player_spawner.lua...")
 
 local projectilepool_table = {} -- fetch in init
-local game_entity = {}
+--local game_entity = {}
 local player_entity = create_player_entity(0.5, 0xffffffff, projectilepool_table, engine.entity_null)
 
 engine.log("Created Player")
+
+return player_entity

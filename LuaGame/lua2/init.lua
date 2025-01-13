@@ -72,8 +72,9 @@ engine.audio:setMasterVolume(128)  -- Set master volume to 50%
 engine.audio:setEffectVolume(sounds.projectile_fire1, 32)
 engine.audio:setEffectVolume(sounds.element_explode, 32)
 
--- -> spawners
-
+--[[
+--> Spawners
+]]
 
 --[[
 Debug entities

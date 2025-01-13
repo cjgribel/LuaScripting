@@ -50,6 +50,18 @@ function node:init()
 	--print('bounce_behavior [#' .. self.id() .. '] init ()', self)
 end
 
+function node:run()
+	print('bounce_behavior [#' .. self.id() .. '] run ()', self)
+
+    -- fetch projectile_pool
+end
+
+function node:stop()
+	print('bounce_behavior [#' .. self.id() .. '] stop ()', self)
+
+    -- ...
+end
+
 function node:update(dt)
 
     local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
@@ -78,7 +90,6 @@ function node:update(dt)
     transform.x = math.max(game.config.bounds.left + radius, math.min(transform.x, game.config.bounds.right - radius))
     transform.y = math.max(game.config.bounds.bottom + radius, math.min(transform.y, game.config.bounds.top - radius))
 
-    --[[
     -- Destroy detected islands
     -- Edit: Break one at a time with some frequency, rather than all at once
     local islandFinder = self.owner:get(self.id(), IslandFinderComponent)
@@ -92,7 +103,7 @@ function node:update(dt)
     end
     self:check_if_destroyed()
     --print(nbr_islands)
-    ]]
+    
 end
 
 function node:destroy()
@@ -111,7 +122,6 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
     --    --print('Other entity has bounce_behavior:', self.velocity.x, bounceBehavior.velocity.x)
     --end
 
-    --[[
     -- Hit by projectile?
     local projectileBehavior = engine.get_script(self.owner, entity, "projectile_behavior")
     if projectileBehavior then
@@ -134,7 +144,6 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
         self:check_if_destroyed()
         --end
     end
-    ]]
 end
 
 function node:hit_element(element_index, vel_x, vel_y)

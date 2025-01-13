@@ -64,3 +64,5 @@ function bouncing_enemy_cross(chunk_tag, color)
 end
 
 local entity = bouncing_enemy_cross("level1", 0xffffffff)
+
+return entity

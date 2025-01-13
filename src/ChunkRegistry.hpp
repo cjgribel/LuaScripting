@@ -187,6 +187,30 @@ public:
      */
     void clear();
 
+    /**
+     * @brief Retrieves an entity by its name.
+     * @param name The name of the entity to search for.
+     * @param get_name A lambda function that returns the name of a given entity.
+     * @return The entity if found, otherwise an invalid entity.
+     * @note Documentation may be AI-generated.
+     * @note Performs a linear search over all entities and should not be used in performance-critical code.
+     */
+    template<typename GetNameFunc>
+    Entity get_entity_by_name(const std::string& name, GetNameFunc get_name) const
+    {
+        for (const auto& [chunk_id, entities] : registry)
+        {
+            for (const auto& entity : entities)
+            {
+                if (get_name(entity) == name)
+                {
+                    return entity;
+                }
+            }
+        }
+        return Entity{}; // Return an invalid entity if not found
+    }
+
 private:
     std::unordered_map<std::string, EntityVector> registry; ///< Map of chunks to their entities.
 };

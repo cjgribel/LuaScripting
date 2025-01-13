@@ -29,8 +29,26 @@ end
 
 function node:init()
 	--print('player_behavior [#' .. self.id() .. '] init ()', self)
+end
 
-    -- fetch projectile_pool
+function node:run()
+	print('player_behavior [#' .. self.id() .. '] run ()', self)
+
+    -- Fetch projectile_pool
+    -- local projectile_pool_entity = engine.get_entity_by_name("ProjectilePool")
+    -- self.projectile_pool = engine.get_script(self.owner, projectile_pool_entity, "projectile_pool_behavior")
+    self.projectile_pool = engine.get_script_by_entity_name("projectile_pool_behavior", "ProjectilePool")
+    if not self.projectile_pool then
+        print("ProjectilePool not found")
+    else
+        print("ProjectilePool found, poolSize = " .. self.projectile_pool.poolSize)
+    end
+end
+
+function node:stop()
+	print('player_behavior [#' .. self.id() .. '] stop ()', self)
+
+    -- ...
 end
 
 function node:update(dt)
