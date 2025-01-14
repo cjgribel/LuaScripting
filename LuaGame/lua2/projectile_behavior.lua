@@ -1,18 +1,36 @@
-local node = {
+local projectile_behavior = {
     velocity = {x = 1.0, y = 0.0},
     --is_active = false,
     projectile_pool = nil
 }
 
-function node:init()
+function projectile_behavior:init()
 	print('projectile_behavior [#' .. self.id() .. '] init ()', self)
 end
 
-function node:destroy()
-	print('projectile:destroy() #' .. self.id())
+function projectile_behavior:destroy()
+	print('projectile_behavior:destroy() #' .. self.id())
 end
 
-function node:update(dt)
+function projectile_behavior:run()
+	print('projectile_behavior [#' .. self.id() .. '] run ()', self)
+
+    -- fetch projectile_pool
+    self.projectile_pool = engine.get_script_by_entity_name("projectile_pool_behavior", "ProjectilePool")
+    if self.projectile_pool then
+        engine.log("projectile_behavior detected ProjectilePool, poolSize = " .. self.projectile_pool.poolSize)
+    else
+        engine.log("projectile_behavior did not detect ProjectilePool")
+    end
+end
+
+function projectile_behavior:stop()
+	print('projectile_behavior [#' .. self.id() .. '] stop ()', self)
+
+    -- ...
+end
+
+function projectile_behavior:update(dt)
 
     if not self.projectile_pool:is_active(self.id()) then
         return
@@ -39,7 +57,7 @@ function node:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, collider_index, entity)
+function projectile_behavior:on_collision(x, y, nx, ny, collider_index, entity)
 
     if not self.projectile_pool:is_active(self.id()) then
         return
@@ -54,4 +72,5 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
     --end
 end
 
-return node
+projectile_behavior:init()
+return projectile_behavior

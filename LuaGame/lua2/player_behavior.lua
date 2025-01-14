@@ -1,4 +1,4 @@
-local node = {
+local player_behavior = {
     fire_cooldown = 0.1,
     fire_delay = 0.0,
 
@@ -19,7 +19,7 @@ local node = {
     --transform = Transform(0.0, 0.0, 0.0)
 }
 
-function node:update_blink(time)
+function player_behavior:update_blink(time)
 
     if time > self.blink.next_blink_time then
         self.blink.flag = not self.blink.flag
@@ -27,31 +27,31 @@ function node:update_blink(time)
     end
 end
 
-function node:init()
+function player_behavior:init()
 	--print('player_behavior [#' .. self.id() .. '] init ()', self)
 end
 
-function node:run()
+function player_behavior:run()
 	print('player_behavior [#' .. self.id() .. '] run ()', self)
 
     -- Fetch projectile_pool
     -- local projectile_pool_entity = engine.get_entity_by_name("ProjectilePool")
     -- self.projectile_pool = engine.get_script(self.owner, projectile_pool_entity, "projectile_pool_behavior")
     self.projectile_pool = engine.get_script_by_entity_name("projectile_pool_behavior", "ProjectilePool")
-    if not self.projectile_pool then
-        print("ProjectilePool not found")
+    if self.projectile_pool then
+        engine.log("player_behavior detected ProjectilePool, poolSize = " .. self.projectile_pool.poolSize)
     else
-        print("ProjectilePool found, poolSize = " .. self.projectile_pool.poolSize)
+        engine.log("player_behavior did not detect ProjectilePool")
     end
 end
 
-function node:stop()
+function player_behavior:stop()
 	print('player_behavior [#' .. self.id() .. '] stop ()', self)
 
     self.projectile_pool = nil
 end
 
-function node:update(dt)
+function player_behavior:update(dt)
 
 	local transform = self.owner:get(self.id(), Transform)
     local quad = self.owner:get(self.id(), QuadGridComponent)
@@ -119,7 +119,7 @@ function node:update(dt)
 end
 
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, collider_index, entity)
+function player_behavior:on_collision(x, y, nx, ny, collider_index, entity)
     
     --print(".")
 
@@ -149,10 +149,10 @@ function node:on_collision(x, y, nx, ny, collider_index, entity)
 
 end
 
-function node:destroy()
+function player_behavior:destroy()
 
     print("player_behavior:destroy() " .. self.id() )
 end
 
-node:init()
-return node
+player_behavior:init()
+return player_behavior

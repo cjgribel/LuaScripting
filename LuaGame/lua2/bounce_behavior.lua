@@ -1,4 +1,4 @@
-local node = {
+local bounce_behavior = {
     VELOCITY_MIN = -5.0,
     VELOCITY_MAX = 5.0,
     STRING = "STRING",
@@ -34,7 +34,7 @@ local node = {
     }
 }
 
-function node:init()
+function bounce_behavior:init()
 
     -- Inspect an instance of usertype HeaderComponent
     --local component = HeaderComponent("test_component")
@@ -50,19 +50,25 @@ function node:init()
 	--print('bounce_behavior [#' .. self.id() .. '] init ()', self)
 end
 
-function node:run()
+function bounce_behavior:destroy()
+
+	print('bounce_behavior:destroy() #' .. self.id())
+
+end
+
+function bounce_behavior:run()
 	print('bounce_behavior [#' .. self.id() .. '] run ()', self)
 
     -- fetch projectile_pool
 end
 
-function node:stop()
+function bounce_behavior:stop()
 	print('bounce_behavior [#' .. self.id() .. '] stop ()', self)
 
     -- ...
 end
 
-function node:update(dt)
+function bounce_behavior:update(dt)
 
     local collidergrid = self.owner:get(self.id(), CircleColliderGridComponent)
     if not collidergrid.is_active then
@@ -106,14 +112,8 @@ function node:update(dt)
     
 end
 
-function node:destroy()
-
-	print('bounce_behavior:destroy() #' .. self.id())
-
-end
-
 -- (nx, ny) points away from this entity
-function node:on_collision(x, y, nx, ny, element_index, entity)
+function bounce_behavior:on_collision(x, y, nx, ny, element_index, entity)
 
     -- Check script in the other entity
     --local bounceBehavior = engine.get_script(self.owner, entity, "bounce_behavior")
@@ -146,7 +146,7 @@ function node:on_collision(x, y, nx, ny, element_index, entity)
     end
 end
 
-function node:hit_element(element_index, vel_x, vel_y)
+function bounce_behavior:hit_element(element_index, vel_x, vel_y)
 
     local transform = self.owner:get(self.id(), Transform)
     local collider = self.owner:get(self.id(), CircleColliderGridComponent)
@@ -184,7 +184,7 @@ function node:hit_element(element_index, vel_x, vel_y)
     engine.audio:playEffect(game.config.sounds.element_explode, 1)
 end
 
-function node:check_if_destroyed()
+function bounce_behavior:check_if_destroyed()
 
     local collider = self.owner:get(self.id(), CircleColliderGridComponent)
     if (not collider:is_any_active()) then
@@ -218,7 +218,7 @@ function node:check_if_destroyed()
 
 end
 
-function node:scale_alpha(color, f, fmax)
+function bounce_behavior:scale_alpha(color, f, fmax)
     -- Extract the RGBA components from the color
     local a = (color >> 24) & 0xFF
     local r = (color >> 16) & 0xFF
@@ -237,5 +237,5 @@ function node:scale_alpha(color, f, fmax)
     return scaled_color
 end
 
-node:init()
-return node
+bounce_behavior:init()
+return bounce_behavior
