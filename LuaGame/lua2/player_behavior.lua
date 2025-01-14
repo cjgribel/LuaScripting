@@ -48,7 +48,7 @@ end
 function node:stop()
 	print('player_behavior [#' .. self.id() .. '] stop ()', self)
 
-    -- ...
+    self.projectile_pool = nil
 end
 
 function node:update(dt)
