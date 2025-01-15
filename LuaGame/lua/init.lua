@@ -107,7 +107,7 @@ function game:init()
     -- Projectile pool
     engine.log("Creating projectile pool...")
     self.projectilepool_entity = self:create_projectile_pool_entity(self.game_entity)
-    local projectilepool_table = engine.get_script(engine.registry, self.projectilepool_entity, "projectile_pool_behavior")
+    local projectilepool_table = engine.get_script_by_entity(engine.registry, "projectile_pool_behavior", self.projectilepool_entity)
 
     -- Create player(s)
     engine.log("Creating player...")

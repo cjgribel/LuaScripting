@@ -433,7 +433,7 @@ namespace {
         return add_script(registry, entity, script_function(), script_name, script_path);
     }
 
-    sol::table get_script(entt::registry& registry, entt::entity entity, const std::string& identifier)
+    sol::table get_script_by_entity(entt::registry& registry, const std::string& identifier, entt::entity entity)
     {
         if (!registry.all_of<ScriptedBehaviorComponent>(entity))
             return sol::lua_nil;
@@ -1630,8 +1630,7 @@ bool Scene::init(const v2i& windowSize)
                 return add_script_from_file(registry, entity, lua, script_dir, script_name);
             };
 
-        // A better name might be get_script_by_entity
-        lua->operator[]("engine")["get_script"] = &get_script;
+        lua->operator[]("engine")["get_script_by_entity"] = &get_script_by_entity;
 
         lua->operator[]("engine")["get_script_by_entity_name"] = [&](
             const std::string& script_name,
@@ -1643,7 +1642,7 @@ bool Scene::init(const v2i& windowSize)
                         assert(registry->all_of<HeaderComponent>(entity));
                         return registry->get<HeaderComponent>(entity).name;
                     });
-                return get_script(*registry, entity, script_name);
+                return get_script_by_entity(*registry, script_name, entity);
             };
 
 #if 0

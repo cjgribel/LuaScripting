@@ -65,7 +65,7 @@ function projectile_behavior:on_collision(x, y, nx, ny, collider_index, entity)
     end
     
     -- Deactivate if collided with bouncy entity
-    local bounceBehavior = engine.get_script(self.owner, entity, "bounce_behavior")
+    local bounceBehavior = engine.get_script_by_entity(self.owner, "bounce_behavior", entity)
     if bounceBehavior then
         self.projectile_pool:release(self.id())
 

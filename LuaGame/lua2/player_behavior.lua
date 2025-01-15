@@ -36,7 +36,7 @@ function player_behavior:run()
 
     -- Fetch projectile_pool
     -- local projectile_pool_entity = engine.get_entity_by_name("ProjectilePool")
-    -- self.projectile_pool = engine.get_script(self.owner, projectile_pool_entity, "projectile_pool_behavior")
+    -- self.projectile_pool = engine.get_script_by_entity(self.owner, "projectile_pool_behavior", projectile_pool_entity)
     self.projectile_pool = engine.get_script_by_entity_name("projectile_pool_behavior", "ProjectilePool")
     if self.projectile_pool then
         engine.log("player_behavior detected ProjectilePool, poolSize = " .. self.projectile_pool.poolSize)
@@ -128,7 +128,7 @@ function player_behavior:on_collision(x, y, nx, ny, collider_index, entity)
     end
 
     -- Death
-    local bounceBehavior = engine.get_script(self.owner, entity, "bounce_behavior")
+    local bounceBehavior = engine.get_script_by_entity(self.owner, "bounce_behavior", entity)
     if bounceBehavior then
 
         local transform = self.owner:get(self.id(), Transform)
