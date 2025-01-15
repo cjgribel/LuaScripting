@@ -2,7 +2,11 @@
 
 local entity = engine.create_entity("game_chunk", "ProjectilePool", engine.entity_null)
 
+print("projectilepool_behavior", projectilepool_behavior)
+
 local projectilepool_behavior = engine.add_script(engine.registry, entity, "projectile_pool_behavior")
+
+print("projectilepool_behavior", projectilepool_behavior)
 
 return entity
 

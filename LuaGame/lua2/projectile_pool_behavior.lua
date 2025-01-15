@@ -1,5 +1,6 @@
 
-local prefabloaders = require("prefabs")
+--local prefabloaders = require("prefabs")
+local spawn_projectile = require("projectile_spawner")
 
 -- Define the ProjectilePool
 ProjectilePool = {
@@ -11,18 +12,7 @@ ProjectilePool = {
 
 -- Initialize the pool
 function ProjectilePool:init()
---[[
-    -- Create projectiles
-    for i = 1, self.poolSize do
-
-        local entity = prefabloaders.projectile("game_chunk", 0.2, self)
-
-        table.insert(self.pool, entity)
-        self.entityToIndex[entity] = i
-
-    end
-    engine.log("Pooled " .. self.poolSize .. " projectiles")
-    ]]
+    print('ProjectilePool:init()', self)
 end
 
 function ProjectilePool:run()
@@ -30,31 +20,41 @@ function ProjectilePool:run()
     print('ProjectilePool [#' .. self.id() .. '] run ()', self)
     
     -- Create projectiles
-    --[[
     for i = 1, self.poolSize do
-
+        
         -- local entity = prefabloaders.projectile("game_chunk", 0.2, self)
-        local entity = prefabloaders.projectile("projectile_chunk", 0.2, self)
+        --local entity = prefabloaders.projectile("projectile_chunk", 0.2, self)
+        local entity = spawn_projectile("projectile_chunk", 0.2, self)
 
         table.insert(self.pool, entity)
         self.entityToIndex[entity] = i
 
     end
     engine.log("Pooled " .. self.poolSize .. " projectiles")
-    ]]
 end
 
 function ProjectilePool:stop()
 	print('ProjectilePool [#' .. self.id() .. '] stop ()', self)
 
     -- Either destroy projectile entities one by one or destroy the chunk
+
+    for _, entity in ipairs(self.pool) do
+
+        -- Flag for destruction
+        engine.destroy_entity(entity)
+    end
+
+    self.pool = {}
+    self.entityToIndex = {}
+    self.activeCount = 0
 end
 
 -- Update function for projectiles
 function ProjectilePool:update(dt)
-
-    for i = 1, ProjectilePool.activeCount do
-        local projectile = ProjectilePool.pool[i]
+    print("ProjectilePool:update()", self)
+    for i = 1, self.activeCount do
+        local projectile = self.pool[i]
+        print('ProjectilePool:update', projectile)
         -- Update projectile logic here
         -- e.g., move the projectile, check for collisions, emit particles
     end
@@ -72,12 +72,14 @@ function ProjectilePool:destroy()
     print("ProjectilePool:destroy() " .. self.id());
     --print('projectile_pool_behavior [#' .. self.id() .. '] destroy()', self)
 
+    --[[
     for _, entity in ipairs(self.pool) do
 
         -- Flag for destruction
         engine.destroy_entity(entity)
 
     end
+    ]]
 
 end
 
@@ -190,4 +192,5 @@ function ProjectilePool:fire(x, y, dx, dy)
     end
 end
 
+ProjectilePool:init()
 return ProjectilePool

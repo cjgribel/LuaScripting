@@ -5,7 +5,8 @@ local projectile_behavior = {
 }
 
 function projectile_behavior:init()
-	print('projectile_behavior [#' .. self.id() .. '] init ()', self)
+    print("projectile_behavior:init ()", self)
+	--print('projectile_behavior [#' .. self.id() .. '] init ()', self)
 end
 
 function projectile_behavior:destroy()

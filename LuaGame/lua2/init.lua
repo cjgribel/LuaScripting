@@ -1,6 +1,6 @@
 
 -- Adjust the package path to include the "../../LuaGame/lua" directory
-package.path = package.path .. ";../../LuaGame/lua/?.lua"
+package.path = package.path .. ";../../LuaGame/lua2/?.lua"
 
 -- remove local here and make it global to entire lua state?
 --local prefabloaders = require("prefabs")
