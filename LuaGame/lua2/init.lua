@@ -1,9 +1,10 @@
 
 -- Adjust the package path to include the "../../LuaGame/lua" directory
 package.path = package.path .. ";../../LuaGame/lua2/?.lua"
-
 -- remove local here and make it global to entire lua state?
 --local prefabloaders = require("prefabs")
+scripts_path = "../../LuaGame/lua2/"
+assets_path = "../../assets/"
 
 PlayerCollisionBit = 0x1
 EnemyCollisionBit = 0x2
@@ -79,6 +80,7 @@ engine.audio:setEffectVolume(sounds.element_explode, 32)
 --[[
 Debug entities
 ]]
+--[[
 local node1 = engine.create_entity("test_chunk", "Node1", engine.entity_null)
 local node2 = engine.create_entity("test_chunk", "Node2", node1)
 local node3 = engine.create_entity("test_chunk", "Node3", node2)
@@ -96,7 +98,7 @@ engine.registry:emplace(node2, quadgrid2)
 local quadgrid3 = QuadGridComponent(1, 1, true)
 quadgrid3:set_quad_at(0, 0.0, 0.0, 0.3, 0xff00ffff, true)
 engine.registry:emplace(node3, quadgrid3)
-
+]]
 
 --[[
 -- Game root entity
@@ -126,5 +128,8 @@ engine.log("Creating phases...")
 self.phasemanager_entity = self:create_phasemanager_entity(self.game_entity)
 ]]
 
-engine.log("Lua init")
+-- or import_chunk("game_chunk")
+dofile(scripts_path .. "player_spawner.lua")
+dofile(scripts_path .. "projectilepool_spawner.lua")
 
+engine.log("Lua init")
