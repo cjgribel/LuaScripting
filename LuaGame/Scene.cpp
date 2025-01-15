@@ -1629,6 +1629,8 @@ bool Scene::init(const v2i& windowSize)
             const std::string& script_name) {
                 return add_script_from_file(registry, entity, lua, script_dir, script_name);
             };
+
+        // A better name might be get_script_by_entity
         lua->operator[]("engine")["get_script"] = &get_script;
 
         lua->operator[]("engine")["get_script_by_entity_name"] = [&](
@@ -1644,6 +1646,7 @@ bool Scene::init(const v2i& windowSize)
                 return get_script(*registry, entity, script_name);
             };
 
+#if 0
         // Register get_entity_by_name function
         lua->operator[]("engine")["get_entity_by_name"] = [&](const std::string& name) -> entt::entity
             {
@@ -1653,6 +1656,7 @@ bool Scene::init(const v2i& windowSize)
                         return registry->get<HeaderComponent>(entity).name;
                     });
             };
+#endif
 
         // // Try to reserve entity root ...
         // auto entity = registry.create(root_entity);
@@ -1796,7 +1800,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-        }
+    }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -1819,7 +1823,7 @@ bool Scene::init(const v2i& windowSize)
             auto lua_engine = lua->operator[]("engine");
             std::cout << "Inspect Lua engine state:" << std::endl;
             dump_lua_state(lua, lua_engine, "    ");
-        }
+}
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
@@ -2129,7 +2133,7 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-        }
+    }
 } // anon
 #endif
 

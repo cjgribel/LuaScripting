@@ -33,6 +33,8 @@ function ProjectilePool:run()
     engine.log("Pooled " .. self.poolSize .. " projectiles")
 end
 
+-- ASSERT STOPPING NOT DONE MORE THAN ONE TIME CONSECUTIVELY
+
 function ProjectilePool:stop()
 	print('ProjectilePool [#' .. self.id() .. '] stop ()', self)
 
@@ -52,12 +54,15 @@ end
 -- Update function for projectiles
 function ProjectilePool:update(dt)
     print("ProjectilePool:update()", self)
+
+    -- Projectiles have their own update()
+    --[[
     for i = 1, self.activeCount do
         local projectile = self.pool[i]
-        print('ProjectilePool:update', projectile)
+        --print('ProjectilePool:update', projectile)
         -- Update projectile logic here
-        -- e.g., move the projectile, check for collisions, emit particles
     end
+    ]]
 
     --self:fire(-5.0 + 10.0*math.random(), -5.0 + 10.0*math.random(), 0.0, 0.0)
 end
