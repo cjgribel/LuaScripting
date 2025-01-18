@@ -39,10 +39,10 @@ function ProjectilePool:stop()
 	print('ProjectilePool [#' .. self.id() .. '] stop ()', self)
 
     -- Either destroy projectile entities one by one or destroy the chunk
-
+    --[[
+    engine.unload_chunk("projectile_chunk")
+    ]]
     for _, entity in ipairs(self.pool) do
-
-        -- Flag for destruction
         engine.destroy_entity(entity)
     end
 
