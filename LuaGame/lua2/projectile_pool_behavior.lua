@@ -4,6 +4,7 @@ local spawn_projectile = require("projectile_spawner")
 
 -- Define the ProjectilePool
 ProjectilePool = {
+    game = {},
     pool = {},
     entityToIndex = {},
     activeCount = 0,
@@ -17,8 +18,11 @@ end
 
 function ProjectilePool:run()
     
-    print('ProjectilePool [#' .. self.id() .. '] run ()', self)
+    --print('ProjectilePool [#' .. self.id() .. '] run ()', self)
     
+    -- Fetch game behavior
+    self.game = engine.get_script_by_entity_name("game_behavior", "Game")
+
     -- Create projectiles
     for i = 1, self.poolSize do
         
@@ -30,7 +34,20 @@ function ProjectilePool:run()
         self.entityToIndex[entity] = i
 
     end
-    engine.log("Pooled " .. self.poolSize .. " projectiles")
+    --engine.log("Pooled " .. self.poolSize .. " projectiles")
+
+    --[[
+    engine.log(string.format(
+        'ProjectilePool:run() entity = %s, pool size = %s',
+        self.id(),
+        tostring(self.poolSize)
+    ))
+    ]]
+    engine.log(string.format(
+        'ProjectilePool:run() entity = %s, game = %s',
+        self.id(),
+        tostring(self.game)
+    ))
 end
 
 -- ASSERT STOPPING NOT DONE MORE THAN ONE TIME CONSECUTIVELY
@@ -53,7 +70,7 @@ end
 
 -- Update function for projectiles
 function ProjectilePool:update(dt)
-    print("ProjectilePool:update()", self)
+    --print("ProjectilePool:update()", self)
 
     -- Projectiles have their own update()
     --[[
@@ -193,7 +210,7 @@ function ProjectilePool:fire(x, y, dx, dy)
         end
 
         -- Sound
-        engine.audio:playEffect(game.config.sounds.projectile_fire1, 0)
+        engine.audio:playEffect(self.game.config.sounds.projectile_fire1, 0)
     end
 end
 

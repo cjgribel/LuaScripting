@@ -128,7 +128,17 @@ engine.log("Creating phases...")
 self.phasemanager_entity = self:create_phasemanager_entity(self.game_entity)
 ]]
 
--- or import_chunk("game_chunk")
+--[[
+(game_init.lua)
+Game entity
+]]
+local game_entity = engine.create_entity("game_chunk", "Game", engine.entity_null)
+local game_behavior = engine.add_script(engine.registry, game_entity, "game_behavior")
+
+--[[
+(game_init.lua)
+-- or import_chunk("game_chunk"), if these entities were edited & saved in the UI
+]]
 dofile(scripts_path .. "player_spawner.lua")
 dofile(scripts_path .. "projectilepool_spawner.lua")
 

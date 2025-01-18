@@ -1,4 +1,5 @@
 local bounce_behavior = {
+    game = {},
     VELOCITY_MIN = -5.0,
     VELOCITY_MAX = 5.0,
     STRING = "STRING",
@@ -57,9 +58,15 @@ function bounce_behavior:destroy()
 end
 
 function bounce_behavior:run()
-	print('bounce_behavior [#' .. self.id() .. '] run ()', self)
+	--print('bounce_behavior [#' .. self.id() .. '] run ()', self)
 
-    -- fetch projectile_pool
+    self.game = engine.get_script_by_entity_name("game_behavior", "Game")
+
+    engine.log(string.format(
+        'bounce_behavior:run() entity = %s, game = %s',
+        self.id(),
+        tostring(self.game)
+    ))
 end
 
 function bounce_behavior:stop()
@@ -84,17 +91,19 @@ function bounce_behavior:update(dt)
     transform.y = transform.y + self.velocity.y * dt
     transform.angle = transform.angle + self.velocity.angle * dt
 
+    local bounds = self.game.config.bounds
+
     -- Bounce at bounds
-    if transform.x - radius <= game.config.bounds.left or transform.x + radius >= game.config.bounds.right then
+    if transform.x - radius <= bounds.left or transform.x + radius >= bounds.right then
         self.velocity.x = -self.velocity.x
     end
-    if transform.y - radius <= game.config.bounds.bottom or transform.y + radius >= game.config.bounds.top then
+    if transform.y - radius <= bounds.bottom or transform.y + radius >= bounds.top then
         self.velocity.y = -self.velocity.y
     end
 
     -- Clamp to bounds
-    transform.x = math.max(game.config.bounds.left + radius, math.min(transform.x, game.config.bounds.right - radius))
-    transform.y = math.max(game.config.bounds.bottom + radius, math.min(transform.y, game.config.bounds.top - radius))
+    transform.x = math.max(bounds.left + radius, math.min(transform.x, bounds.right - radius))
+    transform.y = math.max(bounds.bottom + radius, math.min(transform.y, bounds.top - radius))
 
     -- Destroy detected islands
     -- Edit: Break one at a time with some frequency, rather than all at once
@@ -181,7 +190,7 @@ function bounce_behavior:hit_element(element_index, vel_x, vel_y)
     end
 
     -- Sound
-    engine.audio:playEffect(game.config.sounds.element_explode, 1)
+    engine.audio:playEffect(self.game.config.sounds.element_explode, 1)
 end
 
 function bounce_behavior:check_if_destroyed()
@@ -212,7 +221,7 @@ function bounce_behavior:check_if_destroyed()
         --quad:set_color_all(random_color())
 
         -- Kill counter
-        game.config.enemy_kill_count = game.config.enemy_kill_count + 1
+        self.game.config.enemy_kill_count = self.game.config.enemy_kill_count + 1
 
     end
 

@@ -1,4 +1,6 @@
 local player_behavior = {
+    game = {},
+
     fire_cooldown = 0.1,
     fire_delay = 0.0,
 
@@ -14,9 +16,14 @@ local player_behavior = {
         delay = 0.1,
         next_blink_time = 0.0,
         flag = false
-    }
+    },
     --header = HeaderComponent("Hello"),
     --transform = Transform(0.0, 0.0, 0.0)
+
+    meta = {
+        fire_cooldown = {inspectable = true, serializable = true},
+        projectiles_fired = {inspectable = true, serializable = true}
+    }
 }
 
 function player_behavior:update_blink(time)
@@ -32,17 +39,18 @@ function player_behavior:init()
 end
 
 function player_behavior:run()
-	print('player_behavior [#' .. self.id() .. '] run ()', self)
+	--print('player_behavior [#' .. self.id() .. '] run()', self)
 
-    -- Fetch projectile_pool
-    -- local projectile_pool_entity = engine.get_entity_by_name("ProjectilePool")
-    -- self.projectile_pool = engine.get_script_by_entity(self.owner, "projectile_pool_behavior", projectile_pool_entity)
+    -- Fetch projectile_pool and game behaviors
+    self.game = engine.get_script_by_entity_name("game_behavior", "Game")
     self.projectile_pool = engine.get_script_by_entity_name("projectile_pool_behavior", "ProjectilePool")
-    if self.projectile_pool then
-        engine.log("player_behavior detected ProjectilePool, poolSize = " .. self.projectile_pool.poolSize)
-    else
-        engine.log("player_behavior did not detect ProjectilePool")
-    end
+
+    engine.log(string.format(
+        'player_behavior:run() entity = %s, projectile_pool = %s, game = %s',
+        self.id(),
+        tostring(self.projectile_pool),
+        tostring(self.game)
+    ))
 end
 
 function player_behavior:stop()
@@ -59,12 +67,12 @@ function player_behavior:update(dt)
     local quad_r = 0.25 --TODO getter
 
     -- Apply input to transform
-    transform.x = transform.x + engine.input.axis_left_x * dt * game.config.player_speed
-    transform.y = transform.y - engine.input.axis_left_y * dt * game.config.player_speed
+    transform.x = transform.x + engine.input.axis_left_x * dt * self.game.config.player_speed
+    transform.y = transform.y - engine.input.axis_left_y * dt * self.game.config.player_speed
 
     -- Clamp to bounds
-    transform.x = math.max(game.config.bounds.left + quad_r, math.min(transform.x, game.config.bounds.right - quad_r))
-    transform.y = math.max(game.config.bounds.bottom + quad_r, math.min(transform.y, game.config.bounds.top - quad_r))
+    transform.x = math.max(self.game.config.bounds.left + quad_r, math.min(transform.x, self.game.config.bounds.right - quad_r))
+    transform.y = math.max(self.game.config.bounds.bottom + quad_r, math.min(transform.y, self.game.config.bounds.top - quad_r))
 
     --if engine.input.button_x then
         --print('button pressed')
@@ -113,8 +121,8 @@ function player_behavior:update(dt)
     ImGui_SetNextWindowWorldPos(-5, 7)
     ImGui_Begin("ProjectileCount2")
     ImGui_Text('Projectiles fired ' .. tostring(self.projectiles_fired))
-    ImGui_Text('Targets destroyed ' .. tostring(game.config.enemy_kill_count))
-    ImGui_Text('Deaths ' .. tostring(game.config.player_deaths))
+    ImGui_Text('Targets destroyed ' .. tostring(self.game.config.enemy_kill_count))
+    ImGui_Text('Deaths ' .. tostring(self.game.config.player_deaths))
     ImGui_End()
 end
 
@@ -137,13 +145,13 @@ function player_behavior:on_collision(x, y, nx, ny, collider_index, entity)
         engine.emit_explosion(transform.x, transform.y, 0.0, 0.0, 80, 0xff0000ff)
         
         -- Reset
-        --transform.x, transform.y = game.config.bounds.right, game.config.bounds.bottom
+        --transform.x, transform.y = self.game.config.bounds.right, self.game.config.bounds.bottom
         
         -- Sound (death)
-        --engine.audio:playEffect(game.config.sounds.player_death, 0)
+        --engine.audio:playEffect(self.game.config.sounds.player_death, 0)
 
         self.last_death_time = self.time
-        game.config.player_deaths = game.config.player_deaths + 1
+        self.game.config.player_deaths = self.game.config.player_deaths + 1
 
     end
 
