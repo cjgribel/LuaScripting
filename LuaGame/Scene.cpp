@@ -1284,7 +1284,7 @@ namespace Inspector
         }
         ImGui::EndChild(); // Chunk list window
 
-        if (ImGui::Button("Save"))
+        if (ImGui::Button("Save") && selected_chunk_tag.size())
         {
             observer.enqueue_event(SaveChunkToFileEvent{ selected_chunk_tag });
         };
@@ -1296,7 +1296,7 @@ namespace Inspector
         };
 
         ImGui::SameLine();
-        if (ImGui::Button("Unload"))
+        if (ImGui::Button("Unload") && selected_chunk_tag.size())
         {
             observer.enqueue_event(UnloadChunkEvent{ selected_chunk_tag });
         };
@@ -1657,6 +1657,21 @@ bool Scene::init(const v2i& windowSize)
             };
 #endif
 
+        lua->operator[]("engine")["load_chunk"] = [&](const std::string& chunk_tag)
+            {
+                OnLoadChunkFromFileEvent(LoadChunkFromFileEvent{ chunk_tag });
+            };
+
+        lua->operator[]("engine")["unload_chunk"] = [&](const std::string& chunk_tag)
+            {
+                OnUnloadChunkEvent(UnloadChunkEvent{ chunk_tag });
+            };
+
+        // lua->operator[]("engine")["save_chunk"] = [&](const std::string& chunk_tag)
+        //     {
+        //         OnSaveChunkToFileEvent(SaveChunkToFileEvent{ chunk_tag });
+        //     };
+
         // // Try to reserve entity root ...
         // auto entity = registry.create(root_entity);
         // assert(root_entity == entity);
@@ -1799,7 +1814,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-    }
+        }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -1822,7 +1837,7 @@ bool Scene::init(const v2i& windowSize)
             auto lua_engine = lua->operator[]("engine");
             std::cout << "Inspect Lua engine state:" << std::endl;
             dump_lua_state(lua, lua_engine, "    ");
-}
+        }
 
         // Debugging inspection
         // auto debug_entity = create_entity_and_attach_to_scenegraph();
@@ -1883,9 +1898,9 @@ bool Scene::init(const v2i& windowSize)
             registry.emplace<QuadComponent>(entity, QuadComponent{ 1.0f, 0x80ffffff, true });
 
             add_script_from_file(registry, entity, lua, "lua/behavior.lua", "test_behavior");
-    }
+        }
 #endif
-}
+    }
     // catch (const std::exception& e)
     catch (const sol::error& e)
     {
@@ -1896,7 +1911,7 @@ bool Scene::init(const v2i& windowSize)
 
     is_initialized = true;
     return true;
-        }
+}
 
 void Scene::update(float time_s, float deltaTime_s)
 {
@@ -2132,15 +2147,15 @@ void Scene::update(float time_s, float deltaTime_s)
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
                 }
             }
-    }
-} // anon
+        }
+    } // anon
 #endif
 
     if (play_state == GamePlayState::Play)
         IslandFinderSystem(registry, deltaTime_s);
 
     observer->dispatch_all_events();
-        }
+}
 
 void Scene::renderUI()
 {
@@ -2338,7 +2353,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
