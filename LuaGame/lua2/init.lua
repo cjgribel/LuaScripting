@@ -30,6 +30,8 @@ function random_color()
     return color
 end
 
+-- To be removed - an entity behavior is used instead
+-- Still used to for asset loading, for now
 game = {
     game_entity = {},
     config = {

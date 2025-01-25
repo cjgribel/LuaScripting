@@ -684,6 +684,104 @@ void bind_conditional_observer(auto& lua, std::shared_ptr<ConditionalObserver> o
     // lua->operator[]("observer") = observer.get();
 }
 
+// Bind BatchLoader to Lua
+namespace
+{
+    // Function to queue assets for loading
+    BatchLoader::BatchID queue_assets(BatchLoader& loader, const std::vector<std::string>& asset_names)
+    {
+        std::vector<std::function<bool()>> tasks;
+
+        for (const auto& asset_name : asset_names)
+        {
+            // PLACEHOLDER TASK: Simulate loading an asset
+            tasks.push_back([asset_name]()
+                {
+                    // Simulate loading success or failure
+                    std::this_thread::sleep_for(std::chrono::seconds(1 + (rand() % 3)));
+
+                    // Randomly decide success or failure
+                    bool success = rand() % 2 == 0;
+                    if (success)
+                    {
+                        std::cout << "Successfully loaded asset: " << asset_name << std::endl;
+                    }
+                    else
+                    {
+                        std::cerr << "Failed to load asset: " << asset_name << std::endl;
+                    }
+                    return success;
+                });
+        }
+
+        // Enqueue the batch and return the batch ID
+        return loader.queue_batch(tasks);
+    }
+
+    // Function to check if a batch is complete
+    bool is_loading_complete(BatchLoader& loader, BatchLoader::BatchID batch_id)
+    {
+        return loader.is_batch_complete(batch_id);
+    }
+
+    // Function to get the loading progress of a batch
+    float get_loading_progress(BatchLoader& loader, BatchLoader::BatchID batch_id)
+    {
+        return loader.get_batch_progress(batch_id);
+    }
+
+    // Function to check if a batch succeeded
+    bool did_loading_succeed(BatchLoader& loader, BatchLoader::BatchID batch_id)
+    {
+        return loader.did_batch_succeed(batch_id);
+    }
+}
+
+void BindBatchLoader(sol::state& lua, BatchLoader& batch_loader)
+{
+    // Ensure the "engine" table exists
+    sol::table engine = lua["engine"];
+    assert(engine.valid());
+    // if (!engine.valid())
+    // {
+    //     engine = lua.create_named_table("engine");
+    // }
+
+    // queue_assets: Manually handle Lua table to std::vector conversion
+    engine.set_function("queue_assets", [&batch_loader](sol::table asset_table)
+        {
+            std::vector<std::string> asset_names;
+
+            // Convert Lua table to std::vector<std::string>
+            for (size_t i = 1; i <= asset_table.size(); ++i) // Lua tables are 1-indexed
+            {
+                sol::object value = asset_table[i];
+                if (value.is<std::string>()) // Ensure the value is a string
+                {
+                    asset_names.push_back(value.as<std::string>());
+                }
+            }
+
+            // Call the queue_assets function with the converted vector
+            return queue_assets(batch_loader, asset_names);
+        });
+
+    engine.set_function("is_loading_complete", [&batch_loader](BatchLoader::BatchID batch_id)
+        {
+            return is_loading_complete(batch_loader, batch_id);
+        });
+
+    engine.set_function("get_loading_progress", [&batch_loader](BatchLoader::BatchID batch_id)
+        {
+            return get_loading_progress(batch_loader, batch_id);
+        });
+
+    engine.set_function("did_loading_succeed", [&batch_loader](BatchLoader::BatchID batch_id)
+        {
+            return did_loading_succeed(batch_loader, batch_id);
+        });
+}
+
 namespace Inspector
 {
 
@@ -1557,6 +1655,7 @@ bool Scene::init(const v2i& windowSize)
     scenegraph = std::make_shared<SceneGraph>();
     cmd_queue = std::make_shared<Editor::CommandQueue>();
     observer = std::make_shared<ConditionalObserver>();
+    // loader = std::make_shared<BatchLoader>(thread_pool);
 
     // Hook up Scene events
     observer->register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
@@ -1587,7 +1686,6 @@ bool Scene::init(const v2i& windowSize)
 
     try
     {
-
         // Create Lua state
         lua = std::make_shared<sol::state>(sol::c_call<decltype(&lua_panic_func), &lua_panic_func>);
         lua->open_libraries(
@@ -1654,7 +1752,7 @@ bool Scene::init(const v2i& windowSize)
                         assert(registry->all_of<HeaderComponent>(entity));
                         return registry->get<HeaderComponent>(entity).name;
                     });
-            };
+    };
 #endif
 
         lua->operator[]("engine")["load_chunk"] = [&](const std::string& chunk_tag)
@@ -1802,6 +1900,9 @@ bool Scene::init(const v2i& windowSize)
         // Bind observer
         bind_conditional_observer(lua, observer);
 
+        // Bind asset loading stuff
+        BindBatchLoader(*lua, loader);
+
         // Load & execute init script
         lua->safe_script_file(script_dir + "init.lua");
 
@@ -1814,7 +1915,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-        }
+}
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -2145,10 +2246,10 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
-                }
             }
         }
-    } // anon
+    }
+} // anon
 #endif
 
     if (play_state == GamePlayState::Play)
@@ -2353,7 +2454,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-    }
+}
 #endif
 
     // Render particles

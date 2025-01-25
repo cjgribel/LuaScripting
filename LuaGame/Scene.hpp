@@ -14,6 +14,7 @@
 #include "SceneBase.h"
 #include "Observer.h"
 #include "ChunkRegistry.hpp"
+#include "BatchLoader.hpp"
 #include "SceneGraph.hpp"
 #include "CommandQueue.hpp"
 #include "SelectionManager.hpp"
@@ -81,6 +82,8 @@ private:
     std::shared_ptr<sol::state> lua{};
     std::shared_ptr<SceneGraph> scenegraph{};
     std::shared_ptr<ConditionalObserver> observer{};
+    ThreadPool thread_pool{};
+    BatchLoader loader{ thread_pool };
 
     std::deque<Entity> entities_pending_destruction;
 
