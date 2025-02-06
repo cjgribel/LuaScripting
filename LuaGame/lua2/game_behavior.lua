@@ -1,3 +1,9 @@
+
+-- Lua caches that returned value so any subsequent calls to require(...) will reuse the same result and won’t re-run the file.
+local phase_load = require("phase_load")
+local phase_1 = require("phase_1")
+local phase_2 = require("phase_2")
+
 game = {
     --game_entity = {},
     config = {
@@ -20,6 +26,11 @@ game = {
         enemy_kill_count = 0,
         player_deaths = 0,
 
+        phases = {phase_1, phase_2},
+        current_phase_index = -1,
+        next_phase_index = 1,
+        current_phase = nil,
+        phase_is_loading = false, -- ???
         
         meta = {
             player_speed = {inspectable = true, serializable = true}
@@ -33,6 +44,24 @@ game = {
     }
 }
 
+function game:switch_to_next_phase()
+    self.config.next_phase_index = self.config.next_phase_index + 1
+end
+
+function game:switch_phase(phase)
+    
+    if self.current_phase then
+        self.current_phase:stop()
+        --self.current_phase:destroy()
+    end
+    
+    self.current_phase = phase
+    if self.current_phase then
+        self.current_phase:run()
+    end
+
+end
+
 function game:init()
     engine.log("game:init()")
 end
@@ -41,9 +70,15 @@ function game:destroy()
     engine.log('game:destroy() #' .. self.id())
 end
 
-function game:run(dt)
+function game:run()
 
-    -- -> PHASE
+    -- Start loading the next level
+    --phase_load:run(self.config.phases[self.config.next_phase_index])
+    --self:phase_is_loading = true
+
+
+
+    -- TEST
     -- Queue a batch of assets
     self.batch_id = engine.queue_assets({"sound1.wav", "model1.fbx", "texture1.png"})
 
@@ -59,12 +94,52 @@ function game:run(dt)
     engine.log('game:run() #' .. self.id())
 end
 
-function game:stop(dt)
+function game:stop()
     engine.log('game:stop() #' .. self.id())
+
+    -- stop current_phase (so it can deallocate resources)
+    --self:current_phase:stop()
 end
 
 function game:update(dt)
 
+    --[[
+    if self:phase_is_loading then
+        if phase_load:is_done() then
+            if phase_load:did_loading_succeed() then
+                print("All assets in batch " .. self.batch_id .. " loaded successfully!")
+            else
+                print("Some assets in batch " .. self.batch_id .. " failed to load.")
+            end
+        else
+            local progress = engine.get_loading_progress(self.batch_id)
+            print(string.format("Loading progress: %.2f%%", progress * 100))
+        end
+    end
+
+    if self.current_phase then
+        
+        self.current_phase:update(dt)
+
+        if self.current_phase:has_finished() then
+            self.config.current_phase_index = self.config.current_phase_index + 1
+
+            if self.config.phases[self.config.current_phase_index] then
+                self:switch_phase(self.config.phases[self.config.current_phase_index])
+            else
+                print('All phases completed.')
+                self.current_phase:destroy()
+                self.current_phase = nil
+            end
+        end
+    end
+    ]]
+
+    --self:switch_phase(self.config.phases[self.config.next_phase_index])
+    -- + run phase_loader while waiting for the next phase to finish loading
+
+
+    -- TEST
     if engine.is_loading_complete(self.batch_id) then
         -- Loading is complete
         if engine.did_loading_succeed(self.batch_id) then
