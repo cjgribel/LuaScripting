@@ -23,47 +23,98 @@ game = {
             player_death = "player_death",
             element_explode = "player_death"
         }, 
-        enemy_kill_count = 0,
-        player_deaths = 0,
-
-        phases = {phase_1, phase_2},
-        current_phase_index = -1,
-        next_phase_index = 1,
-        current_phase = nil,
-        phase_is_loading = false, -- ???
+        enemy_kill_count = 0, -- move 
+        player_deaths = 0, -- move
         
         meta = {
             player_speed = {inspectable = true, serializable = true}
         }
     },
 
-    batch_id = nil, -- -> PHASE
+    batch_id = nil, -- -> TEST
+
+    phases = {phase_1, phase_2},
+    current_phase_index = 0, -- 0 = not started yet
+    --next_phase_index = 1,
+    current_phase = nil,
+    --phase_is_loading = false, -- ???
 
     meta = {
         config = {inspectable = true, serializable = true}
     }
 }
 
-function game:switch_to_next_phase()
-    self.config.next_phase_index = self.config.next_phase_index + 1
-end
-
+--[[
 function game:switch_phase(phase)
-    
-    if self.current_phase then
-        self.current_phase:stop()
-        --self.current_phase:destroy()
+
+    if current_phase then
+        print("game:switch_phase error: current_phase is not nil")
+        return
     end
+    if !phase then
+        print("game:switch_phase error: phase is nil")
+        return
+    end
+
+    -- Stop current phase
+    --if self.current_phase then
+    --    self.current_phase:stop() -- destroys phase entities
+    --end
     
+    -- Run new phase
     self.current_phase = phase
     if self.current_phase then
-        self.current_phase:run()
+        self.current_phase:run() -- creates phase entities
+    end
+
+end
+]]
+
+function game:stop_current_phase()
+
+    --print("game:stop_current_phase() > " .. tostring(self.current_phase))
+
+    if self.current_phase then
+        self.current_phase:stop()
+    end
+    --current_phase_index = 0
+    self.current_phase = nil    
+
+    print("game:stop_current_phase()")
+end
+
+function game:reset()
+    print("game:reset() >")
+    -- Reset game state
+    self.config.enemy_kill_count = 0
+    self.config.player_deaths = 0
+    
+    self:stop_current_phase()
+    print("game:reset()")
+    self.current_phase_index = 0
+end
+
+function game:load_next_phase()
+
+    -- Advance phase index
+    self.current_phase_index = self.current_phase_index + 1
+
+    if self.phases[self.current_phase_index] then
+        -- Start loading the next phase
+        phase_load:run(self.phases[self.current_phase_index])
+
+        -- Switch to next phase
+        --self:switch_phase(self.phases[self.current_phase_index])
+    else
+        print('All phases completed.')
     end
 
 end
 
 function game:init()
+    
     engine.log("game:init()")
+
 end
 
 function game:destroy()
@@ -72,16 +123,14 @@ end
 
 function game:run()
 
-    -- Start loading the next level
-    --phase_load:run(self.config.phases[self.config.next_phase_index])
-    --self:phase_is_loading = true
+    self:reset()
+    self:load_next_phase()
 
 
 
     -- TEST
     -- Queue a batch of assets
-    self.batch_id = engine.queue_assets({"sound1.wav", "model1.fbx", "texture1.png"})
-
+    --self.batch_id = engine.queue_assets({"sound1.wav", "model1.fbx", "texture1.png"})
 
     --[[
         engine.log(string.format(
@@ -94,51 +143,52 @@ function game:run()
     engine.log('game:run() #' .. self.id())
 end
 
+-- Called when play state is stopped
 function game:stop()
-    engine.log('game:stop() #' .. self.id())
 
-    -- stop current_phase (so it can deallocate resources)
-    --self:current_phase:stop()
+    engine.log('game:stop() #' .. self.id())
+    self:reset()
+
 end
 
 function game:update(dt)
 
-    --[[
-    if self:phase_is_loading then
+    if not self.current_phase then
         if phase_load:is_done() then
+            --print(".")
             if phase_load:did_loading_succeed() then
-                print("All assets in batch " .. self.batch_id .. " loaded successfully!")
+                --print("All assets in batch " .. self.batch_id .. " loaded successfully!")
+                --print("All assets loaded successfully!")
+                --self:phase_is_loading = false
+                
+                self.current_phase = self.phases[self.current_phase_index]
+                self.current_phase:run()
             else
-                print("Some assets in batch " .. self.batch_id .. " failed to load.")
+                --print("Some assets in batch " .. self.batch_id .. " failed to load.")
             end
         else
-            local progress = engine.get_loading_progress(self.batch_id)
-            print(string.format("Loading progress: %.2f%%", progress * 100))
+            --local progress = engine.get_loading_progress(self.batch_id)
+            --print(string.format("Loading progress: %.2f%%", progress * 100))
         end
     end
-
+    --print(",")
+    
+    
     if self.current_phase then
-        
         self.current_phase:update(dt)
 
         if self.current_phase:has_finished() then
-            self.config.current_phase_index = self.config.current_phase_index + 1
-
-            if self.config.phases[self.config.current_phase_index] then
-                self:switch_phase(self.config.phases[self.config.current_phase_index])
-            else
-                print('All phases completed.')
-                self.current_phase:destroy()
-                self.current_phase = nil
-            end
+            self:stop_current_phase()
+            self:load_next_phase()
         end
+    else
+        phase_load:update(dt)
     end
-    ]]
-
-    --self:switch_phase(self.config.phases[self.config.next_phase_index])
-    -- + run phase_loader while waiting for the next phase to finish loading
+    
 
 
+
+    --[[
     -- TEST
     if engine.is_loading_complete(self.batch_id) then
         -- Loading is complete
@@ -152,60 +202,8 @@ function game:update(dt)
         local progress = engine.get_loading_progress(self.batch_id)
         print(string.format("Loading progress: %.2f%%", progress * 100))
     end
+    ]]
 
---[[
-while not engine.is_loading_complete(batch_id) do
-    local progress = engine.get_loading_progress(batch_id)
-    print("Loading progress: " .. (progress * 100) .. "%")
-    os.execute("sleep 0.1") -- Replace with your engine's frame delay function
-end
-
--- Check if all assets loaded successfully
-if engine.did_loading_succeed(batch_id) then
-    print("All assets in batch " .. batch_id .. " loaded successfully!")
-else
-    print("Some assets in batch " .. batch_id .. " failed to load.")
-end
-]]
-
---[[
-    LOAD LOADING_SCREEN_BEHAVIOR. Fast & requires no/cheap resources.
-        As an entity: run(), update() called from Core. Inspectable
-        As a local script: do run(), update() etc from here.
-    Now, "load" the next level and wait for it to finish loading (fetching (if loaded) or importing assets).
-            What exactly does this mean?
-            1. The level entity / script is created
-            2. Which function is responsible for starting the loading process: run(), load()
-            3. IsReady = a script is still loading and is not ready to be updated
-                Who query this? The game entity? The Core?
-                If update() should not be called until isReady = true, it must be Core.
-    When it's done, remove the loading screen
-]]
-
---[[
-int main()
-{
-    AssetLoader asset_loader;
-
-    // Queue up some asset loading tasks
-    auto sound_future = asset_loader.queue_task([] { load_sound("sound1.wav"); });
-    auto model_future = asset_loader.queue_task([] { load_model("model1.obj"); });
-
-    // Simulate a loading screen
-    while (!asset_loader.is_loading_complete())
-    {
-        std::cout << "Loading assets...\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    // Wait for futures to ensure all exceptions are handled
-    sound_future.get();
-    model_future.get();
-
-    std::cout << "All assets loaded!\n";
-    return 0;
-}
-]]
 end
 
 game:init()

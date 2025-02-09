@@ -701,7 +701,7 @@ namespace
                     std::this_thread::sleep_for(std::chrono::seconds(1 + (rand() % 3)));
 
                     // Randomly decide success or failure
-                    bool success = rand() % 2 == 0;
+                    bool success = true; // rand() % 2 == 0;
                     if (success)
                     {
                         std::cout << "Successfully loaded asset: " << asset_name << std::endl;

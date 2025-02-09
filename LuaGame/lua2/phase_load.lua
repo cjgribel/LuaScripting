@@ -31,13 +31,14 @@ end
 
 function phase_load:stop()
     engine.log('phase_load:stop() #' .. self.id())
+    self.batch_id = nil
 end
 
 function phase_load:is_done()
     return engine.is_loading_complete(self.batch_id)
 end
 
-function phase_load:did_loading_succeed(next_phase)
+function phase_load:did_loading_succeed()
     return engine.did_loading_succeed(self.batch_id)
 end
 
@@ -56,10 +57,10 @@ function phase_load:update(dt)
         print(string.format("Loading progress: %.2f%%", progress * 100))
     end
 
-    ImGui_SetNextWindowWorldPos(2, 6.5)
-    ImGui_Begin("Phase1Text")
+    ImGui_SetNextWindowWorldPos(2, 4.5)
+    ImGui_Begin("LoadText")
     --ImGui_Text('Time ' .. tostring(self.timer) .. "/" .. tostring(self.dur))
-    ImGui_Text("Kill all enemies")
+    ImGui_Text("Loading")
     ImGui_End()
 end
 

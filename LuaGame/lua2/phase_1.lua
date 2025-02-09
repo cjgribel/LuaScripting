@@ -27,17 +27,22 @@ function phase_1:run()
             tostring(self.game)
             ))
             ]]
-    engine.log('phase_1:run() #' .. self.id())
+    engine.log("phase_1:run()")
 end
 
 function phase_1:stop()
-    engine.log('phase_1:stop() #' .. self.id())
+    engine.log("phase_1:stop()")
 
     -- TODO destroy phase entities
 end
 
 function phase_1:update(dt)
 
+    ImGui_SetNextWindowWorldPos(2, 6.5)
+    ImGui_Begin("Phase1Text")
+    --ImGui_Text('Time ' .. tostring(self.timer) .. "/" .. tostring(self.dur))
+    ImGui_Text("Level 1")
+    ImGui_End()
 
 end
 
