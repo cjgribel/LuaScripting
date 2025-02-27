@@ -30,11 +30,11 @@ function phase_2:run()
             tostring(self.game)
             ))
             ]]
-    engine.log('phase_2:run() #' .. self.id())
+    engine.log("phase_2:run()")
 end
 
 function phase_2:stop()
-    engine.log('phase_2:stop() #' .. self.id())
+    engine.log("phase_2:stop()")
 end
 
 function phase_2:update(dt)

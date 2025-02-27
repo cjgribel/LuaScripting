@@ -26,11 +26,11 @@ function phase_load:run(next_phase)
             tostring(self.game)
             ))
             ]]
-    engine.log('phase_load:run() #' .. self.id())
+    engine.log("phase_load:run()")
 end
 
 function phase_load:stop()
-    engine.log('phase_load:stop() #' .. self.id())
+    engine.log("phase_load:stop()")
     self.batch_id = nil
 end
 
