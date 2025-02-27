@@ -21,8 +21,8 @@ namespace {
     };
 }
 
-// Observer class
-class ConditionalObserver
+// EventDispatcher class
+class EventDispatcher
 {
     using CallbackType = std::function<void(const std::any&)>;
 

@@ -593,7 +593,7 @@ namespace {
     }
 }
 
-// Bind the ConditionalObserver to Lua
+// Bind the EventDispatcher to Lua
 /*
 Example sending Lua event from core to Lua
 
@@ -601,11 +601,11 @@ int main() {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
-    // Create the observer instance
-    ConditionalObserver observer;
+    // Create the dispatcher instance
+    EventDispatcher dispatcher;
 
-    // Bind the observer to Lua
-    bind_conditional_observer(lua, observer);
+    // Bind the dispatcher to Lua
+    bind_conditional_observer(lua, dispatcher);
 
     // Load and run a Lua script to register callbacks
     lua.script(R"(
@@ -621,8 +621,8 @@ int main() {
         }
 
         -- Register Lua callbacks
-        observer:register_callback(event_handler, "on_event1")
-        observer:register_callback(event_handler, "on_event2")
+        dispatcher:register_callback(event_handler, "on_event1")
+        dispatcher:register_callback(event_handler, "on_event2")
     )");
 
     // Create a reusable Lua table
@@ -630,25 +630,25 @@ int main() {
 
     // Set fields and enqueue event1
     lua_data["some_key"] = "value1";
-    observer.enqueue_event(LuaEvent{lua_data, "on_event1"});
+    dispatcher.enqueue_event(LuaEvent{lua_data, "on_event1"});
 
     // Dispatch events
-    observer.dispatch_all_events();
+    dispatcher.dispatch_all_events();
 
     // Reuse the same table for another event
     lua_data["some_other_key"] = "value2";
-    observer.enqueue_event(LuaEvent{lua_data, "on_event2"});
+    dispatcher.enqueue_event(LuaEvent{lua_data, "on_event2"});
 
     // Dispatch events
-    observer.dispatch_all_events();
+    dispatcher.dispatch_all_events();
 
     return 0;
 }
 */
-void bind_conditional_observer(auto& lua, std::shared_ptr<ConditionalObserver> observer)
+void bind_conditional_observer(auto& lua, std::shared_ptr<EventDispatcher> dispatcher)
 {
-    lua->template new_usertype<ConditionalObserver>("ConditionalObserver",
-        "register_callback", [](ConditionalObserver& observer, const sol::table& lua_table, const std::string& event_name) {
+    lua->template new_usertype<EventDispatcher>("EventDispatcher",
+        "register_callback", [](EventDispatcher& dispatcher, const sol::table& lua_table, const std::string& event_name) {
             auto lua_callback = [lua_table, event_name](const LuaEvent& luaEvent) {
                 if (lua_table.valid())
                 {
@@ -668,20 +668,20 @@ void bind_conditional_observer(auto& lua, std::shared_ptr<ConditionalObserver> o
                 }
                 };
 
-            observer.register_callback(lua_callback);
+            dispatcher.register_callback(lua_callback);
         },
-        "enqueue_event", [](ConditionalObserver& observer, const sol::table& lua_data, const std::string& event_name) {
-            observer.enqueue_event(LuaEvent{ lua_data, event_name });
+        "enqueue_event", [](EventDispatcher& dispatcher, const sol::table& lua_data, const std::string& event_name) {
+            dispatcher.enqueue_event(LuaEvent{ lua_data, event_name });
         },
-        "dispatch_all_events", &ConditionalObserver::dispatch_all_events,
-        "clear", &ConditionalObserver::clear
+        "dispatch_all_events", &EventDispatcher::dispatch_all_events,
+        "clear", &EventDispatcher::clear
     );
 
     // Ties ownership to Lua, which can be better fpr insight purposes
-    lua->operator[]("observer") = observer;
+    lua->operator[]("dispatcher") = dispatcher;
 
     // Share raw pointer
-    // lua->operator[]("observer") = observer.get();
+    // lua->operator[]("dispatcher") = dispatcher.get();
 }
 
 // Bind BatchLoader to Lua
@@ -922,7 +922,7 @@ namespace Inspector
     void inspect_scenegraph(
         SceneGraph& scenegraph,
         Editor::InspectorState& inspector,
-        ConditionalObserver& observer)
+        EventDispatcher& dispatcher)
     {
         auto& registry = inspector.context.registry;
         static bool open = true;
@@ -945,7 +945,7 @@ namespace Inspector
             Entity entity_parent;
             if (has_selection) entity_parent = inspector.entity_selection.last();
             CreateEntityEvent event{ .parent_entity = entity_parent };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
 
         // Destroy selected entities
@@ -954,7 +954,7 @@ namespace Inspector
         if (ImGui::Button("Delete"))
         {
             DestroyEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
             inspector.entity_selection.clear();
         }
         if (!has_selection) inspector.end_disabled();
@@ -966,7 +966,7 @@ namespace Inspector
         {
             // Scene::CopyEntityEvent event{ .entity = inspector.entity_selection.last() }; // last
             CopyEntitySelectionEvent event{ inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
 
@@ -976,7 +976,7 @@ namespace Inspector
         if (ImGui::Button("Parent"))
         {
             SetParentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
         if (!has_multi_selection) inspector.end_disabled();
 
@@ -986,7 +986,7 @@ namespace Inspector
         if (ImGui::Button("Unparent"))
         {
             UnparentEntitySelectionEvent event{ .entity_selection = inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
         if (!has_selection) inspector.end_disabled();
 
@@ -1037,7 +1037,7 @@ namespace Inspector
 
     bool inspect_entity(
         Editor::InspectorState& inspector,
-        ConditionalObserver& observer)
+        EventDispatcher& dispatcher)
     {
         auto& registry = inspector.context.registry;
         bool mod = false;
@@ -1102,7 +1102,7 @@ namespace Inspector
         if (ImGui::Button("Add##addcomponent") && selected_comp_id)
         {
             AddComponentToEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
 
         // Remove Component button
@@ -1110,7 +1110,7 @@ namespace Inspector
         if (ImGui::Button("Remove##removecomponent") && selected_comp_id)
         {
             RemoveComponentFromEntitySelectionEvent event{ selected_comp_id, inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         }
 
         ImGui::Text("Add/Remove Behavior");
@@ -1138,7 +1138,7 @@ namespace Inspector
         if (ImGui::Button("Add##addscript") && selected_script_path.size())
         {
             AddScriptToEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         };
 
         // Remove script
@@ -1147,7 +1147,7 @@ namespace Inspector
         if (ImGui::Button("Remove##removescript") && selected_script_path.size())
         {
             RemoveScriptFromEntitySelectionEvent event{ selected_script_path, inspector.entity_selection };
-            observer.enqueue_event(event);
+            dispatcher.enqueue_event(event);
         };
         ImGui::EndDisabled();
 
@@ -1243,7 +1243,7 @@ namespace Inspector
 
     void inspect_playstate(
         const GamePlayState& play_state,
-        ConditionalObserver& observer)
+        EventDispatcher& dispatcher)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -1263,28 +1263,28 @@ namespace Inspector
         // Play button
         if (!can_play) ImGui::BeginDisabled();
         if (ImGui::Button("Play##playpause"))
-            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Play });
+            dispatcher.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Play });
         if (!can_play) ImGui::EndDisabled();
 
         // Pause button
         ImGui::SameLine();
         if (!can_pause) ImGui::BeginDisabled();
         if (ImGui::Button("Pause##playpause"))
-            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Pause });
+            dispatcher.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Pause });
         if (!can_pause) ImGui::EndDisabled();
 
         // Stop button
         ImGui::SameLine();
         if (!can_stop) ImGui::BeginDisabled();
         if (ImGui::Button("Stop##playpause"))
-            observer.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Stop });
+            dispatcher.enqueue_event(SetGamePlayStateEvent{ GamePlayState::Stop });
         if (!can_stop) ImGui::EndDisabled();
 
         ImGui::End(); // Window
     }
 
     void inspect_script_launcher(
-        ConditionalObserver& observer)
+        EventDispatcher& dispatcher)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -1319,7 +1319,7 @@ namespace Inspector
         ImGui::SameLine();
         if (!can_run) ImGui::BeginDisabled();
         if (ImGui::Button("Run##runscript"))
-            observer.enqueue_event(RunScriptEvent{ selected_script_path });
+            dispatcher.enqueue_event(RunScriptEvent{ selected_script_path });
         if (!can_run) ImGui::EndDisabled();
 
         ImGui::End(); // Window
@@ -1327,7 +1327,7 @@ namespace Inspector
 
     void inspect_chunkregistry(
         ChunkRegistry& chunk_registry,
-        ConditionalObserver& observer)
+        EventDispatcher& dispatcher)
     {
         static bool open = true;
         bool* p_open = &open;
@@ -1365,7 +1365,7 @@ namespace Inspector
         ImGui::SameLine();
         if (ImGui::Button("Load") && selected_file_path.size())
         {
-            observer.enqueue_event(LoadChunkFromFileEvent{ selected_file_path });
+            dispatcher.enqueue_event(LoadChunkFromFileEvent{ selected_file_path });
         };
 
         // Chunk list
@@ -1384,25 +1384,25 @@ namespace Inspector
 
         if (ImGui::Button("Save") && selected_chunk_tag.size())
         {
-            observer.enqueue_event(SaveChunkToFileEvent{ selected_chunk_tag });
+            dispatcher.enqueue_event(SaveChunkToFileEvent{ selected_chunk_tag });
         };
 
         ImGui::SameLine();
         if (ImGui::Button("Save All"))
         {
-            observer.enqueue_event(SaveAllChunksToFileEvent{ });
+            dispatcher.enqueue_event(SaveAllChunksToFileEvent{ });
         };
 
         ImGui::SameLine();
         if (ImGui::Button("Unload") && selected_chunk_tag.size())
         {
-            observer.enqueue_event(UnloadChunkEvent{ selected_chunk_tag });
+            dispatcher.enqueue_event(UnloadChunkEvent{ selected_chunk_tag });
         };
 
         ImGui::SameLine();
         if (ImGui::Button("Unload All"))
         {
-            observer.enqueue_event(UnloadAllChunksEvent{ });
+            dispatcher.enqueue_event(UnloadAllChunksEvent{ });
         };
 
         ImGui::End(); // Window
@@ -1654,35 +1654,35 @@ bool Scene::init(const v2i& windowSize)
 
     scenegraph = std::make_shared<SceneGraph>();
     cmd_queue = std::make_shared<Editor::CommandQueue>();
-    observer = std::make_shared<ConditionalObserver>();
+    dispatcher = std::make_shared<EventDispatcher>();
     // loader = std::make_shared<BatchLoader>(thread_pool);
 
     // Hook up Scene events
-    observer->register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
-    observer->register_callback([&](const SaveAllChunksToFileEvent& event) { this->OnSaveAllChunksToFileEvent(event); });
+    dispatcher->register_callback([&](const SaveChunkToFileEvent& event) { this->OnSaveChunkToFileEvent(event); });
+    dispatcher->register_callback([&](const SaveAllChunksToFileEvent& event) { this->OnSaveAllChunksToFileEvent(event); });
 
-    observer->register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
-    observer->register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
-    observer->register_callback([&](const UnloadAllChunksEvent& event) { this->OnUnloadAllChunksEvent(event); });
+    dispatcher->register_callback([&](const SetGamePlayStateEvent& event) { this->OnSetGamePlayStateEvent(event); });
+    dispatcher->register_callback([&](const UnloadChunkEvent& event) { this->OnUnloadChunkEvent(event); });
+    dispatcher->register_callback([&](const UnloadAllChunksEvent& event) { this->OnUnloadAllChunksEvent(event); });
 
-    observer->register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
-    observer->register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
-    observer->register_callback([&](const DestroyEntitySelectionEvent& event) { this->OnDestroyEntitySelectionEvent(event); });
-    // observer.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
-    observer->register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const LoadChunkFromFileEvent& event) { this->OnLoadChunkFromFileEvent(event); });
+    dispatcher->register_callback([&](const CreateEntityEvent& event) { this->OnCreateEntityEvent(event); });
+    dispatcher->register_callback([&](const DestroyEntitySelectionEvent& event) { this->OnDestroyEntitySelectionEvent(event); });
+    // dispatcher.register_callback([&](const CopyEntityEvent& event) { this->OnCopyEntityEvent(event); });
+    dispatcher->register_callback([&](const CopyEntitySelectionEvent& event) { this->OnCopyEntitySelectionEvent(event); });
 
-    observer->register_callback([&](const SetParentEntitySelectionEvent& event) { this->OnSetParentEntitySelectionEvent(event); });
-    observer->register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const SetParentEntitySelectionEvent& event) { this->OnSetParentEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const UnparentEntitySelectionEvent& event) { this->OnUnparentEntitySelectionEvent(event); });
 
-    observer->register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
-    observer->register_callback([&](const RemoveComponentFromEntitySelectionEvent& event) { this->OnRemoveComponentFromEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const AddComponentToEntitySelectionEvent& event) { this->OnAddComponentToEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const RemoveComponentFromEntitySelectionEvent& event) { this->OnRemoveComponentFromEntitySelectionEvent(event); });
 
-    observer->register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
-    observer->register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const AddScriptToEntitySelectionEvent& event) { this->OnAddScriptToEntitySelectionEvent(event); });
+    dispatcher->register_callback([&](const RemoveScriptFromEntitySelectionEvent& event) { this->OnRemoveScriptFromEntitySelectionEvent(event); });
 
-    observer->register_callback([&](const ChunkModifiedEvent& event) { this->OnChunkModifiedEvent(event); });
+    dispatcher->register_callback([&](const ChunkModifiedEvent& event) { this->OnChunkModifiedEvent(event); });
 
-    observer->register_callback([&](const RunScriptEvent& event) { this->OnRunScriptEvent(event); });
+    dispatcher->register_callback([&](const RunScriptEvent& event) { this->OnRunScriptEvent(event); });
 
     try
     {
@@ -1897,8 +1897,8 @@ bool Scene::init(const v2i& windowSize)
                 ImGui_SetNextWindowPos(pos_ss.x / pos_ss.w, SceneBase::windowSize.y - pos_ss.y / pos_ss.w);
             });
 
-        // Bind observer
-        bind_conditional_observer(lua, observer);
+        // Bind dispatcher
+        bind_conditional_observer(lua, dispatcher);
 
         // Bind asset loading stuff
         BindBatchLoader(*lua, loader);
@@ -1948,13 +1948,13 @@ bool Scene::init(const v2i& windowSize)
 #if 0
         // Send event C++ <-> C++
         struct MyEvent { float x; } event{ 5.0f };
-        observer.register_callback([](const MyEvent& e) { std::cout << "C++: MyEvent: " << e.x << std::endl; });
-        observer.enqueue_event(event);
-        observer.dispatch_all_events();
-        observer.clear();
+        dispatcher.register_callback([](const MyEvent& e) { std::cout << "C++: MyEvent: " << e.x << std::endl; });
+        dispatcher.enqueue_event(event);
+        dispatcher.dispatch_all_events();
+        dispatcher.clear();
 
         // C++ listens to event sent from Lua (ever needed?)
-        observer.register_callback([](const LuaEvent& e) { std::cout << "C++: LuaEvent: " << e.event_name << std::endl; });
+        dispatcher.register_callback([](const LuaEvent& e) { std::cout << "C++: LuaEvent: " << e.event_name << std::endl; });
 
         // Script with internal events via Observer (can be listened to from C+ as well)
         lua.script(R"(
@@ -1973,18 +1973,18 @@ bool Scene::init(const v2i& windowSize)
         }
 
         -- Register Lua callbacks
-        observer:register_callback(event_handler, "on_event1")
-        observer:register_callback(event_handler, "on_event2")
+        dispatcher:register_callback(event_handler, "on_event1")
+        dispatcher:register_callback(event_handler, "on_event2")
 
         -- Enqueue events
-        observer:enqueue_event({ some_key = "value1" }, "on_event1")
-        observer:enqueue_event({ some_other_key = "value2" }, "on_event2")
+        dispatcher:enqueue_event({ some_key = "value1" }, "on_event1")
+        dispatcher:enqueue_event({ some_other_key = "value2" }, "on_event2")
 
         -- Dispatch events
-        observer:dispatch_all_events()
+        dispatcher:dispatch_all_events()
 
         -- Clear events
-        observer:clear()
+        dispatcher:clear()
     )");
 #endif
 
@@ -2255,7 +2255,7 @@ void Scene::update(float time_s, float deltaTime_s)
     if (play_state == GamePlayState::Play)
         IslandFinderSystem(registry, deltaTime_s);
 
-    observer->dispatch_all_events();
+    dispatcher->dispatch_all_events();
 }
 
 void Scene::renderUI()
@@ -2311,18 +2311,18 @@ void Scene::renderUI()
     // Begin inspection
     // May issue events
 
-    if (Inspector::inspect_entity(inspector, *observer)) {}
+    if (Inspector::inspect_entity(inspector, *dispatcher)) {}
 
     Inspector::inspect_command_queue(inspector);
 
     // Before inspect_entity ???
-    Inspector::inspect_scenegraph(*scenegraph, inspector, *observer);
+    Inspector::inspect_scenegraph(*scenegraph, inspector, *dispatcher);
 
-    Inspector::inspect_playstate(play_state, *observer);
+    Inspector::inspect_playstate(play_state, *dispatcher);
 
-    Inspector::inspect_script_launcher(*observer);
+    Inspector::inspect_script_launcher(*dispatcher);
 
-    Inspector::inspect_chunkregistry(chunk_registry, *observer);
+    Inspector::inspect_chunkregistry(chunk_registry, *dispatcher);
 
     // Event & command loop
     // TODO: Move to start of update?
@@ -2506,11 +2506,11 @@ void Scene::destroy()
     std::cout << "cmd_queue.use_count() " << cmd_queue.use_count() << std::endl;
     std::cout << "registry.use_count() " << registry.use_count() << std::endl;
     std::cout << "lua.use_count() " << lua.use_count() << std::endl;
-    std::cout << "observer.use_count() " << observer.use_count() << std::endl;
+    std::cout << "dispatcher.use_count() " << dispatcher.use_count() << std::endl;
     cmd_queue.reset();
     scenegraph.reset();
     registry.reset();
-    observer.reset();
+    dispatcher.reset();
     lua.reset();
 
     is_initialized = false;
@@ -2522,13 +2522,13 @@ void Scene::event_loop()
     int cycles = 0;
     const int max_cycles = 5;
 
-    while ((observer->has_pending_events() ||
+    while ((dispatcher->has_pending_events() ||
         cmd_queue->has_new_commands_pending() ||
-        observer->has_pending_events())
+        dispatcher->has_pending_events())
         && cycles++ <= max_cycles)
     {
         // Dispatch events. May lead to commands being issued.
-        observer->dispatch_all_events();
+        dispatcher->dispatch_all_events();
 
         // Execute commands. May lead to entities being queued for destruction
         // and new events being issued.
@@ -2561,7 +2561,7 @@ Editor::Context Scene::create_context()
         registry,
         lua,
         scenegraph,
-        observer,
+        dispatcher,
         // Create entity
         [&](const Entity& entity_parent, const Entity& entity_hint) -> Entity {
             return this->create_entity("", "", entity_parent, entity_hint);

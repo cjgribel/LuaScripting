@@ -13,7 +13,7 @@
 #include "Entity.hpp"
 #include <sol/forward.hpp>
 //#include "SceneGraph.hpp"
-#include "Observer.h"
+#include "EventDispatcher.h"
 class SceneGraph;
 
 namespace Editor {
@@ -33,7 +33,7 @@ namespace Editor {
         std::shared_ptr<entt::registry> registry;   // -> weak
         std::shared_ptr<sol::state> lua;            // -> weak
         std::weak_ptr<SceneGraph> scenegraph;
-        std::weak_ptr<ConditionalObserver> observer;
+        std::weak_ptr<EventDispatcher> dispatcher;
 
         // shared_ptr<Scene>
         CreateEntityFunc            create_entity;

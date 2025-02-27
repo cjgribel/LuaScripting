@@ -12,7 +12,7 @@
 #include "vec.h"
 #include "Log.hpp"
 #include "SceneBase.h"
-#include "Observer.h"
+#include "EventDispatcher.h"
 #include "ChunkRegistry.hpp"
 #include "BatchLoader.hpp"
 #include "SceneGraph.hpp"
@@ -81,7 +81,7 @@ private:
     std::shared_ptr<entt::registry> registry{};
     std::shared_ptr<sol::state> lua{};
     std::shared_ptr<SceneGraph> scenegraph{};
-    std::shared_ptr<ConditionalObserver> observer{};
+    std::shared_ptr<EventDispatcher> dispatcher{};
     ThreadPool thread_pool{};
     BatchLoader loader{ thread_pool };
 

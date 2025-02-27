@@ -138,8 +138,8 @@ void register_meta<HeaderComponent>(Editor::Context& context)
             // std::cout << new_tag << ", " << entity.to_integral() << std::endl;
 
             // Dispatch immediately since entity may be in an invalid state
-            assert(!context.observer.expired());
-            context.observer.lock()->dispatch(ChunkModifiedEvent{ entity, new_tag });
+            assert(!context.dispatcher.expired());
+            context.dispatcher.lock()->dispatch(ChunkModifiedEvent{ entity, new_tag });
         };
 
     entt::meta<HeaderComponent>()
