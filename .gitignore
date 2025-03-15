@@ -7,6 +7,7 @@
 assets/
 doxygen/
 .DS_Store
+src/.DS_Store
 
 # User-specific files
 *.rsuser
