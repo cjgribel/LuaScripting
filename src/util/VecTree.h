@@ -622,6 +622,7 @@ public:
 
     // ---------------------------------------------------------
 
+#if 0
     void reduce()
     {
         // if node[i+1] has 1 child, and node[i+1] is not tied to BONE or MESH
@@ -700,6 +701,7 @@ public:
             nodes.erase(nodes.begin() + i);
         }
     }
+#endif
 
     /// Dump all roots to a stream using recursive traversal (to be removed)
     template<class T>
