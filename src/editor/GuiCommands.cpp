@@ -161,6 +161,7 @@ namespace Editor {
         // Obtain entity branch
         assert(!context.scenegraph.expired());
         auto scenegraph = context.scenegraph.lock();
+        // Top-down ensures that the parent is copied before the child
         source_entities = scenegraph->get_branch_topdown(root_entity);
 
         // Hints for copied entites:
