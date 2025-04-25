@@ -869,7 +869,14 @@ namespace Inspector
 
         std::string label = Editor::get_entity_name(registry, entity, entt::resolve<HeaderComponent>());
         // Add entity nbr to start for clarity
+#if 0
         label = "[entity#" + std::to_string(entity.to_integral()) + "] " + label;
+#else
+        label = "entity#" + std::to_string(entity.to_integral())
+            + " (index: " + std::to_string(index) + ", children: " + std::to_string(nbr_children) +
+            ", branch_stride: " + std::to_string(branch_stride) + ", parent_ofs: " + std::to_string(parent_ofs) + ") "
+            + label;
+#endif
 
         //bool is_selected = inspector.selected_entity == entity;
         auto& entity_selection = inspector.entity_selection;
@@ -1002,7 +1009,7 @@ namespace Inspector
         // Scene graph
         if (scenegraph.size())
         {
-#if 1
+#if 0
             scenegraph.tree.traverse_depthfirst(EntityInspectorVisitor(inspector));
 #else
             // For all roots ...
@@ -1752,7 +1759,7 @@ bool Scene::init(const v2i& windowSize)
                         assert(registry->all_of<HeaderComponent>(entity));
                         return registry->get<HeaderComponent>(entity).name;
                     });
-    };
+            };
 #endif
 
         lua->operator[]("engine")["load_chunk"] = [&](const std::string& chunk_tag)
@@ -1915,7 +1922,7 @@ bool Scene::init(const v2i& windowSize)
             assert(lua_game["destroy"].valid());
             lua_game["init"](lua_game);
 #endif
-}
+        }
         // lua["game"]["destroy"]();
 
         // - Lua binding done -
@@ -2246,17 +2253,17 @@ void Scene::update(float time_s, float deltaTime_s)
                     // (nx, ny) points 2 -> 1
                     dispatch_collision_event_to_scripts(px, py, -nx, -ny, entity1, entity2);
                     dispatch_collision_event_to_scripts(px, py, nx, ny, entity2, entity1);
+                }
             }
         }
-    }
-} // anon
+    } // anon
 #endif
 
     if (play_state == GamePlayState::Play)
         IslandFinderSystem(registry, deltaTime_s);
 
     dispatcher->dispatch_all_events();
-}
+    }
 
 void Scene::renderUI()
 {
@@ -2454,7 +2461,7 @@ void Scene::render(float time_s, ShapeRendererPtr renderer)
         const float x = std::cos(angle);
         const float y = std::sin(angle);
         particleBuffer.push_point(v3f{ 0.0f, 0.0f, 0.0f }, v3f{ x, y, 0.0f } *4, 0xff0000ff);
-}
+    }
 #endif
 
     // Render particles
