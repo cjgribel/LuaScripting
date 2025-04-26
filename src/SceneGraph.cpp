@@ -98,7 +98,8 @@ size_t SceneGraph::size()
 void SceneGraph::traverse(std::shared_ptr<entt::registry>& registry)
 {
     // std::cout << "traverse:" << std::endl;
-    tree.traverse_progressive([&](Entity* entity_ptr, Entity* entity_parent_ptr) {
+    tree.traverse_depthfirst([&](Entity* entity_ptr, Entity* entity_parent_ptr, size_t, size_t) {
+    //tree.traverse_progressive([&](Entity* entity_ptr, Entity* entity_parent_ptr) {
         // + Transform = parent tfm + tfm (+ maybe their aggregate)
 
         // std::cout << "node " << Editor::get_entity_name(registry, entity, entt::meta_type{});

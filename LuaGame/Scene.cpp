@@ -1009,7 +1009,7 @@ namespace Inspector
         // Scene graph
         if (scenegraph.size())
         {
-#if 0
+#if 1
             scenegraph.tree.traverse_depthfirst(EntityInspectorVisitor(inspector));
 #else
             // For all roots ...
@@ -2296,7 +2296,7 @@ void Scene::renderUI()
         entities_pending_destruction.clear();
         // NOTE: SG is left unchanged
 
-        scenegraph->tree.nodes.clear(); // visibility ...
+        scenegraph->tree.clear();
 
         chunk_registry.clear();
 
