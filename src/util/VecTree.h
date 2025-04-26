@@ -60,7 +60,7 @@ public:
     {
         nodes.clear();
     }
-    
+
     void reserve(size_t size)
     {
         nodes.reserve(size);
@@ -294,10 +294,10 @@ public:
                 nodes[i].m_parent_ofs += 1;
         }
 
-        // 5) Increment this parent’s child‐count
+        // Increment parent child‐count
         nodes[parent_idx].m_nbr_children += 1;
 
-        // 6) Finally, insert the new node just after the parent
+        // Insert the new node
         nodes.insert(
             nodes.begin() + (parent_idx + 1),
             TreeNodeType{
@@ -308,7 +308,6 @@ public:
 
         return true;
     }
-
 
 private:
     // Core branch-erasure by index (no payload search)
