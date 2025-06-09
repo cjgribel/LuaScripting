@@ -620,10 +620,10 @@ int main(int argc, char* argv[])
             SDL_GameControllerGetAxis(controller1, SDL_CONTROLLER_AXIS_RIGHTY) / 32767.0f
         };
         const vec4<bool> buttons{
-            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A),
-            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B),
-            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X),
-            SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y)
+            static_cast<bool>(SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_A)),
+            static_cast<bool>(SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_B)),
+            static_cast<bool>(SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_X)),
+            static_cast<bool>(SDL_GameControllerGetButton(controller1, SDL_CONTROLLER_BUTTON_Y))
         };
         scene->update_input(axes, buttons);
 
