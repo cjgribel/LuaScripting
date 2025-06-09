@@ -55,7 +55,7 @@ ThreadPool::~ThreadPool()
     }
 }
 
-bool ThreadPool::is_loading_complete() const
+bool ThreadPool::is_task_queue_empty() const
 {
     std::lock_guard<std::mutex> lock(queue_mutex);
     return task_queue.empty();

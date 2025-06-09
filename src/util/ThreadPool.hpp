@@ -22,7 +22,7 @@ public:
     template <typename Func>
     auto queue_task(Func task) -> std::future<std::invoke_result_t<Func>>;
 
-    bool is_loading_complete() const;
+    bool is_task_queue_empty() const;
 
 private:
     std::vector<std::thread> workers;
